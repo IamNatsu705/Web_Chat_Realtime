@@ -67,11 +67,24 @@ export default function Header() {
           <div className="flex items-center">
             {user ? (
               <div className="flex items-center space-x-4">
-                <Link to="/profile" className="text-sm font-medium text-gray-700 hidden md:block">
+                <Link
+                  to="/profile"
+                  className={`text-sm font-medium transition-colors hidden md:block ${isActive('/profile')
+                    ? 'text-indigo-600 font-bold'
+                    : 'text-gray-700 hover:text-indigo-600'
+                    }`}
+                >
                   {user.name}
                 </Link>
                 <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-bold border border-indigo-200">
-                  {user.name.charAt(0).toUpperCase()}
+
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    <span>
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={logout}

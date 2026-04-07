@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar',
     ];
 
     /**
@@ -45,5 +46,35 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function friendRequestsSent()
+    {
+        return $this->hasMany(FriendRequest::class, 'sender_id');
+    }
+
+    public function friendRequestsReceived()
+    {
+        return $this->hasMany(FriendRequest::class, 'receiver_id');
+    }
+
+    public function friendships()
+    {
+        return $this->hasMany(Friendship::class, 'user_id');
+    }
+
+    public function conversationParticipations()
+    {
+        return $this->hasMany(ConversationParticipant::class);
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    public function posts()
+    {
+        return $this->hasMany(Post::class);
     }
 }

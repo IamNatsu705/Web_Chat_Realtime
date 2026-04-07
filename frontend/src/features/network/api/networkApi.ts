@@ -6,7 +6,7 @@ export const networkApi = {
   // Search users by name or email
   searchUsers: async (query: string): Promise<NetworkResponse<NetworkUser[]>> => {
     const response = await axiosInstance.get<NetworkResponse<NetworkUser[]>>(NETWORK_ENDPOINTS.SEARCH_USERS, {
-      params: { q: query },
+      params: { keyword: query },
     });
     return response.data;
   },

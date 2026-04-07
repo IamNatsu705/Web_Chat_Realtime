@@ -7,6 +7,7 @@ import HomePage from '../pages/home/HomePage';
 import ChatPage from '../pages/messages/ChatPage';
 import NetworkPage from '../pages/network/NetworkPage';
 import ConnectionsPage from '../pages/network/ConnectionsPage';
+import ProfilePage from '../pages/profile/ProfilePage';
 
 // Protected Route wrapper for authenticated pages
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -109,6 +110,14 @@ export default function AppRoutes() {
             element={
               <ProtectedRoute>
                 <ConnectionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

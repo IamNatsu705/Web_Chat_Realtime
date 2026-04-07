@@ -2,25 +2,21 @@
 
 namespace App\Services;
 
-use App\Models\User;
+use App\Repositories\UserRepo\UserRepositoryInterface;
+use App\Services\UserServiceInterface;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
-class AuthService
+class AuthService implements AuthServiceInterface
 {
-    /**
-     * Register a new user.
-     *
-     * @param array $data
-     * @return array
-     */
+    public function __construct(
+        protected UserServiceInterface $userService,
+        protected UserRepositoryInterface $userRepository
+    ) {}
+
     public function register(array $data): array
     {
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
+        $user = $this->userService->createUser($data);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -30,16 +26,9 @@ class AuthService
         ];
     }
 
-    /**
-     * Authenticate a user.
-     *
-     * @param array $credentials
-     * @return array
-     * @throws ValidationException
-     */
     public function login(array $credentials): array
     {
-        $user = User::where('email', $credentials['email'])->first();
+        $user = $this->userRepository->findByEmail($credentials['email']);
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
@@ -47,7 +36,6 @@ class AuthService
             ]);
         }
 
-        // Revoke all existing tokens for web flow (optional, for security)
         $user->tokens()->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;
