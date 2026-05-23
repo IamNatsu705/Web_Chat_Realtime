@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { FriendRequest } from '../types';
 import { USER_CARD_TEXTS } from '../constants';
 
@@ -16,19 +17,23 @@ export default function RequestCard({ request, onAccept, onReject, isProcessing 
 
   return (
     <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 space-y-4 sm:space-y-0">
-      <div className="flex items-center space-x-4 cursor-pointer">
-        {sender.avatar ? (
-          <img src={sender.avatar} alt={sender.name} className="h-16 w-16 rounded-full shrink-0 object-cover border border-indigo-200" />
-        ) : (
-          <div className="h-16 w-16 rounded-full bg-indigo-100 shrink-0 flex items-center justify-center text-indigo-800 text-xl font-bold border border-indigo-200">
-            {getAvatarLetter(sender.name)}
-          </div>
-        )}
+      <div className="flex items-center space-x-4">
+        <Link to={`/profile/${sender.id}`} className="hover:opacity-90 block">
+          {sender.avatar ? (
+            <img src={sender.avatar} alt={sender.name} className="h-16 w-16 rounded-full shrink-0 object-cover border border-indigo-200" />
+          ) : (
+            <div className="h-16 w-16 rounded-full bg-indigo-100 shrink-0 flex items-center justify-center text-indigo-800 text-xl font-bold border border-indigo-200">
+              {getAvatarLetter(sender.name)}
+            </div>
+          )}
+        </Link>
         <div>
-          <h3 className="text-base font-bold text-gray-900 hover:text-indigo-600">{sender.name}</h3>
+          <Link to={`/profile/${sender.id}`} className="text-base font-bold text-gray-900 hover:text-indigo-600 hover:underline block">
+            {sender.name}
+          </Link>
           <p className="text-sm text-gray-500">{sender.email}</p>
           <p className="text-xs text-gray-400 mt-1 flex items-center">
-            Sent you a friend request
+            Đã gửi cho bạn một lời mời kết bạn
           </p>
         </div>
       </div>

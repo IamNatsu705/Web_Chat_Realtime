@@ -21,14 +21,17 @@ export interface FriendRequest {
 
 export interface Friendship {
   id: number;
-  user_id: number;
-  friend_id: number;
   created_at: string;
   friend?: User;
 }
 
-export interface NetworkResponse<T> {
-  status: string;
-  message: string;
-  data: T;
+import type { ApiResponse } from '@/types/api';
+
+/**
+ * NetworkResponse = ApiResponse. Giữ alias cho rõ ràng trong context network.
+ */
+export type NetworkResponse<T> = ApiResponse<T>;
+
+export interface SuggestedUser extends NetworkUser {
+  mutual_friends_count: number;
 }

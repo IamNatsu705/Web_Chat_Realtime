@@ -1,54 +1,30 @@
 import { useState, useEffect } from 'react';
-import { networkApi } from '../api';
-import type { NetworkUser, FriendRequest, Friendship } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { chatApi } from '../../chat/api/chatApi';
+import { networkApi } from '../api/networkApi';
+import type { NetworkUser } from '../types';
+import type { Conversation } from '../../chat/types';
 import { RELATIONSHIP_STATUS, FRIEND_REQUEST_ACTION, NETWORK_UI_CONSTANTS } from '../constants';
 import { useDebounce } from '../../../hooks/useDebounce';
+import { useFriendsQuery, useFriendRequestsQuery, NETWORK_QUERIES } from './queries';
+import { CHAT_QUERIES } from '../../chat/hooks/queries';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function useNetwork() {
+  const queryClient = useQueryClient();
+
+  // Dữ liệu từ React Query (Tự động cache & quản lý loading state)
+  const { data: friends = [], isLoading: isFriendsLoading } = useFriendsQuery();
+  const { data: requests = [], isLoading: isRequestsLoading } = useFriendRequestsQuery();
+
+  // Giữ lại Local State cho tính năng Tìm kiếm (Vì search thay đổi liên tục, không nên đưa vào Global Cache)
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, NETWORK_UI_CONSTANTS.DEBOUNCE_DELAY_MS);
-
   const [searchResults, setSearchResults] = useState<NetworkUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [processingUserIds, setProcessingUserIds] = useState<number[]>([]);
 
-  const [requests, setRequests] = useState<FriendRequest[]>([]);
-  const [isRequestsLoading, setIsRequestsLoading] = useState(true);
-
-  const [friends, setFriends] = useState<Friendship[]>([]);
-  const [isFriendsLoading, setIsFriendsLoading] = useState(true);
-
-  // Load initial data
-  useEffect(() => {
-    fetchFriends();
-    fetchRequests();
-  }, []);
-
-  const fetchFriends = async () => {
-    try {
-      setIsFriendsLoading(true);
-      const res = await networkApi.getFriends();
-      setFriends(res.data);
-    } catch (error) {
-      console.error('Failed to fetch friends', error);
-    } finally {
-      setIsFriendsLoading(false);
-    }
-  };
-
-  const fetchRequests = async () => {
-    try {
-      setIsRequestsLoading(true);
-      const res = await networkApi.getFriendRequests();
-      setRequests(res.data);
-    } catch (error) {
-      console.error('Failed to fetch requests', error);
-    } finally {
-      setIsRequestsLoading(false);
-    }
-  };
-
-  // Perform search
+  // ── Tính năng Tìm Kiếm (Search Engine) ──────────────────────────────────────────────────
   useEffect(() => {
     const performSearch = async () => {
       if (!debouncedSearchQuery.trim()) {
@@ -68,90 +44,157 @@ export function useNetwork() {
     performSearch();
   }, [debouncedSearchQuery]);
 
-  // Actions
-  const handleAddFriend = async (userId: number) => {
-    try {
-      setProcessingUserIds(prev => [...prev, userId]);
-      const res = await networkApi.sendFriendRequest(userId);
-      // Optimistic UI update in search results
-      setSearchResults(prev => prev.map(u => 
-        u.id === userId 
-          ? { ...u, relationship_status: RELATIONSHIP_STATUS.PENDING, is_sender: true, friend_request_id: res.data?.id } 
-          : u
-      ));
-    } catch (error) {
-      console.error('Failed to send friend request', error);
-    } finally {
-      setProcessingUserIds(prev => prev.filter(id => id !== userId));
-    }
+  // Hàm Helper: Đánh dấu đang xử lý 1 user
+  const trackProcessing = (userId: number, isAdding: boolean) => {
+    setProcessingUserIds(prev => isAdding ? [...prev, userId] : prev.filter(id => id !== userId));
   };
 
-  const handleCancelRequest = async (userId: number) => {
-    try {
-      setProcessingUserIds(prev => [...prev, userId]);
-      await networkApi.cancelFriendRequest(userId);
+  // ── Mutations: Tự động cập nhật giao diện TRƯỚC khi gọi API (Optimistic UI) ─────────────
+
+  // 1. Thêm Bạn / Gửi Lời Mời
+  const addFriendMutation = useMutation({
+    mutationFn: (userId: number) => networkApi.sendFriendRequest(userId),
+    onMutate: async (userId) => {
+      trackProcessing(userId, true);
+      // Cập nhật giao diện ngầm thành "Đã gửi" trong lúc chờ máy chủ
+      setSearchResults(prev => prev.map(u => 
+        u.id === userId 
+          ? { ...u, relationship_status: RELATIONSHIP_STATUS.PENDING, is_sender: true } 
+          : u
+      ));
+    },
+    onSuccess: (res, userId) => {
+      // Có dữ liệu chuẩn từ backend, cập nhật lại ID lời mời để dùng hàm hủy nếu cần
+      setSearchResults(prev => prev.map(u => 
+        u.id === userId ? { ...u, friend_request_id: res.data?.id } : u
+      ));
+      queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.friendRequests() });
+    },
+    onSettled: (_, __, userId) => trackProcessing(userId, false)
+  });
+
+  // 2. Hủy Lời Mời Đã Gửi (Đổi ý)
+  const cancelRequestMutation = useMutation({
+    mutationFn: (userId: number) => networkApi.cancelFriendRequest(userId),
+    onMutate: (userId) => {
+      trackProcessing(userId, true);
       setSearchResults(prev => prev.map(u => 
         u.id === userId ? { ...u, relationship_status: RELATIONSHIP_STATUS.NONE } : u
       ));
-    } catch (error) {
-      console.error('Failed to cancel request', error);
-    } finally {
-      setProcessingUserIds(prev => prev.filter(id => id !== userId));
-    }
-  };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.friendRequests() });
+    },
+    onSettled: (_, __, userId) => trackProcessing(userId, false)
+  });
 
-  const handleAcceptRequest = async (requestId: number, userId?: number) => {
-    try {
-      if (userId) setProcessingUserIds(prev => [...prev, userId]);
-      // Optimistic UI
-      setRequests(prev => prev.filter(r => r.id !== requestId));
+  // 3. Chấp Nhận Yêu Cầu Kết Bạn
+  const acceptRequestMutation = useMutation({
+    mutationFn: ({ requestId }: { requestId: number, userId?: number }) => 
+      networkApi.respondToRequest(requestId, FRIEND_REQUEST_ACTION.ACCEPT),
+    onMutate: ({ requestId, userId }) => {
+      if (userId) trackProcessing(userId, true);
+      
+      // Xóa nháp lời mời trên giao diện
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      queryClient.setQueryData(NETWORK_QUERIES.friendRequests(), (old: any) => 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        old ? old.filter((r: any) => r.id !== requestId) : []
+      );
+      
+      // Cập nhật kết quả search thành "Đã kết bạn"
       setSearchResults(prev => prev.map(u => 
         u.friend_request_id === requestId ? { ...u, relationship_status: RELATIONSHIP_STATUS.ACCEPTED } : u
       ));
-      await networkApi.respondToRequest(requestId, FRIEND_REQUEST_ACTION.ACCEPT);
-      // Refresh friends list to show new friend
-      fetchFriends();
-    } catch (error) {
-      console.error('Accept request failed', error);
-    } finally {
-      if (userId) setProcessingUserIds(prev => prev.filter(id => id !== userId));
+    },
+    onSuccess: () => {
+      // Kết bạn xong thì phải tải lại list Friends mới nhất
+      queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.friends() });
+    },
+    onSettled: (_, __, { userId }) => {
+      if (userId) trackProcessing(userId, false);
     }
-  };
+  });
 
-  const handleRejectRequest = async (requestId: number, userId?: number) => {
-    try {
-      if (userId) setProcessingUserIds(prev => [...prev, userId]);
-      // Optimistic UI
-      setRequests(prev => prev.filter(r => r.id !== requestId));
+  // 4. Từ Chối Yêu Cầu Kết Bạn
+  const rejectRequestMutation = useMutation({
+    mutationFn: ({ requestId }: { requestId: number, userId?: number }) => 
+      networkApi.respondToRequest(requestId, FRIEND_REQUEST_ACTION.REJECT),
+    onMutate: ({ requestId, userId }) => {
+      if (userId) trackProcessing(userId, true);
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      queryClient.setQueryData(NETWORK_QUERIES.friendRequests(), (old: any) => 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        old ? old.filter((r: any) => r.id !== requestId) : []
+      );
+      
       setSearchResults(prev => prev.map(u => 
         u.friend_request_id === requestId ? { ...u, relationship_status: RELATIONSHIP_STATUS.NONE } : u
       ));
-      await networkApi.respondToRequest(requestId, FRIEND_REQUEST_ACTION.REJECT);
-    } catch (error) {
-      console.error('Reject request failed', error);
-    } finally {
-      if (userId) setProcessingUserIds(prev => prev.filter(id => id !== userId));
+    },
+    onSettled: (_, __, { userId }) => {
+      if (userId) trackProcessing(userId, false);
     }
-  };
+  });
 
-  const handleUnfriend = async (friendId: number) => {
-    try {
-      setProcessingUserIds(prev => [...prev, friendId]);
+  // 5. Hủy Kết Bạn (Đoạn tuyệt)
+  const unfriendMutation = useMutation({
+    mutationFn: (friendId: number) => networkApi.unfriend(friendId),
+    onMutate: (friendId) => {
+      trackProcessing(friendId, true);
       
-      // Update both friends list and search results optimistically
-      setFriends(prev => prev.filter(f => f.friend?.id !== friendId));
+      // Gỡ khỏi list Bạn Bè (Optimistic UI)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      queryClient.setQueryData(NETWORK_QUERIES.friends(), (old: any) => 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        old ? old.filter((f: any) => f.friend?.id !== friendId) : []
+      );
+      
       setSearchResults(prev => prev.map(u => 
         u.id === friendId ? { ...u, relationship_status: RELATIONSHIP_STATUS.NONE } : u
       ));
-      
-      await networkApi.unfriend(friendId);
+    },
+    onError: () => {
+      // Lỗi mạng thả lại dữ liệu cũ
+      queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.friends() });
+    },
+    onSettled: (_, __, friendId) => trackProcessing(friendId, false)
+  });
+
+  const navigate = useNavigate();
+
+  // 6. Nhắn tin với 1 người dùng (Chuyển sang Chat)
+  const handleMessageUser = async (userId: number) => {
+    trackProcessing(userId, true);
+    try {
+      const res = await chatApi.getOrCreateDirect(userId);
+      if (res.data?.conversation) {
+        const newConv = res.data.conversation;
+        // Optimistically add the conversation to cache using the CORRECT query key
+        queryClient.setQueryData<Conversation[]>(CHAT_QUERIES.conversations(), (oldData) => {
+          if (!oldData) return [newConv];
+          if (oldData.some((c) => c.id === newConv.id)) return oldData;
+          return [newConv, ...oldData];
+        });
+        // Also force a refetch to ensure server data is in sync
+        queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
+        navigate(`/messages?conversationId=${newConv.id}`);
+      }
     } catch (error) {
-      console.error('Unfriend failed', error);
-      fetchFriends(); // Revert on failure
+      console.error('Failed to create or get conversation', error);
+      alert('Không thể bắt đầu cuộc trò chuyện. Người này có thể đã chặn bạn.');
     } finally {
-      setProcessingUserIds(prev => prev.filter(id => id !== friendId));
+      trackProcessing(userId, false);
     }
   };
+
+  // Bọc vào hàm truyền thống để Components (NetworkPage, Card) không tốn công phải chỉnh sửa Props
+  const handleAddFriend = (id: number) => addFriendMutation.mutate(id);
+  const handleCancelRequest = (id: number) => cancelRequestMutation.mutate(id);
+  const handleAcceptRequest = (reqId: number, uId?: number) => acceptRequestMutation.mutate({ requestId: reqId, userId: uId });
+  const handleRejectRequest = (reqId: number, uId?: number) => rejectRequestMutation.mutate({ requestId: reqId, userId: uId });
+  const handleUnfriend = (fId: number) => unfriendMutation.mutate(fId);
 
   return {
     searchQuery,
@@ -168,5 +211,6 @@ export function useNetwork() {
     handleAcceptRequest,
     handleRejectRequest,
     handleUnfriend,
+    handleMessageUser,
   };
 }

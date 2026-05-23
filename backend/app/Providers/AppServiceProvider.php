@@ -11,7 +11,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Repositories
+        // ─── Repositories ────────────────────────────────────────────────────
+
         $this->app->bind(
             \App\Repositories\UserRepo\UserRepositoryInterface::class,
             \App\Repositories\UserRepo\UserRepository::class
@@ -21,30 +22,88 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\FriendRequestRepo\FriendRequestRepository::class
         );
         $this->app->bind(
-            \App\Repositories\FriendShipRepo\FriendShipRepositoryInterface::class,
-            \App\Repositories\FriendShipRepo\FriendShipRepository::class
+            \App\Repositories\FriendshipRepo\FriendshipRepositoryInterface::class,
+            \App\Repositories\FriendshipRepo\FriendshipRepository::class
         );
         $this->app->bind(
             \App\Repositories\PostRepo\PostRepositoryInterface::class,
             \App\Repositories\PostRepo\PostRepository::class
         );
+        $this->app->bind(
+            \App\Repositories\ConversationRepo\ConversationRepositoryInterface::class,
+            \App\Repositories\ConversationRepo\ConversationRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\MessageRepo\MessageRepositoryInterface::class,
+            \App\Repositories\MessageRepo\MessageRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\PostLikeRepo\PostLikeRepositoryInterface::class,
+            \App\Repositories\PostLikeRepo\PostLikeRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\PostCommentRepo\PostCommentRepositoryInterface::class,
+            \App\Repositories\PostCommentRepo\PostCommentRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\ConversationParticipantRepo\ConversationParticipantRepositoryInterface::class,
+            \App\Repositories\ConversationParticipantRepo\ConversationParticipantRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\StreakRepo\StreakRepositoryInterface::class,
+            \App\Repositories\StreakRepo\StreakRepository::class
+        );
 
-        // Services
+        // ─── Services ────────────────────────────────────────────────────────
+
+        // Auth
         $this->app->bind(
-            \App\Services\AuthServiceInterface::class,
-            \App\Services\AuthService::class
+            \App\Services\Auth\AuthServiceInterface::class,
+            \App\Services\Auth\AuthService::class
+        );
+
+        // User
+        $this->app->bind(
+            \App\Services\User\UserServiceInterface::class,
+            \App\Services\User\UserService::class
+        );
+
+        // Network
+        $this->app->bind(
+            \App\Services\Network\NetworkServiceInterface::class,
+            \App\Services\Network\NetworkService::class
+        );
+
+        // Profile
+        $this->app->bind(
+            \App\Services\Profile\ProfileServiceInterface::class,
+            \App\Services\Profile\ProfileService::class
+        );
+
+        // Chat
+        $this->app->bind(
+            \App\Services\Chat\ChatServiceInterface::class,
+            \App\Services\Chat\ChatService::class
         );
         $this->app->bind(
-            \App\Services\UserServiceInterface::class,
-            \App\Services\UserService::class
+            \App\Services\Chat\GroupChatServiceInterface::class,
+            \App\Services\Chat\GroupChatService::class
         );
         $this->app->bind(
-            \App\Services\NetworkServiceInterface::class,
-            \App\Services\NetworkService::class
+            \App\Services\Chat\StreakServiceInterface::class,
+            \App\Services\Chat\StreakService::class
         );
+
+        // Post
         $this->app->bind(
-            \App\Services\ProfileServiceInterface::class,
-            \App\Services\ProfileService::class
+            \App\Services\Post\PostServiceInterface::class,
+            \App\Services\Post\PostService::class
+        );
+
+        // Admin
+        $this->app->bind(
+            \App\Services\Admin\AdminServiceInterface::class,
+            \App\Services\Admin\AdminService::class
         );
     }
 
@@ -56,4 +115,3 @@ class AppServiceProvider extends ServiceProvider
         //
     }
 }
-

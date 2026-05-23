@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 export default function Footer() {
   return (
@@ -9,11 +9,11 @@ export default function Footer() {
           <span className="ml-2 text-sm text-gray-500">© 2026 Chatify Inc.</span>
         </div>
         <div className="flex space-x-6">
-          <a href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">About</a>
-          <a href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Accessibility</a>
-          <a href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">User Agreement</a>
-          <a href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Privacy Policy</a>
-          <a href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Cookie Policy</a>
+          <a href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Giới thiệu</a>
+          <a href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Trợ năng</a>
+          <a href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Thỏa thuận người dùng</a>
+          <a href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Chính sách bảo mật</a>
+          <a href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Chính sách Cookie</a>
         </div>
       </div>
     </footer>

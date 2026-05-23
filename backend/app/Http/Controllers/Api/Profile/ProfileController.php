@@ -7,7 +7,7 @@ use App\Http\Requests\Profile\UpdateProfileRequest;
 use App\Http\Requests\Profile\UpdatePasswordRequest;
 use App\Http\Resources\PostResource;
 use App\Http\Resources\UserResource;
-use App\Services\ProfileServiceInterface;
+use App\Services\Profile\ProfileServiceInterface;
 use App\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

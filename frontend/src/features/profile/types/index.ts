@@ -1,20 +1,14 @@
 import type { User } from '../../auth/types';
+import type { ApiResponse } from '@/types/api';
 
-export interface ProfileResponse<T> {
-  status: string;
-  message: string;
-  data: T;
-}
+// Re-export Post từ post/types (dùng chung, tránh duplicate)
+export type { Post } from '../../post/types';
 
-export interface Post {
-  id: number;
-  user_id: number;
-  content: string;
-  media_url?: string | null;
-  created_at: string;
-  updated_at: string;
-  user?: User;
-}
+/**
+ * ProfileResponse = ApiResponse nhưng giữ alias cho rõ ràng trong context profile.
+ * Lý do: các component profile đã quen dùng ProfileResponse, đổi tên gây churn không cần thiết.
+ */
+export type ProfileResponse<T> = ApiResponse<T>;
 
 export interface UpdateProfileRequest {
   name: string;
@@ -26,3 +20,6 @@ export interface UpdatePasswordRequest {
   new_password?: string;
   new_password_confirmation?: string;
 }
+
+// Re-export User để profile components không phải import cross-feature
+export type { User };

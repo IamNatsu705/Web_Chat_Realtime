@@ -43,6 +43,7 @@ export default function EditProfileForm() {
             const res = await profileApi.updateProfile(reqData);
             updateUser(res.data.user);
             setMessage('Thông tin cá nhân đã được cập nhật!');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.response?.data?.message || err.message || 'Có lỗi xảy ra.');
         } finally {

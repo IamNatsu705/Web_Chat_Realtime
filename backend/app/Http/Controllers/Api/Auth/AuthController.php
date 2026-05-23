@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
-use App\Services\AuthServiceInterface;
+use App\Services\Auth\AuthServiceInterface;
 use App\Http\Resources\UserResource;
 use App\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;

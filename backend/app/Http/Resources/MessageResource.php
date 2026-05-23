@@ -21,6 +21,10 @@ class MessageResource extends JsonResource
             'content' => $this->content,
             'type' => $this->type,
             'read_at' => $this->read_at,
+            'is_recalled' => $this->is_recalled,
+            'deleted_by' => $this->deleted_by,
+            // Computed status so FE always has a usable value on page reload
+            'status' => $this->read_at ? 'read' : 'sent',
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'sender' => new UserResource($this->whenLoaded('sender')),

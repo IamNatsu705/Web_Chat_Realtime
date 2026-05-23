@@ -9,7 +9,11 @@ class ConversationParticipant extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['conversation_id', 'user_id'];
+    protected $fillable = ['conversation_id', 'user_id', 'status', 'cleared_at'];
+
+    protected $casts = [
+        'cleared_at' => 'datetime',
+    ];
 
     public function conversation()
     {

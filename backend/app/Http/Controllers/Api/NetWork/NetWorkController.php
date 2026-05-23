@@ -10,8 +10,8 @@ use App\Http\Requests\User\SearchUserRequest;
 use App\Http\Resources\FriendRequestResource;
 use App\Http\Resources\FriendshipResource;
 use App\Http\Resources\UserResource;
-use App\Services\NetworkServiceInterface;
-use App\Services\UserServiceInterface;
+use App\Services\Network\NetworkServiceInterface;
+use App\Services\User\UserServiceInterface;
 use App\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -115,5 +115,38 @@ class NetworkController extends Controller
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), 422);
         }
+    }
+
+    public function getUser(int $userId): JsonResponse
+    {
+        $wrappedUser = $this->userService->search(['keyword' => ''], auth()->id())
+            ->where('id', $userId)
+            ->first();
+
+        if (!$wrappedUser) {
+            $wrappedUser = $this->userService->getUserById($userId);
+        }
+
+        return $this->success(
+            new UserResource($wrappedUser),
+            'Lấy thông tin người dùng thành công.'
+        );
+    }
+
+    /**
+     * Gợi ý kết bạn dựa trên Mutual Friends.
+     * Trả về danh sách users sắp xếp theo số bạn chung giảm dần.
+     */
+    public function suggestions(Request $request): JsonResponse
+    {
+        $suggestions = $this->networkService->getSuggestedFriends(
+            $request->user()->id,
+            $request->query('limit', 10)
+        );
+
+        return $this->success(
+            UserResource::collection($suggestions),
+            'Lấy gợi ý kết bạn thành công.'
+        );
     }
 }

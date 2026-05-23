@@ -16,14 +16,18 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
     try {
-      await login({ email, password });
-      navigate('/'); // Redirect to dashboard or home
+      const user = await login({ email, password });
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       if (err.response?.data?.message) {
         setError(err.response.data.message);
       } else {
-        setError('Login failed. Please check credentials.');
+        setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
       }
     } finally {
       setIsLoading(false);
@@ -36,8 +40,8 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md bg-white/70 backdrop-blur-xl border border-gray-200 p-8 rounded-3xl shadow-2xl shadow-indigo-100 transition-all duration-300 hover:shadow-indigo-200">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-500 text-sm">Please enter your details to sign in.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Chào mừng trở lại</h1>
+          <p className="text-gray-500 text-sm">Vui lòng nhập thông tin để đăng nhập.</p>
         </div>
 
         {error && (
@@ -60,7 +64,7 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Password</label>
+            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Mật khẩu</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -95,15 +99,15 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-all duration-200 shadow-md shadow-indigo-600/20 active:scale-[0.98]"
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
 
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">
-            Don't have an account?{' '}
+            Chưa có tài khoản?{' '}
             <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
-              Sign Up
+              Đăng ký
             </Link>
           </p>
         </div>

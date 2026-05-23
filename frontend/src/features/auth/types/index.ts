@@ -1,10 +1,15 @@
 export interface User {
   id: number;
   name: string;
-  email: string;
+  email?: string;
   avatar?: string | null;
-  created_at: string;
-  updated_at: string;
+  role?: 'user' | 'admin';
+  last_seen_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  is_banned?: boolean;
+  banned_at?: string | null;
+  ban_reason?: string | null;
 }
 
 export interface AuthResponse {

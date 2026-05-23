@@ -17,7 +17,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== passwordConfirmation) {
-      setError('Passwords do not match');
+      setError('Mật khẩu không khớp');
       return;
     }
     setError('');
@@ -30,7 +30,7 @@ export default function RegisterPage() {
       if (err.response?.data?.message) {
         setError(err.response.data.message);
       } else {
-        setError('Registration failed. Please try again.');
+        setError('Đăng ký thất bại. Vui lòng thử lại.');
       }
     } finally {
       setIsLoading(false);
@@ -43,8 +43,8 @@ export default function RegisterPage() {
 
       <div className="w-full max-w-md bg-white/70 backdrop-blur-xl border border-gray-200 p-8 rounded-3xl shadow-2xl shadow-indigo-100 transition-all duration-300 hover:shadow-indigo-200">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Create an Account</h1>
-          <p className="text-gray-500 text-sm">Join us and start your journey.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Tạo tài khoản</h1>
+          <p className="text-gray-500 text-sm">Tham gia và bắt đầu hành trình của bạn.</p>
         </div>
 
         {error && (
@@ -55,7 +55,7 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</label>
+            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Họ và tên</label>
             <input
               type="text"
               placeholder="John Doe"
@@ -79,7 +79,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Password</label>
+            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Mật khẩu</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -110,7 +110,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Confirm Password</label>
+            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Xác nhận mật khẩu</label>
             <div className="relative">
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
@@ -145,15 +145,15 @@ export default function RegisterPage() {
             disabled={isLoading}
             className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-all duration-200 shadow-md shadow-indigo-600/20 active:scale-[0.98] mt-2"
           >
-            {isLoading ? 'Creating account...' : 'Sign Up'}
+            {isLoading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
           </button>
         </form>
 
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">
-            Already have an account?{' '}
+            Đã có tài khoản?{' '}
             <Link to="/login" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
-              Sign In
+              Đăng nhập
             </Link>
           </p>
         </div>

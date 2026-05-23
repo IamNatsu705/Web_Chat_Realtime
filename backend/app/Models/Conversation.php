@@ -9,7 +9,7 @@ class Conversation extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'is_group'];
+    protected $fillable = ['name', 'is_group', 'avatar', 'admin_id'];
 
     protected $casts = [
         'is_group' => 'boolean',
@@ -23,5 +23,20 @@ class Conversation extends Model
     public function messages()
     {
         return $this->hasMany(Message::class);
+    }
+
+    public function lastMessage()
+    {
+        return $this->hasOne(Message::class)->latestOfMany();
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
+    }
+
+    public function streak()
+    {
+        return $this->hasOne(Streak::class);
     }
 }

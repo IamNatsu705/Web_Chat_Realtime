@@ -35,4 +35,12 @@ class FriendRequestRepository extends BaseRepository implements FriendRequestRep
     {
         return $this->findPendingRequest($senderId, $receiverId);
     }
+
+    public function getSentPendingRequestIds(int $userId): \Illuminate\Support\Collection
+    {
+        return $this->model
+            ->where('sender_id', $userId)
+            ->where('status', 'pending')
+            ->pluck('receiver_id');
+    }
 }

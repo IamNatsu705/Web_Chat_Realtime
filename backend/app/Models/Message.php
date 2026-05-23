@@ -9,10 +9,12 @@ class Message extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['conversation_id', 'sender_id', 'content', 'type', 'read_at'];
+    protected $fillable = ['conversation_id', 'sender_id', 'content', 'type', 'read_at', 'is_recalled', 'deleted_by'];
 
     protected $casts = [
         'read_at' => 'datetime',
+        'is_recalled' => 'boolean',
+        'deleted_by' => 'array',
     ];
 
     public function conversation()
@@ -23,5 +25,10 @@ class Message extends Model
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    public function readReceipts()
+    {
+        return $this->hasMany(MessageReadReceipt::class);
     }
 }

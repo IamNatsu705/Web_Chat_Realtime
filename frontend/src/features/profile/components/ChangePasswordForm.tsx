@@ -41,6 +41,7 @@ export default function ChangePasswordForm() {
             setOldPassword('');
             setNewPassword('');
             setConfirmPassword('');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.response?.data?.message || err.message || 'Có lỗi xảy ra.');
         } finally {

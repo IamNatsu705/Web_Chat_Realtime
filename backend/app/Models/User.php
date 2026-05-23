@@ -23,6 +23,11 @@ class User extends Authenticatable
         'email',
         'password',
         'avatar',
+        'role',
+        'is_banned',
+        'banned_at',
+        'ban_reason',
+        'last_seen_at',
     ];
 
     /**
@@ -45,8 +50,18 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_banned' => 'boolean',
+            'banned_at' => 'datetime',
+            'last_seen_at' => 'datetime',
         ];
     }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+
 
     public function friendRequestsSent()
     {

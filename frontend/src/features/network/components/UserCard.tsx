@@ -1,9 +1,12 @@
+import { Link } from 'react-router-dom';
 import type { NetworkUser } from '../types';
 import { RELATIONSHIP_STATUS, USER_CARD_TEXTS } from '../constants';
+import { usePresence } from '../../chat/hooks/usePresence';
 
 interface UserCardProps {
   user: NetworkUser;
   onAddFriend: (userId: number) => void;
+  onMessage?: (userId: number) => void;
   onCancelRequest?: (userId: number) => void;
   onAcceptRequest?: (requestId: number) => void;
   onRejectRequest?: (requestId: number) => void;
@@ -14,6 +17,7 @@ interface UserCardProps {
 export default function UserCard({ 
   user, 
   onAddFriend, 
+  onMessage,
   onCancelRequest,
   onAcceptRequest,
   onRejectRequest,
@@ -21,13 +25,15 @@ export default function UserCard({
   isProcessing = false 
 }: UserCardProps) {
   const getAvatarLetter = (name: string) => name ? name.charAt(0).toUpperCase() : '?';
+  const { isOnline } = usePresence();
+  const userIsOnline = isOnline(user.id);
 
   return (
     <div className="border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white flex flex-col relative group">
       <div className="h-16 bg-gradient-to-r rounded-t-xl from-indigo-100 to-indigo-200 w-full relative"></div>
 
       <div className="flex flex-col items-center px-4 -mt-10 pb-4 flex-grow">
-        <div className="h-20 w-20 rounded-full relative z-10 bg-white p-1 mb-2">
+        <Link to={`/profile/${user.id}`} className="h-20 w-20 rounded-full relative z-10 bg-white p-1 mb-2 hover:opacity-90 transition-opacity">
           {user.avatar ? (
             <img src={user.avatar} alt={user.name} className="h-full w-full rounded-full object-cover border border-indigo-100 shadow-sm" />
           ) : (
@@ -35,10 +41,16 @@ export default function UserCard({
               {getAvatarLetter(user.name)}
             </div>
           )}
-        </div>
+          {/* Online indicator dot */}
+          <span className={`absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-white transition-colors ${
+            userIsOnline ? 'bg-green-500' : 'bg-gray-300'
+          }`} />
+        </Link>
 
-        <h3 className="text-base font-bold text-gray-900 text-center hover:underline cursor-pointer">{user.name}</h3>
-        <p className="text-xs text-gray-500 text-center mb-4 line-clamp-1">{user.email}</p>
+        <Link to={`/profile/${user.id}`} className="text-base font-bold text-gray-900 text-center hover:underline hover:text-indigo-600">
+          {user.name}
+        </Link>
+        <div className="mb-4"></div>
 
         <div className="mt-auto w-full">
           {user.relationship_status === 'none' && (
@@ -99,16 +111,28 @@ export default function UserCard({
           )}
 
           {user.relationship_status === RELATIONSHIP_STATUS.ACCEPTED && (
-            <button
-              onClick={() => onUnfriend?.(user.id)}
-              disabled={isProcessing}
-              className="w-full py-1.5 border border-red-200 text-red-500 font-medium rounded-full hover:bg-red-50 hover:border-red-300 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed group-hover:text-red-600"
-            >
-              <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
-              </svg>
-              {isProcessing ? USER_CARD_TEXTS.PROCESSING : USER_CARD_TEXTS.UNFRIEND}
-            </button>
+            <div className="flex space-x-2 w-full">
+              <button
+                onClick={() => onMessage?.(user.id)}
+                disabled={isProcessing}
+                className="flex-[2] py-1.5 border border-indigo-600 bg-indigo-600 text-white font-medium rounded-full hover:bg-indigo-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed group-hover:bg-indigo-800"
+              >
+                <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                Nhắn tin
+              </button>
+              <button
+                onClick={() => onUnfriend?.(user.id)}
+                disabled={isProcessing}
+                className="flex-1 py-1.5 border border-red-200 text-red-500 font-medium rounded-full hover:bg-red-50 hover:border-red-300 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed group-hover:text-red-600"
+                title="Hủy kết bạn"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+                </svg>
+              </button>
+            </div>
           )}
         </div>
       </div>
