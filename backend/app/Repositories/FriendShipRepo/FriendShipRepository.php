@@ -68,16 +68,16 @@ class FriendshipRepository extends BaseRepository implements FriendshipRepositor
      * Gợi ý kết bạn dựa trên bạn chung (mutual friends).
      *
      * ╔══════════════════════════════════════════════════════════════════════╗
-     * ║  GIẢI THUẬT TỐI ƯU (2-step, không correlated subquery):           ║
-     * ║                                                                    ║
-     * ║  B1: Gọi getFriendIds() lấy danh sách friend_ids (đã indexed)     ║
-     * ║  B2: Query friendships WHERE user_id IN (friend_ids)               ║
-     * ║      → Tìm friend-of-friend (không phải chính mình, chưa kết bạn) ║
-     * ║      → GROUP BY + COUNT → đếm mutual friends                      ║
-     * ║      → ORDER BY mutual_count DESC → sắp xếp theo số bạn chung    ║
-     * ║                                                                    ║
-     * ║  Complexity: O(F) cho B1 + O(F*avg_friends) cho B2                ║
-     * ║  So với correlated subquery: O(N*F) với N=total users              ║
+     * ║  GIẢI THUẬT TỐI ƯU (2-step, không correlated subquery):              ║
+     * ║                                                                      ║
+     * ║  B1: Gọi getFriendIds() lấy danh sách friend_ids (đã indexed)        ║
+     * ║  B2: Query friendships WHERE user_id IN (friend_ids)                 ║
+     * ║      => Tìm friend-of-friend (không phải chính mình, chưa kết bạn)   ║
+     * ║      => GROUP BY + COUNT => đếm mutual friends                       ║
+     * ║      => ORDER BY mutual_count DESC => sắp xếp theo số bạn chung      ║
+     * ║                                                                      ║
+     * ║  Complexity: O(F) cho B1 + O(F*avg_friends) cho B2                   ║
+     * ║  So với correlated subquery: O(N*F) với N=total users                ║
      * ╚══════════════════════════════════════════════════════════════════════╝
      */
     public function getSuggestedFriends(int $userId, array $friendIds, array $excludeIds = [], int $limit = 10): Collection

@@ -19,9 +19,6 @@ class ConversationRepository extends BaseRepository implements ConversationRepos
      * - Lọc bỏ các cuộc trò chuyện đã bị xóa (cleared) trực tiếp bằng truy vấn SQL (Tránh lỗi N+1).
      * - Tính toán sẵn số lượng tin nhắn chưa đọc thành một trường ảo (Loại bỏ vấn đề N+1 khi gọi API Resource).
      * - Sắp xếp theo tin nhắn mới nhất trực tiếp ở cấp độ cơ sở dữ liệu.
-     * 
-     * @param int $userId ID của người dùng cần truy vấn
-     * @return \Illuminate\Database\Eloquent\Collection Danh sách các cuộc trò chuyện
      */
     public function getUserConversations(int $userId)
     {
@@ -50,7 +47,7 @@ class ConversationRepository extends BaseRepository implements ConversationRepos
                 });
             })
             ->with(['participants.user', 'lastMessage.sender', 'streak'])
-            // ── Tính toán sẵn (Pre-compute) số lượng tin nhắn chưa đọc thành một cột ảo (preloaded_unread_count) để tối ưu hiệu suất ──
+            // Tính toán sẵn (Pre-compute) số lượng tin nhắn chưa đọc thành một cột ảo (preloaded_unread_count) để tối ưu hiệu suất
             ->addSelect(['*'])
             ->selectSub(function ($query) use ($userId) {
                 $query->from('messages')
@@ -58,7 +55,7 @@ class ConversationRepository extends BaseRepository implements ConversationRepos
                     ->whereColumn('messages.conversation_id', 'conversations.id')
                     ->where('messages.sender_id', '!=', $userId)
                     ->where(function ($q) use ($userId) {
-                        // ── Phân biệt logic kiểm tra tin nhắn chưa đọc giữa Group Chat (nhóm) và Direct Chat (1-1) ──
+                        // Phân biệt logic kiểm tra tin nhắn chưa đọc giữa Group Chat (nhóm) và Direct Chat (1-1)
                         $q->where(function ($qDirect) {
                             // Đối với chat 1-1: Chỉ cần kiểm tra cột read_at của tin nhắn
                             $qDirect->whereRaw('conversations.is_group = false')

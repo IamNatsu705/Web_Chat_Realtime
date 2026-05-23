@@ -193,8 +193,8 @@ class StreakService implements StreakServiceInterface
      * Xác định giá trị streak mới khi cả 2 người đã nhắn tin trong ngày.
      *
      * Quy tắc:
-     *   - Nếu ngày hoàn thành gần nhất là hôm qua → cộng thêm 1 (tiếp nối chuỗi).
-     *   - Mọi trường hợp khác → bắt đầu lại từ 1 (chuỗi mới).
+     *   - Nếu ngày hoàn thành gần nhất là hôm qua -> cộng thêm 1 (tiếp nối chuỗi).
+     *   - Mọi trường hợp khác -> bắt đầu lại từ 1 (chuỗi mới).
      *
      * Hàm này không cần xử lý trạng thái 'pending_restore' vì handleMessageSent()
      * đã return sớm trước khi gọi tới đây.
@@ -262,8 +262,8 @@ class StreakService implements StreakServiceInterface
      * Cách hoạt động:
      *   - Streak +1 (bỏ qua ngày bị lỡ, coi như vẫn liên tiếp).
      *   - Trừ 1 lượt khôi phục.
-     *   - Đặt last_completed_date = hôm nay → nhắn tin thêm trong ngày cũng KHÔNG tăng streak.
-     *   - Reset ngày nhắn tin của cả 2 → ngày mai bắt đầu chu kỳ mới.
+     *   - Đặt last_completed_date = hôm nay => nhắn tin thêm trong ngày cũng KHÔNG tăng streak.
+     *   - Reset ngày nhắn tin của cả 2 => ngày mai bắt đầu chu kỳ mới.
      *
      * @param int $conversationId ID cuộc trò chuyện
      * @param int $userId         ID người dùng thực hiện khôi phục
@@ -293,7 +293,7 @@ class StreakService implements StreakServiceInterface
         if ($streak->last_completed_date) {
             $daysSince = (int) Carbon::parse($streak->last_completed_date)->diffInDays(Carbon::today(), false);
             if ($daysSince >= 3) {
-                // Quá hạn → mất chuỗi luôn (cron chưa kịp dọn)
+                // Quá hạn => mất chuỗi luôn (cron chưa kịp dọn)
                 $participants = $this->participantRepository->getParticipantIds($conversationId);
                 $this->loseStreak($streak, $participants);
                 throw new Exception('Đã quá hạn khôi phục chuỗi.');
