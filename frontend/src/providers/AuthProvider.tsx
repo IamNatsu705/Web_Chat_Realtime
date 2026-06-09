@@ -22,7 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /**
  * `AuthProvider` — Thành phần bao bọc (Context Provider) quản lý toàn bộ trạng thái xác thực người dùng.
- * 
+ *
  * **Chức năng chính:**
  * - Cung cấp trạng thái đăng nhập (`user`, `isAuthenticated`).
  * - Xử lý quá trình tự động đăng nhập khi có Token lưu trong LocalStorage.
@@ -37,8 +37,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const loadUser = async () => {
-      let token = localStorage.getItem('token');
-      
+      const token = localStorage.getItem('token');
+
 
 
       if (token) {
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.setItem('token', res.data.token);
         setUser(res.data.user);
         setIsAuthenticated(true);
-        // Sau khi đăng ký và tự động đăng nhập, khởi tạo lại Echo instance 
+        // Sau khi đăng ký và tự động đăng nhập, khởi tạo lại Echo instance
         // với token mới để đảm bảo có quyền truy cập vào các WebSockets channel.
         reinitializeEcho();
       }
@@ -122,11 +122,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.removeItem('token');
       setUser(null);
       setIsAuthenticated(false);
-      
+
       destroyEcho();
       resetPresence();
       queryClient.clear();
-      
+
       setLoggingOut(false);
     }
   }, [queryClient]);
@@ -135,8 +135,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(updatedUser);
   }, []);
 
-  // Đóng gói (Memoize) giá trị của Context bằng useMemo để đảm bảo tham chiếu (reference) không thay đổi 
-  // giữa các lần render của AuthProvider nếu các dependency không đổi. Điều này giúp ngăn chặn 
+  // Đóng gói (Memoize) giá trị của Context bằng useMemo để đảm bảo tham chiếu (reference) không thay đổi
+  // giữa các lần render của AuthProvider nếu các dependency không đổi. Điều này giúp ngăn chặn
   // việc re-render hàng loạt (unnecessary re-renders) ở tất cả các component con đang tiêu thụ (consume) AuthContext.
   const contextValue = useMemo(() => ({
     user, isAuthenticated, isLoading, login, register, logout, updateUser

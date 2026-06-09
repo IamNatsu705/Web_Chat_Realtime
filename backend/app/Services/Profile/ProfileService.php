@@ -19,6 +19,17 @@ class ProfileService implements ProfileServiceInterface
     {
         $updateData = ['name' => $data['name']];
 
+        // Cập nhật thông tin sinh viên PTIT
+        if (array_key_exists('bio', $data)) {
+            $updateData['bio'] = $data['bio'];
+        }
+        if (array_key_exists('student_id', $data)) {
+            $updateData['student_id'] = $data['student_id'];
+        }
+        if (array_key_exists('department', $data)) {
+            $updateData['department'] = $data['department'];
+        }
+
         if (!empty($data['avatar'])) {
             if ($user->avatar) {
                 Storage::disk('public')->delete($user->avatar);

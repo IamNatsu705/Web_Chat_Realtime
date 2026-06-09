@@ -86,6 +86,8 @@ class Streak extends Model
         if ($streak >= 30) return 'streak_30';
         if ($streak >= 15) return 'streak_15';
         if ($streak >= 10) return 'streak_10';
-        return 'streak_5';
+        if ($streak >= 5) return 'streak_5';
+        // BUG-04 FIX: Trả 'none' khi chưa đạt mốc nào (streak < 5)
+        return 'none';
     }
 }

@@ -276,6 +276,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
             : msg
         );
 
+        // BUG FIX: Invalidate resources in case a file message was recalled
+        queryClient.invalidateQueries({ queryKey: ['resources', convId] });
+
         // BUG-14 FIX: Cập nhật sidebar CHỈ KHI tin nhắn bị recall là last_message
         updateConversationInCache(queryClient, convId, (c: Conversation): Conversation => {
           if (!c.last_message || c.last_message.id !== payload.messageId) return c;

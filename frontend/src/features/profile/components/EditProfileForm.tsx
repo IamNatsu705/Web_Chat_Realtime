@@ -5,6 +5,9 @@ import { profileApi } from '../api/profileApi';
 export default function EditProfileForm() {
     const { user, updateUser } = useAuth();
     const [name, setName] = useState(user?.name || '');
+    const [bio, setBio] = useState(user?.bio || '');
+    const [studentId, setStudentId] = useState(user?.student_id || '');
+    const [department, setDepartment] = useState(user?.department || '');
     const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar || null);
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,11 +35,13 @@ export default function EditProfileForm() {
         setError('');
 
         try {
-            // Using base64 for mock, or actual file for real API
             const avatarData = avatarFile ? (import.meta.env.VITE_USE_MOCK_API === 'true' ? avatarPreview : avatarFile) : null;
             
             const reqData = {
                 name,
+                bio,
+                student_id: studentId,
+                department,
                 ...(avatarData && { avatar: avatarData })
             };
 
@@ -87,7 +92,7 @@ export default function EditProfileForm() {
                         />
                     </div>
 
-                    {/* Name Input */}
+                    {/* Form Fields */}
                     <div className="flex-grow space-y-4 w-full">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
@@ -108,6 +113,40 @@ export default function EditProfileForm() {
                                 disabled
                                 className="w-full px-4 py-2 bg-gray-50 border border-gray-200 text-gray-500 rounded-lg"
                             />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả bản thân</label>
+                            <textarea
+                                value={bio}
+                                onChange={(e) => setBio(e.target.value)}
+                                maxLength={300}
+                                rows={3}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none"
+                                placeholder="Viết vài dòng giới thiệu bản thân..."
+                            />
+                            <p className="text-xs text-gray-400 mt-1">{bio.length}/300 ký tự</p>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Mã sinh viên</label>
+                                <input
+                                    type="text"
+                                    value={studentId}
+                                    onChange={(e) => setStudentId(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                    placeholder="VD: B21DCCN001"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Khoa</label>
+                                <input
+                                    type="text"
+                                    value={department}
+                                    onChange={(e) => setDepartment(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                    placeholder="VD: Công nghệ thông tin"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -82,9 +82,14 @@ export default function ProfilePage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Top banner / header banner */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-                        <div className="h-32 md:h-48 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 relative">
-                            {/* Decorative overlay */}
-                            <div className="absolute inset-0 bg-white/10 opacity-50 backdrop-blur-sm"></div>
+                        <div className="h-32 md:h-48 bg-[#FFF1F2] relative overflow-hidden flex items-center justify-center">
+                            {/* Decorative dot pattern */}
+                            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#D70038 1px, transparent 1px)', backgroundSize: '16px 16px' }}></div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <h1 className="text-[60px] md:text-[100px] font-black text-[#D70038]/15 whitespace-nowrap select-none rotate-[-5deg] tracking-tighter pointer-events-none">
+                                    I LOVE PTIT I LOVE PTIT I LOVE PTIT
+                                </h1>
+                            </div>
                         </div>
                         <div className="px-6 pb-6 relative flex flex-col md:flex-row items-center md:items-end gap-4">
                             <div className="h-28 w-28 md:h-36 md:w-36 -mt-14 md:-mt-20 rounded-full bg-white p-1.5 shadow-lg flex-shrink-0 relative z-10 transition-transform hover:scale-105 duration-300">
@@ -209,7 +214,26 @@ export default function ProfilePage() {
                             {isOtherUser && (
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                     <h3 className="text-lg font-bold text-gray-900 mb-4">Giới thiệu</h3>
-                                    <p className="text-gray-500 text-sm">Chưa có thông tin giới thiệu.</p>
+                                    {displayUser?.bio ? (
+                                        <p className="text-gray-700 text-sm mb-3">{displayUser.bio}</p>
+                                    ) : (
+                                        <p className="text-gray-400 text-sm italic mb-3">Chưa có mô tả.</p>
+                                    )}
+                                    {displayUser?.student_id && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                                            <span className="font-medium">MSSV:</span>
+                                            <span>{displayUser.student_id}</span>
+                                        </div>
+                                    )}
+                                    {displayUser?.department && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <span className="font-medium">Khoa:</span>
+                                            <span>{displayUser.department}</span>
+                                        </div>
+                                    )}
+                                    {!displayUser?.bio && !displayUser?.student_id && !displayUser?.department && (
+                                        <p className="text-gray-500 text-sm">Chưa có thông tin giới thiệu.</p>
+                                    )}
                                 </div>
                             )}
                         </div>

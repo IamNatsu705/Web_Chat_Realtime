@@ -49,17 +49,30 @@ export default function ConversationItem({
 
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
-  const lastMsgContent = conversation.last_message
-    ? conversation.last_message.type === 'system'
-      ? `[Thông báo] ${conversation.last_message.content}`
-      : conversation.last_message.type === 'image'
-        ? conversation.last_message.sender_id === currentUser.id
-          ? 'Bạn: [Hình ảnh]'
-          : '[Hình ảnh]'
-        : conversation.last_message.sender_id === currentUser.id
-          ? `Bạn: ${conversation.last_message.content}`
-          : conversation.last_message.content
-    : 'Chưa có tin nhắn';
+  let lastMsgContent = 'Chưa có tin nhắn';
+  if (conversation.last_message) {
+    const msg = conversation.last_message;
+    const prefix = msg.sender_id === currentUser.id ? 'Bạn: ' : '';
+    
+    if (msg.is_recalled) {
+      lastMsgContent = `${prefix}Tin nhắn đã thu hồi`;
+    } else if (msg.type === 'system') {
+      // Strip metadata after ||| separator (same format as SystemMessage.tsx)
+      const systemText = msg.content.split('|||')[0];
+      lastMsgContent = `[Thông báo] ${systemText}`;
+    } else if (msg.type === 'image') {
+      lastMsgContent = `${prefix}[Hình ảnh]`;
+    } else if (msg.type === 'file') {
+      try {
+        const fileData = JSON.parse(msg.content);
+        lastMsgContent = `${prefix}[Tài liệu] ${fileData.name || 'File đính kèm'}`;
+      } catch {
+        lastMsgContent = `${prefix}[Tài liệu]`;
+      }
+    } else {
+      lastMsgContent = `${prefix}${msg.content}`;
+    }
+  }
 
   return (
     <button

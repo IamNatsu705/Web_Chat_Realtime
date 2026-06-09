@@ -2,8 +2,14 @@ import type { User } from '../../auth/types';
 
 // ─── Message ─────────────────────────────────────────────────────────────────
 
-export type MessageType = 'text' | 'image' | 'system';
+export type MessageType = 'text' | 'image' | 'file' | 'system';
 export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+
+// ─── Community / Group Types ─────────────────────────────────────────────────
+
+export type JoinType = 'invite' | 'open' | 'request';
+export type GroupRole = 'owner' | 'moderator' | 'member';
+export type CommunityCategory = 'subject' | 'department' | 'project' | 'research' | 'club' | 'other';
 
 export interface Message {
   id: number | string; // string for optimistic (temp_id)
@@ -45,17 +51,25 @@ export interface ConversationParticipant {
   user_id: number;
   conversation_id: number;
   status: 'active' | 'pending' | 'rejected';
+  role?: GroupRole;
   user?: User;
 }
 
 export interface Conversation {
   id: number;
   name: string | null;
+  description?: string | null;
   is_group: boolean;
   avatar?: string | null;
-  admin_id?: number | null;   // For group chats
-  participants: User[];
+  admin_id?: number | null;
+  join_type?: JoinType;
+  category?: CommunityCategory | null;
+  member_count?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  participants: any[];
   my_status?: 'active' | 'pending' | 'rejected';
+  my_role?: GroupRole | null;
+  my_join_request_status?: 'pending' | 'approved' | 'rejected' | null;
   last_message?: Message | null;
   unread_count?: number;
   streak?: StreakData | null;
@@ -119,14 +133,16 @@ export type GroupEventType =
   | 'member_left'
   | 'group_renamed'
   | 'group_dissolved'
-  | 'group_avatar_changed';
+  | 'group_avatar_changed'
+  | 'member_promoted'
+  | 'member_demoted';
 
 export interface WsGroupEvent {
   type: GroupEventType;
-  conversationId: number;  // camelCase — matches BE broadcastWith()
-  actor: User;             // who performed the action
-  target?: User | null;    // who was affected (added/removed)
-  newName?: string | null;  // for group_renamed (camelCase — matches BE)
+  conversationId: number;
+  actor: User;
+  target?: User | null;
+  newName?: string | null;
 }
 
 // ─── Presence state ───────────────────────────────────────────────────────────
@@ -141,11 +157,46 @@ export interface PresenceEntry {
 
 export interface CreateGroupRequest {
   name: string;
-  member_ids: number[];
+  description?: string;
+  join_type?: JoinType;
+  category?: CommunityCategory;
+  member_ids?: number[];
   avatar?: File | null;
 }
 
 export interface UpdateGroupRequest {
   name?: string;
+  description?: string;
+  join_type?: JoinType;
   avatar?: File | null;
+}
+
+// ─── Group Resources (Tài liệu nhóm) ─────────────────────────────────────────
+
+export interface GroupResource {
+  id: number;
+  conversation_id: number;
+  title: string;
+  description?: string | null;
+  file_url: string;
+  file_type: string;
+  file_size: number;
+  file_size_human: string;
+  category: string;
+  download_count: number;
+  is_pinned: boolean;
+  created_at: string;
+  updated_at: string;
+  uploader?: User;
+}
+
+// ─── Join Request ─────────────────────────────────────────────────────────────
+
+export interface GroupJoinRequest {
+  id: number;
+  conversation_id: number;
+  user_id: number;
+  status: 'pending' | 'approved' | 'rejected';
+  user?: User;
+  created_at: string;
 }

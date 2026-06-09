@@ -55,6 +55,8 @@ export function useTyping(conversationId: number | null, isGroup: boolean) {
   // ── Listen for typing whispers ──────────────────────────────────────────
   useEffect(() => {
     if (!conversationId || !user) return;
+    
+    const timeoutsMap = typingTimeoutsRef.current;
 
     let echo: ReturnType<typeof getEcho>;
     try {
@@ -83,15 +85,15 @@ export function useTyping(conversationId: number | null, isGroup: boolean) {
       });
 
       // Reset timeout cho user này: ẩn sau 2.5s không nhận thêm
-      const existingTimeout = typingTimeoutsRef.current.get(incomingUserId);
+      const existingTimeout = timeoutsMap.get(incomingUserId);
       if (existingTimeout) clearTimeout(existingTimeout);
 
       const timeout = setTimeout(() => {
         setTypingUsers((prev) => prev.filter((u) => u.userId !== incomingUserId));
-        typingTimeoutsRef.current.delete(incomingUserId);
+        timeoutsMap.delete(incomingUserId);
       }, 2500);
 
-      typingTimeoutsRef.current.set(incomingUserId, timeout);
+      timeoutsMap.set(incomingUserId, timeout);
     };
 
     channel.listenForWhisper('typing', handleTypingWhisper);
@@ -100,8 +102,8 @@ export function useTyping(conversationId: number | null, isGroup: boolean) {
       channel.stopListeningForWhisper('typing');
 
       // Clear tất cả timeouts khi unmount / đổi conversation
-      typingTimeoutsRef.current.forEach((t) => clearTimeout(t));
-      typingTimeoutsRef.current.clear();
+      timeoutsMap.forEach((t) => clearTimeout(t));
+      timeoutsMap.clear();
       setTypingUsers([]);
     };
   }, [conversationId, user]);

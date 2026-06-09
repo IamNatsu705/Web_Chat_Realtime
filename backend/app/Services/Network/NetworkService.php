@@ -185,11 +185,32 @@ class NetworkService implements NetworkServiceInterface
             ->all();
 
         // B3: Query mutual friends (optimized — xem FriendshipRepository)
-        return $this->friendshipRepo->getSuggestedFriends(
+        $suggestions = $this->friendshipRepo->getSuggestedFriends(
             $userId,
             $friendIds,
             $pendingRequestIds,
             $limit
         );
+
+        // B4: Fallback cho tân sinh viên — nếu chưa đủ gợi ý, bổ sung theo cùng department
+        if ($suggestions->count() < $limit) {
+            $remaining = $limit - $suggestions->count();
+            $existingIds = $suggestions->pluck('id')
+                ->merge($friendIds)
+                ->merge($pendingRequestIds)
+                ->push($userId)
+                ->unique()
+                ->all();
+
+            $departmentSuggestions = $this->friendshipRepo->getSuggestionsByDepartment(
+                $userId,
+                $existingIds,
+                $remaining
+            );
+
+            $suggestions = $suggestions->concat($departmentSuggestions);
+        }
+
+        return $suggestions;
     }
 }

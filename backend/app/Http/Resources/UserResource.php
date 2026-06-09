@@ -20,6 +20,11 @@ class UserResource extends JsonResource
             'avatar' => $this->avatar,
             'last_seen_at' => $this->last_seen_at,
 
+            // Thông tin sinh viên PTIT (public — ai cũng thấy)
+            'bio' => $this->bio,
+            'student_id' => $this->student_id,
+            'department' => $this->department,
+
             'relationship_status' => $this->relationship_status ?? 'none',
             'friend_request_id' => $this->friend_request_id,
             'is_sender' => (bool) $this->is_sender,

@@ -4,6 +4,7 @@ import type { User } from '../../auth/types';
 import MessageStatus from './MessageStatus';
 import SystemMessage from './SystemMessage';
 import { getImageUrl } from '@/utils/getImageUrl';
+import { HiOutlineDocumentArrowDown } from 'react-icons/hi2';
 
 interface MessageBubbleProps {
   message: Message;
@@ -85,6 +86,48 @@ function ImageContent({ src, isOwn }: { src: string; isOwn: boolean }) {
 }
 
 /**
+ * FileContent — renders a document file message with download button
+ */
+function FileContent({ content, isOwn }: { content: string; isOwn: boolean }) {
+  let fileData;
+  try {
+    fileData = JSON.parse(content);
+    if (!fileData || typeof fileData !== 'object') throw new Error('Invalid format');
+  } catch {
+    return <div className="p-3 bg-red-50 text-red-500 rounded-xl text-sm">Lỗi định dạng file</div>;
+  }
+  
+  const sizeMb = fileData.size ? (fileData.size / 1024 / 1024).toFixed(2) : '0.00';
+  const fileUrl = getImageUrl(fileData.url);
+  
+  const icons: Record<string, string> = {
+    pdf: 'text-red-600 bg-red-100',
+    doc: 'text-blue-600 bg-blue-100',
+    excel: 'text-green-600 bg-green-100',
+    ppt: 'text-orange-600 bg-orange-100',
+    archive: 'text-yellow-600 bg-yellow-100',
+    image: 'text-purple-600 bg-purple-100',
+    other: 'text-gray-600 bg-gray-100'
+  };
+  const iconClass = icons[fileData.type] || icons.other;
+
+  return (
+    <div className={`flex items-center space-x-3 p-2 pr-3 rounded-2xl min-w-[220px] max-w-[280px] shadow-sm ${isOwn ? 'bg-indigo-600/95 border border-indigo-500' : 'bg-white border border-gray-200'}`}>
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-white/20 ${iconClass}`}>
+         <span className="text-[10px] font-bold uppercase">{fileData.type === 'other' ? 'FILE' : fileData.type}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+         <p className={`text-sm font-medium truncate ${isOwn ? 'text-white' : 'text-gray-800'}`}>{fileData.name}</p>
+         <p className={`text-[11px] mt-0.5 ${isOwn ? 'text-indigo-200' : 'text-gray-500'}`}>{sizeMb} MB</p>
+      </div>
+      <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={`p-2 rounded-full shrink-0 transition-colors ${isOwn ? 'hover:bg-indigo-500 text-indigo-100 hover:text-white' : 'hover:bg-gray-100 text-gray-400 hover:text-indigo-600'}`} title="Tải xuống">
+        <HiOutlineDocumentArrowDown className="w-5 h-5" />
+      </a>
+    </div>
+  );
+}
+
+/**
  * MessageBubble — renders a single chat message.
  *
  * - Own messages: indigo bubble on the right + status ticks
@@ -107,6 +150,7 @@ export default function MessageBubble({
   }
 
   const isImage = message.type === 'image';
+  const isFile = message.type === 'file';
 
   if (isOwn) {
     return (
@@ -131,6 +175,8 @@ export default function MessageBubble({
           )}
           {isImage && !message.is_recalled ? (
             <ImageContent src={message.content} isOwn={true} />
+          ) : isFile && !message.is_recalled ? (
+            <FileContent content={message.content} isOwn={true} />
           ) : (
             <div
               className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-2.5 rounded-2xl rounded-br-sm shadow-sm transition-opacity ${message.is_optimistic ? 'opacity-70' : 'opacity-100'} ${message.is_recalled ? 'bg-gray-100 text-gray-500 border border-gray-200' : 'bg-indigo-600 text-white'}`}
@@ -168,6 +214,8 @@ export default function MessageBubble({
         <div className="flex items-center">
             {isImage && !message.is_recalled ? (
               <ImageContent src={message.content} isOwn={false} />
+            ) : isFile && !message.is_recalled ? (
+              <FileContent content={message.content} isOwn={false} />
             ) : (
               <div className={`border border-gray-200 px-4 py-2.5 rounded-2xl rounded-bl-sm shadow-sm ${message.is_recalled ? 'bg-gray-50' : 'bg-white'}`}>
                 <p className={`text-sm leading-relaxed whitespace-pre-wrap wrap-break-word ${message.is_recalled ? 'italic text-gray-400' : 'text-gray-800'}`}>

@@ -53,6 +53,14 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\StreakRepo\StreakRepositoryInterface::class,
             \App\Repositories\StreakRepo\StreakRepository::class
         );
+        $this->app->bind(
+            \App\Repositories\GroupJoinRequestRepo\GroupJoinRequestRepositoryInterface::class,
+            \App\Repositories\GroupJoinRequestRepo\GroupJoinRequestRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\GroupResourceRepo\GroupResourceRepositoryInterface::class,
+            \App\Repositories\GroupResourceRepo\GroupResourceRepository::class
+        );
 
         // ─── Services ────────────────────────────────────────────────────────
 
@@ -92,6 +100,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             \App\Services\Chat\StreakServiceInterface::class,
             \App\Services\Chat\StreakService::class
+        );
+        $this->app->bind(
+            \App\Services\Chat\GroupResourceServiceInterface::class,
+            \App\Services\Chat\GroupResourceService::class
         );
 
         // Post

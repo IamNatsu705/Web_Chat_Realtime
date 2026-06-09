@@ -463,6 +463,8 @@ class StreakService implements StreakServiceInterface
             'next_milestone' => $nextMilestone,
             'days_to_next_milestone' => $nextMilestone ? $nextMilestone - $current : 0,
             'is_milestone' => $streak->isMilestone(),
+            'today_completed' => $streak->last_completed_date
+                && $streak->last_completed_date->isToday(),
         ];
     }
 

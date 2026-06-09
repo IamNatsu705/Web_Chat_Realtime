@@ -23,7 +23,7 @@ class PostController extends Controller
     public function feed(Request $request): JsonResponse
     {
         $cursor = $request->input('cursor');
-        $posts = $this->postService->getFeed($request->user()->id, $cursor);
+        $posts = $this->postService->getFeed((int) auth()->id(), $cursor);
 
         return $this->success([
             'posts' => PostResource::collection($posts->items()),
@@ -34,7 +34,7 @@ class PostController extends Controller
 
     public function show(Request $request, int $postId): JsonResponse
     {
-        $post = $this->postService->getPostById($postId, $request->user()->id);
+        $post = $this->postService->getPostById($postId, (int) auth()->id());
 
         return $this->success(
             ['post' => new PostResource($post)],
@@ -50,7 +50,7 @@ class PostController extends Controller
             $data['media'] = $request->file('media');
         }
 
-        $post = $this->postService->createPost($request->user()->id, $data);
+        $post = $this->postService->createPost((int) auth()->id(), $data);
 
         return $this->success(
             ['post' => new PostResource($post)],
@@ -65,7 +65,7 @@ class PostController extends Controller
             'content' => 'required|string|max:5000',
         ]);
 
-        $post = $this->postService->updatePost($postId, $request->user()->id, $data);
+        $post = $this->postService->updatePost($postId, (int) auth()->id(), $data);
 
         return $this->success(
             ['post' => new PostResource($post)],
@@ -75,14 +75,14 @@ class PostController extends Controller
 
     public function destroy(Request $request, int $postId): JsonResponse
     {
-        $this->postService->deletePost($postId, $request->user()->id);
+        $this->postService->deletePost($postId, (int) auth()->id());
 
         return $this->success(null, 'Xoá bài viết thành công.');
     }
 
     public function toggleLike(Request $request, int $postId): JsonResponse
     {
-        $result = $this->postService->toggleLike($postId, $request->user()->id);
+        $result = $this->postService->toggleLike($postId, (int) auth()->id());
 
         return $this->success($result, $result['liked'] ? 'Đã thích bài viết.' : 'Đã bỏ thích bài viết.');
     }
@@ -102,7 +102,7 @@ class PostController extends Controller
     {
         $comment = $this->postService->createComment(
             $postId,
-            $request->user()->id,
+            (int) auth()->id(),
             $request->validated()
         );
 
@@ -119,7 +119,7 @@ class PostController extends Controller
             'content' => 'required|string|max:2000',
         ]);
 
-        $comment = $this->postService->updateComment($commentId, $request->user()->id, $data);
+        $comment = $this->postService->updateComment($commentId, (int) auth()->id(), $data);
 
         return $this->success(
             ['comment' => new CommentResource($comment)],
@@ -129,14 +129,14 @@ class PostController extends Controller
 
     public function destroyComment(Request $request, int $commentId): JsonResponse
     {
-        $this->postService->deleteComment($commentId, $request->user()->id);
+        $this->postService->deleteComment($commentId, (int) auth()->id());
 
         return $this->success(null, 'Xoá bình luận thành công.');
     }
 
     public function userPosts(Request $request, int $userId): JsonResponse
     {
-        $posts = $this->postService->getUserPosts($userId, $request->user()->id);
+        $posts = $this->postService->getUserPosts($userId, (int) auth()->id());
 
         return $this->success([
             'posts' => PostResource::collection($posts->items()),

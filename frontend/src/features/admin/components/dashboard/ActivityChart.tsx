@@ -8,22 +8,24 @@ interface ActivityChartProps {
 
 type TabType = 'users' | 'posts' | 'messages';
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload) return null;
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 min-w-[140px]">
-      <p className="text-xs font-medium text-gray-500 mb-1">{label}</p>
-      {payload.map((entry: any, index: number) => (
-        <div key={index} className="flex items-center justify-between gap-4 text-sm">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full" style={{ background: entry.color }} />
-            <span className="text-gray-600">{entry.name}</span>
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: unknown[]; label?: string }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-100 rounded-lg shadow-lg">
+        <p className="text-sm font-medium text-gray-900 mb-1">{label}</p>
+        {(payload as Array<{ name: string; value: number; color: string }>).map((entry, index) => (
+          <div key={index} className="flex items-center justify-between gap-4 text-sm">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{ background: entry.color }} />
+              <span className="text-gray-600">{entry.name}</span>
+            </div>
+            <span className="font-semibold text-gray-900">{entry.value}</span>
           </div>
-          <span className="font-semibold text-gray-900">{entry.value}</span>
-        </div>
-      ))}
-    </div>
-  );
+        ))}
+      </div>
+    );
+  }
+  return null;
 };
 
 export function ActivityChart({ dailyStats }: ActivityChartProps) {

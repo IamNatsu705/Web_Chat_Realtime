@@ -102,4 +102,44 @@ class ConversationRepository extends BaseRepository implements ConversationRepos
             ->with(['participants.user', 'lastMessage.sender', 'streak'])
             ->first();
     }
+
+    /**
+     * Lấy danh sách nhóm cộng đồng (join_type = open/request) cho trang Khám phá.
+     * Chỉ hiển thị nhóm group, không hiển thị chat 1-1.
+     * Sắp xếp theo số thành viên giảm dần (nhóm đông hiển thị trước).
+     */
+    public function getCommunities(?string $search, ?string $category, int $perPage = 12, ?int $userId = null)
+    {
+        $query = $this->model
+            ->where('is_group', true)
+            ->whereIn('join_type', ['open', 'request']);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // Lọc theo danh mục cộng đồng (môn học, chuyên ngành, đồ án, NCKH, CLB...)
+        if ($category && $category !== 'all') {
+            $query->where('category', $category);
+        }
+
+        if ($userId) {
+            $query->with([
+                'participants' => function ($q) use ($userId) {
+                    $q->where('user_id', $userId);
+                },
+                'joinRequests' => function ($q) use ($userId) {
+                    $q->where('user_id', $userId)->where('status', 'pending');
+                }
+            ]);
+        }
+
+        return $query
+            ->orderByDesc('member_count')
+            ->orderByDesc('created_at')
+            ->paginate($perPage);
+    }
 }

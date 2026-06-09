@@ -87,6 +87,13 @@ Route::prefix('v1')->group(function () {
 
                 Route::post('/accept', [ChatController::class, 'acceptStranger']);
                 Route::post('/reject', [ChatController::class, 'rejectStranger']);
+
+                // ── Tài liệu (dùng cho mọi loại chat: DM, group, community) ────
+                Route::get('/resources', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'index']);
+                Route::post('/resources', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'store']);
+                Route::get('/resources/{resourceId}/download', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'download']);
+                Route::delete('/resources/{resourceId}', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'destroy']);
+                Route::post('/resources/{resourceId}/pin', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'togglePin']);
             });
 
             Route::prefix('messages')->group(function() {
@@ -102,7 +109,29 @@ Route::prefix('v1')->group(function () {
                 
                 Route::post('/{groupId}/members', [GroupChatController::class, 'addGroupMember']);
                 Route::delete('/{groupId}/members/{userId}', [GroupChatController::class, 'removeGroupMember']);
+
+                // ── Community: Tham gia nhóm ────────────────────────────────
+                Route::post('/{groupId}/join', [GroupChatController::class, 'joinGroup']);
+                Route::delete('/{groupId}/join', [GroupChatController::class, 'cancelJoinRequest']);
+
+                // ── Community: Quản lý yêu cầu tham gia ────────────────────
+                Route::get('/{groupId}/join-requests', [GroupChatController::class, 'getJoinRequests']);
+                Route::post('/{groupId}/join-requests/{requestId}/respond', [GroupChatController::class, 'respondToJoinRequest']);
+
+                // ── Community: Quản lý phó nhóm ────────────────────────────
+                Route::post('/{groupId}/moderators/{userId}', [GroupChatController::class, 'promoteModerator']);
+                Route::delete('/{groupId}/moderators/{userId}', [GroupChatController::class, 'demoteModerator']);
+
+                // ── Tài liệu nhóm ──────────────────────────────────────────
+                Route::get('/{groupId}/resources', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'index']);
+                Route::post('/{groupId}/resources', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'store']);
+                Route::get('/{groupId}/resources/{resourceId}/download', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'download']);
+                Route::delete('/{groupId}/resources/{resourceId}', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'destroy']);
+                Route::post('/{groupId}/resources/{resourceId}/pin', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'togglePin']);
             });
+
+            // ── Community: Khám phá nhóm cộng đồng ─────────────────────────
+            Route::get('/communities', [GroupChatController::class, 'getCommunities']);
 
             // Streaks
             Route::prefix('streaks/{conversationId}')->group(function () {

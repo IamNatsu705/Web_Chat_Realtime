@@ -46,19 +46,19 @@ export default function CreatePost() {
   const avatarUrl = user?.avatar ? getImageUrl(user.avatar) : null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-      <div className="flex items-start space-x-3">
-        <div className="h-10 w-10 rounded-full bg-indigo-100 shrink-0 flex items-center justify-center text-indigo-800 font-bold overflow-hidden">
+    <div className="bg-white rounded-[16px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-[#E5E7EB] p-5 transition-shadow hover:shadow-[0_8px_24px_rgba(215,0,56,0.06)]">
+      <div className="flex items-start space-x-4">
+        <div className="h-12 w-12 rounded-[16px] bg-gradient-to-br from-[#FFF5F6] to-[#FFF1F2] shrink-0 flex items-center justify-center text-[#D70038] font-bold overflow-hidden border border-[#FFE4E6] shadow-[0_2px_8px_rgba(215,0,56,0.08)]">
           {avatarUrl ? (
             <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
           ) : (
-            user?.name?.charAt(0).toUpperCase()
+            <span className="text-lg">{user?.name?.charAt(0).toUpperCase()}</span>
           )}
         </div>
         <textarea
-          className="grow resize-none border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-400"
+          className="grow resize-none bg-[#F9FAFB] border border-[#F3F4F6] rounded-xl px-4 py-3 text-[15px] text-[#111827] focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#D70038]/20 focus:border-[#D70038]/40 placeholder:text-[#9CA3AF] transition-all"
           rows={3}
-          placeholder="Bạn đang nghĩ gì?"
+          placeholder="Bạn muốn thảo luận gì với cộng đồng PTIT?"
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
@@ -81,14 +81,14 @@ export default function CreatePost() {
         </div>
       )}
 
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-        <div className="flex space-x-1">
+      <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#F3F4F6]">
+        <div className="flex space-x-2">
           <input type="file" ref={fileInputRef} multiple accept="image/*,video/*" onChange={handleMediaSelect} className="hidden" />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center space-x-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors text-sm"
+            className="flex items-center space-x-2 text-[#6B7280] hover:text-[#D70038] hover:bg-[#FFF1F2] px-3.5 py-2 rounded-xl transition-all font-medium text-[14px]"
           >
-            <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>
+            <svg className="w-5 h-5 text-[#10B981]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>
             <span>Ảnh/Video</span>
           </button>
         </div>
@@ -96,7 +96,7 @@ export default function CreatePost() {
         <button
           onClick={handleSubmit}
           disabled={createPost.isPending || (!content.trim() && mediaFiles.length === 0)}
-          className="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-gradient-to-r from-[#D70038] to-[#E6003C] text-white px-6 py-2.5 rounded-xl text-[14px] font-semibold shadow-sm hover:shadow-[0_4px_12px_rgba(215,0,56,0.3)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
         >
           {createPost.isPending ? 'Đang đăng...' : 'Đăng bài'}
         </button>

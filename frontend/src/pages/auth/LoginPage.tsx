@@ -40,7 +40,12 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md bg-white/70 backdrop-blur-xl border border-gray-200 p-8 rounded-3xl shadow-2xl shadow-indigo-100 transition-all duration-300 hover:shadow-indigo-200">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Chào mừng trở lại</h1>
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-red-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-red-200">
+              PTIT
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">PTIT Social</h1>
           <p className="text-gray-500 text-sm">Vui lòng nhập thông tin để đăng nhập.</p>
         </div>
 

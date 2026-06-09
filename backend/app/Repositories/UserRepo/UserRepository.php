@@ -23,7 +23,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     public function searchByKeyword(string $keyword, int $currentUserId)
     {
         return $this->model
-            ->select('users.id', 'users.name', 'users.email', 'users.avatar')
+            ->select('users.id', 'users.name', 'users.email', 'users.avatar', 'users.bio', 'users.student_id', 'users.department')
             // 1. Join với FriendRequest (Giữ nguyên logic orOn của bạn)
             ->leftJoin('friend_requests', function ($join) use ($currentUserId) {
                 $join->on(function ($q) use ($currentUserId) {
@@ -70,6 +70,9 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
                 'users.name',
                 'users.email',
                 'users.avatar',
+                'users.bio',
+                'users.student_id',
+                'users.department',
                 'friendships.id',
                 'friend_requests.id',
                 'friend_requests.status',

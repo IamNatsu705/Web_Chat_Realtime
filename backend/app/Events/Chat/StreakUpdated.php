@@ -35,9 +35,17 @@ class StreakUpdated implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
-        return [
+        // BUG-05 FIX: Broadcast đến cả user.{id} channels (giống MessageSent)
+        // để sidebar nhận được cập nhật streak khi user đang xem conversation khác
+        $channels = [
             new PrivateChannel('chat.' . $this->conversationId),
         ];
+
+        foreach ($this->participantIds as $userId) {
+            $channels[] = new PrivateChannel('user.' . $userId);
+        }
+
+        return $channels;
     }
 
     public function broadcastAs(): string

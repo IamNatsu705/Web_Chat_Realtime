@@ -45,7 +45,7 @@ class ProfileController extends Controller
 
     public function getMyPosts(Request $request): JsonResponse
     {
-        $posts = $this->profileService->getMyPosts($request->user()->id);
+        $posts = $this->profileService->getMyPosts((int) auth()->id());
 
         return $this->success(
             ['posts' => PostResource::collection($posts)],

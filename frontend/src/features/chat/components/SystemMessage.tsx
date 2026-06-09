@@ -37,7 +37,7 @@ function getStreakType(text: string): 'milestone' | 'warning' | 'lost' | 'reward
  * Hiển thị text thuần và icon thư viện cho tất cả các loại thông báo streak.
  */
 export default function SystemMessage({ content }: SystemMessageProps) {
-  const { text, metadata } = parseStreakMessage(content);
+  const { text } = parseStreakMessage(content);
   const streakType = getStreakType(text);
 
   let bgColor = 'bg-gray-100';

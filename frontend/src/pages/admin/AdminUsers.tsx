@@ -8,7 +8,6 @@ export default function AdminUsers() {
   const {
     search,
     setSearch,
-    page,
     setPage,
     status,
     setStatus,

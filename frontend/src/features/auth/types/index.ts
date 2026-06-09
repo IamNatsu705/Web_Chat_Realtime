@@ -3,6 +3,9 @@ export interface User {
   name: string;
   email?: string;
   avatar?: string | null;
+  bio?: string | null;
+  student_id?: string | null;
+  department?: string | null;
   role?: 'user' | 'admin';
   last_seen_at?: string | null;
   created_at?: string;
@@ -31,4 +34,6 @@ export interface RegisterCredentials {
   email: string;
   password?: string;
   password_confirmation?: string;
+  student_id?: string;
+  department?: string;
 }

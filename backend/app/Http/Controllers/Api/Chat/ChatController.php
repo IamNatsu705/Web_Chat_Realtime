@@ -21,7 +21,7 @@ class ChatController extends Controller
 
     public function getConversations(Request $request): JsonResponse
     {
-        $conversations = $this->chatService->getUserConversations($request->user()->id);
+        $conversations = $this->chatService->getUserConversations((int) auth()->id());
 
         return $this->success(
             ['conversations' => ConversationResource::collection($conversations)],
@@ -36,7 +36,7 @@ class ChatController extends Controller
         ]);
 
         $conversation = $this->chatService->getOrCreateDirectConversation(
-            $request->user()->id,
+            (int) auth()->id(),
             $request->input('friend_id')
         );
 
@@ -51,7 +51,7 @@ class ChatController extends Controller
         $limit = $request->input('limit', 20);
         $cursor = $request->input('cursor');
 
-        $messagesPaginated = $this->chatService->getMessages($conversationId, $request->user()->id, $limit, $cursor);
+        $messagesPaginated = $this->chatService->getMessages($conversationId, (int) auth()->id(), $limit, $cursor);
 
         return $this->success(
             [
@@ -74,7 +74,7 @@ class ChatController extends Controller
 
         $message = $this->chatService->sendMessage(
             $conversationId,
-            $request->user()->id,
+            (int) auth()->id(),
             $data
         );
 
@@ -86,14 +86,14 @@ class ChatController extends Controller
 
     public function markRead(Request $request, int $conversationId): JsonResponse
     {
-        $this->chatService->markAsRead($conversationId, $request->user()->id);
+        $this->chatService->markAsRead($conversationId, (int) auth()->id());
 
         return $this->success(null, 'Đã đánh dấu đọc tin nhắn.');
     }
 
     public function recallMessage(Request $request, int $messageId): JsonResponse
     {
-        $message = $this->chatService->recallMessage($messageId, $request->user()->id);
+        $message = $this->chatService->recallMessage($messageId, (int) auth()->id());
         
         return $this->success(
             ['message' => new MessageResource($message)],
@@ -103,31 +103,31 @@ class ChatController extends Controller
 
     public function deleteMessageForMe(Request $request, int $messageId): JsonResponse
     {
-        $message = $this->chatService->deleteMessageForMe($messageId, $request->user()->id);
+        $message = $this->chatService->deleteMessageForMe($messageId, (int) auth()->id());
         
         return $this->success(
             ['message' => new MessageResource($message)],
-            'Đã xóa tin nhắn phí bạn.'
+            'Đã xóa tin nhắn phía bạn.'
         );
     }
 
     public function clearConversation(Request $request, int $conversationId): JsonResponse
     {
-        $this->chatService->clearConversation($conversationId, $request->user()->id);
+        $this->chatService->clearConversation($conversationId, (int) auth()->id());
 
         return $this->success(null, 'Đã xóa lịch sử trò chuyện phía bạn.');
     }
 
     public function acceptStranger(Request $request, int $conversationId): JsonResponse
     {
-        $this->chatService->acceptStrangerConversation($conversationId, $request->user()->id);
+        $this->chatService->acceptStrangerConversation($conversationId, (int) auth()->id());
 
         return $this->success(null, 'Đã chấp nhận cuộc trò chuyện.');
     }
 
     public function rejectStranger(Request $request, int $conversationId): JsonResponse
     {
-        $this->chatService->rejectStrangerConversation($conversationId, $request->user()->id);
+        $this->chatService->rejectStrangerConversation($conversationId, (int) auth()->id());
 
         return $this->success(null, 'Đã từ chối cuộc trò chuyện.');
     }

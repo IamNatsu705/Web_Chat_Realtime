@@ -14,8 +14,11 @@ class UpdateGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['nullable', 'string', 'max:255'],
-            'avatar' => ['nullable', 'image', 'max:5120'],
+            'name'        => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'join_type'   => ['nullable', 'string', 'in:invite,open,request'],
+            'category'    => ['nullable', 'string', 'in:subject,department,project,research,club,other'],
+            'avatar'      => ['nullable', 'image', 'max:5120'],
         ];
     }
 }

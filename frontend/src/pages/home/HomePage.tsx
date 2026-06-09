@@ -11,11 +11,12 @@ export default function HomePage() {
   const allPosts = feedData?.pages.flatMap(page => page.posts) ?? [];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
+    <div className="min-h-screen flex flex-col bg-[#F8F9FA] font-sans">
       <Header />
 
-      <main className="grow pt-6 pb-12">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 space-y-4">
+      <main className="grow pt-8 pb-12">
+        <div className="max-w-[800px] mx-auto px-4 sm:px-6 space-y-6">
+          
           <CreatePost />
 
           {isLoading && (
@@ -32,7 +33,7 @@ export default function HomePage() {
           {allPosts.length === 0 && !isLoading && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
               <HiOutlineDocumentText className="mx-auto text-4xl text-gray-300 mb-3" />
-              <p className="text-gray-500 text-sm">Chưa có bài viết nào. Hãy là người đầu tiên đăng bài!</p>
+              <p className="text-gray-500 text-sm">Chưa có cuộc thảo luận nào. Hãy bắt đầu chia sẻ với cộng đồng PTIT!</p>
             </div>
           )}
 

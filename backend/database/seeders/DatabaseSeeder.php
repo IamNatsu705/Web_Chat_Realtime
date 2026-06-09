@@ -15,5 +15,7 @@ class DatabaseSeeder extends Seeder
             PostSeeder::class,
             StreakSeeder::class,
         ]);
+        
+        $this->command->info('✅ Seeded modular test data successfully.');
     }
 }

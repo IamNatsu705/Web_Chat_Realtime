@@ -26,5 +26,10 @@ interface FriendshipRepositoryInterface extends BaseRepositoryInterface
      */
     public function getSuggestedFriends(int $userId, array $friendIds, array $excludeIds = [], int $limit = 10): Collection;
 
+    /**
+     * Fallback gợi ý cho tân sinh viên: gợi ý theo cùng khoa/ngành.
+     */
+    public function getSuggestionsByDepartment(int $userId, array $excludeIds, int $limit = 10): Collection;
+
     public function getFriendshipStatus(int $userId, int $friendId);
 }

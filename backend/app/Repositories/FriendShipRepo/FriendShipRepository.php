@@ -126,6 +126,47 @@ class FriendshipRepository extends BaseRepository implements FriendshipRepositor
         })->sortByDesc('mutual_friends_count')->values();
     }
 
+    /**
+     * Fallback gợi ý cho tân sinh viên: gợi ý theo cùng khoa/ngành (department).
+     * Dùng khi user chưa có bạn bè (mutual friends trả rỗng).
+     *
+     * @param int   $userId      ID user hiện tại
+     * @param array $excludeIds  Các user IDs cần loại trừ (đã là bạn, pending request, chính mình)
+     * @param int   $limit       Số lượng gợi ý tối đa
+     */
+    public function getSuggestionsByDepartment(int $userId, array $excludeIds, int $limit = 10): Collection
+    {
+        $currentUser = \App\Models\User::find($userId);
+
+        if (!$currentUser || !$currentUser->department) {
+            // Không có thông tin department → gợi ý ngẫu nhiên các user mới nhất
+            return \App\Models\User::whereNotIn('id', array_merge($excludeIds, [$userId]))
+                ->where('is_banned', false)
+                ->where('role', '!=', 'admin')
+                ->orderByDesc('created_at')
+                ->limit($limit)
+                ->get()
+                ->map(function ($user) {
+                    $user->mutual_friends_count = 0;
+                    $user->relationship_status = 'none';
+                    return $user;
+                });
+        }
+
+        return \App\Models\User::where('department', $currentUser->department)
+            ->whereNotIn('id', array_merge($excludeIds, [$userId]))
+            ->where('is_banned', false)
+            ->where('role', '!=', 'admin')
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get()
+            ->map(function ($user) {
+                $user->mutual_friends_count = 0;
+                $user->relationship_status = 'none';
+                return $user;
+            });
+    }
+
     public function getFriendshipStatus(int $userId, int $friendId)
     {
         return $this->model->where(function ($query) use ($userId, $friendId) {

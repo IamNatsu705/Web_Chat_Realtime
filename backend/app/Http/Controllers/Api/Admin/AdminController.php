@@ -42,7 +42,7 @@ class AdminController extends Controller
 
     public function banUser(BanUserRequest $request, int $userId): JsonResponse
     {
-        $this->adminService->banUser($userId, $request->user()->id, $request->input('reason'));
+        $this->adminService->banUser($userId, (int) auth()->id(), $request->input('reason'));
 
         return $this->success(null, 'Đã khoá tài khoản.');
     }
@@ -74,7 +74,7 @@ class AdminController extends Controller
             'reason' => 'required|string|min:10|max:500',
         ]);
 
-        $this->adminService->hidePost($postId, $request->user()->id, $request->input('reason'));
+        $this->adminService->hidePost($postId, (int) auth()->id(), $request->input('reason'));
 
         return $this->success(null, 'Đã ẩn bài viết.');
     }

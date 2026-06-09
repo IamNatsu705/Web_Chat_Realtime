@@ -14,7 +14,7 @@ class FriendshipResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $authUserId = $request->user()->id;
+        $authUserId = $request->user()?->id ?? 0;
 
         $friendData = ($this->user_id === $authUserId)
             ? $this->friend

@@ -23,9 +23,10 @@ class MessageRepository extends BaseRepository implements MessageRepositoryInter
 
         $query = $this->model->where('conversation_id', $conversationId)
             ->where(function($q) use ($userId) {
-                // Kiểm tra tin nhắn chưa bị xóa bởi user này (kiểm tra mảng JSON trong MySQL)
+                // BUG-10 FIX: Sử dụng Eloquent JSON method thay vì raw SQL JSON_CONTAINS
+                // whereJsonDoesntContain hoạt động trên cả MySQL và SQLite
                 $q->whereNull('deleted_by')
-                  ->orWhereRaw("JSON_CONTAINS(deleted_by, ?) = 0", [(string)$userId]);
+                  ->orWhereJsonDoesntContain('deleted_by', (int)$userId);
             });
 
         if ($clearedAt) {

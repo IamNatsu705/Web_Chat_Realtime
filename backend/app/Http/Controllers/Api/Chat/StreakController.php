@@ -23,7 +23,7 @@ class StreakController extends Controller
     public function restore(Request $request, int $conversationId): JsonResponse
     {
         try {
-            $result = $this->streakService->restoreStreak($conversationId, $request->user()->id);
+            $result = $this->streakService->restoreStreak($conversationId, (int) auth()->id());
             return $this->success($result, 'Khôi phục chuỗi thành công!');
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), 400);
@@ -37,7 +37,7 @@ class StreakController extends Controller
     public function share(Request $request, int $conversationId): JsonResponse
     {
         try {
-            $result = $this->streakService->shareStreak($conversationId, $request->user()->id);
+            $result = $this->streakService->shareStreak($conversationId, (int) auth()->id());
             return $this->success($result, 'Đã chia sẻ chuỗi lên tường!');
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), 400);
@@ -50,7 +50,7 @@ class StreakController extends Controller
      */
     public function show(Request $request, int $conversationId): JsonResponse
     {
-        $data = $this->streakService->getStreakForConversation($conversationId, $request->user()->id);
+        $data = $this->streakService->getStreakForConversation($conversationId, (int) auth()->id());
         return $this->success(['streak' => $data], 'Lấy thông tin chuỗi thành công.');
     }
 }

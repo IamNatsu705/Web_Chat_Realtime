@@ -20,7 +20,7 @@ export default function AdminLayout() {
           <div className="flex items-center space-x-2">
             <ShieldAlert className="w-7 h-7 text-indigo-400" />
             <div>
-              <p className="text-lg font-bold text-white tracking-tight">Chatify</p>
+              <p className="text-lg font-bold text-white tracking-tight">PTIT Social</p>
               <p className="text-[10px] text-indigo-400 font-semibold uppercase tracking-widest">Admin Panel</p>
             </div>
           </div>

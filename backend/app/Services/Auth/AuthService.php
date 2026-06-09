@@ -36,6 +36,13 @@ class AuthService implements AuthServiceInterface
             ]);
         }
 
+        // Chặn đăng nhập nếu tài khoản bị khóa bởi admin
+        if ($user->is_banned) {
+            throw ValidationException::withMessages([
+                'email' => ['Tài khoản đã bị khóa. Lý do: ' . ($user->ban_reason ?? 'Vi phạm nội quy cộng đồng.')],
+            ]);
+        }
+
         $user->tokens()->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;

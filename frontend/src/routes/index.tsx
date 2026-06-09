@@ -14,6 +14,8 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminUsers from '../pages/admin/AdminUsers';
 import AdminPosts from '../pages/admin/AdminPosts';
 
+import CommunitiesPage from '../pages/communities/CommunitiesPage';
+
 // Protected Route wrapper for authenticated pages
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -131,6 +133,14 @@ export default function AppRoutes() {
                 element={
                   <ProtectedRoute>
                     <ChatPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/communities"
+                element={
+                  <ProtectedRoute>
+                    <CommunitiesPage />
                   </ProtectedRoute>
                 }
               />

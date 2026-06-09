@@ -6,7 +6,6 @@ import { AdminPagination } from '@/features/admin/components/shared/AdminPaginat
 
 export default function AdminPosts() {
   const {
-    page,
     setPage,
     statusFilter,
     setStatusFilter,

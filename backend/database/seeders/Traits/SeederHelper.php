@@ -94,10 +94,11 @@ trait SeederHelper
     protected function makeDM(User $a, User $b, array $msgs): Conversation
     {
         $conv = Conversation::create([
-            'name'       => null,
-            'is_group'   => false,
-            'admin_id'   => null,
-            'created_at' => now()->subDays(rand(5, 30)),
+            'name'         => null,
+            'is_group'     => false,
+            'admin_id'     => null,
+            'member_count' => 2,
+            'created_at'   => now()->subDays(rand(5, 30)),
         ]);
 
         ConversationParticipant::create([
@@ -131,11 +132,12 @@ trait SeederHelper
         array $msgs,
     ): Conversation {
         $conv = Conversation::create([
-            'name'       => $name,
-            'avatar'     => $avatarUrl,
-            'is_group'   => true,
-            'admin_id'   => $admin->id,
-            'created_at' => now()->subDays(rand(10, 40)),
+            'name'         => $name,
+            'avatar'       => $avatarUrl,
+            'is_group'     => true,
+            'admin_id'     => $admin->id,
+            'member_count' => count($members) + 1,
+            'created_at'   => now()->subDays(rand(10, 40)),
         ]);
 
         ConversationParticipant::create([
@@ -283,7 +285,7 @@ trait SeederHelper
             'content'        => $content,
             'media_url'      => $mediaUrls[0] ?? null,
             'likes_count'    => count($likers),
-            'comments_count' => count($comments),
+            'comments_count' => $this->countAllComments($comments),
             'is_pinned'      => $isPinned,
             'status'         => 'active',
             'created_at'     => $postTime,
@@ -336,5 +338,18 @@ trait SeederHelper
         }
 
         return $post;
+    }
+
+    /** Đếm tổng số comments bao gồm cả replies con. */
+    private function countAllComments(array $comments): int
+    {
+        $count = 0;
+        foreach ($comments as $c) {
+            $count++; // Comment gốc
+            if (!empty($c[2])) {
+                $count += count($c[2]); // Replies
+            }
+        }
+        return $count;
     }
 }

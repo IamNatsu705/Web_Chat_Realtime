@@ -28,6 +28,7 @@ interface StreakInfoPanelProps {
 const MILESTONES = [5, 10, 15, 30, 50, 100] as const;
 
 const TIER_MAPPING: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
+  none: { label: 'Mới bắt đầu', icon: <FaSeedling />, color: 'text-gray-500', bg: 'bg-gray-50' },
   streak_5: { label: 'Khởi đầu', icon: <FaSeedling />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   streak_10: { label: 'Thân thiết', icon: <FaStar />, color: 'text-amber-500', bg: 'bg-amber-50' },
   streak_15: { label: 'Chuyên cần', icon: <FaGem />, color: 'text-blue-500', bg: 'bg-blue-50' },
@@ -39,12 +40,9 @@ const TIER_MAPPING: Record<string, { label: string; icon: React.ReactNode; color
 export default function StreakInfoPanel({
   conversationId,
   streakPreview,
-  currentUser,
-  otherUser,
   onClose,
 }: StreakInfoPanelProps) {
   const [streak, setStreak] = useState<StreakData>(streakPreview);
-  const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [shared, setShared] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -60,8 +58,6 @@ export default function StreakInfoPanel({
       }
     } catch (err) {
       console.error('Failed to load streak details:', err);
-    } finally {
-      setLoading(false);
     }
   }, [conversationId]);
 
@@ -120,15 +116,12 @@ export default function StreakInfoPanel({
     if (restoring || restored) return;
     setRestoring(true);
     try {
-      const res = await chatApi.restoreStreak(conversationId);
+      await chatApi.restoreStreak(conversationId);
       setRestored(true);
-      if (res.data) {
-        setStreak((prev) => ({
-          ...prev,
-          status: (res.data as { status: string }).status as StreakData['status'],
-          restore_days: (res.data as { restore_days: number }).restore_days,
-        }));
-      }
+      // BUG-06 FIX: Re-fetch full streak data từ server sau restore
+      // Thay vì chỉ cập nhật status/restore_days, lấy toàn bộ data mới
+      // (current_streak đã được BE tăng, tier có thể thay đổi)
+      await fetchStreak();
     } catch (err) {
       console.error('Restore streak failed:', err);
     } finally {

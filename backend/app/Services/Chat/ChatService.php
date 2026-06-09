@@ -84,6 +84,48 @@ class ChatService implements ChatServiceInterface
             $type = 'image';
         }
 
+        // Xử lý upload file (Tài liệu)
+        if (isset($data['file']) && $data['file'] instanceof \Illuminate\Http\UploadedFile) {
+            $uploadedFile = $data['file'];
+            $path = $uploadedFile->store('chat_files', 'public');
+            
+            $fileExtension = $uploadedFile->getClientOriginalExtension();
+            $fileName = $uploadedFile->getClientOriginalName();
+            $fileSize = $uploadedFile->getSize();
+            
+            // Map extension to resource type
+            $ext = strtolower($fileExtension);
+            $resourceType = 'other';
+            if (in_array($ext, ['pdf'])) $resourceType = 'pdf';
+            elseif (in_array($ext, ['doc', 'docx'])) $resourceType = 'doc';
+            elseif (in_array($ext, ['xls', 'xlsx'])) $resourceType = 'excel';
+            elseif (in_array($ext, ['ppt', 'pptx'])) $resourceType = 'ppt';
+            elseif (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) $resourceType = 'image';
+            elseif (in_array($ext, ['zip', 'rar', '7z'])) $resourceType = 'archive';
+
+            // Lưu vào bảng group_resources (Kho tài liệu chung)
+            $resource = \App\Models\GroupResource::create([
+                'conversation_id' => $conversationId,
+                'uploader_id' => $userId,
+                'title' => $data['file_title'] ?? $fileName,
+                'category' => $data['file_category'] ?? 'other',
+                'description' => $data['file_description'] ?? null,
+                'file_url' => $path,
+                'file_type' => $resourceType,
+                'file_size' => $fileSize,
+            ]);
+
+            // Save JSON payload for frontend
+            $content = json_encode([
+                'resource_id' => $resource->id,
+                'name' => $fileName,
+                'url' => $path,
+                'size' => $fileSize,
+                'type' => $resourceType
+            ]);
+            $type = 'file';
+        }
+
         $messageData = [
             'conversation_id' => $conversationId,
             'sender_id' => $userId,
@@ -101,7 +143,7 @@ class ChatService implements ChatServiceInterface
         // Gọi hàm xử lý Streak
         try {
             $this->streakService->handleMessageSent($conversationId, $userId);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             \Log::warning('Streak handling failed: ' . $e->getMessage());
         }
 
@@ -148,6 +190,18 @@ class ChatService implements ChatServiceInterface
 
         if ($message->sender_id !== $userId) {
             throw new Exception('Bạn không thể thu hồi tin nhắn của người khác.');
+        }
+
+        if ($message->type === 'file') {
+            $content = json_decode($message->content, true);
+            if (isset($content['resource_id'])) {
+                $resourceId = $content['resource_id'];
+                $resource = \App\Models\GroupResource::find($resourceId);
+                if ($resource) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($resource->file_url);
+                    $resource->delete();
+                }
+            }
         }
 
         $message->update([

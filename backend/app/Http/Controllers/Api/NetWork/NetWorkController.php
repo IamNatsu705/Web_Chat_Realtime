@@ -29,7 +29,7 @@ class NetworkController extends Controller
     {
         $users = $this->userService->search(
             $request->validated(),
-            $request->user()->id
+            (int) auth()->id()
         );
 
         return $this->success(
@@ -42,7 +42,7 @@ class NetworkController extends Controller
     {
         try {
             $result = $this->networkService->sendFriendRequest(
-                $request->user()->id,
+                (int) auth()->id(),
                 $request->validated()['receiver_id']
             );
 
@@ -58,7 +58,7 @@ class NetworkController extends Controller
 
     public function getIncomingRequests(GetIncomingRequests $request): JsonResponse
     {
-        $requests = $this->networkService->getIncomingRequests($request->user()->id);
+        $requests = $this->networkService->getIncomingRequests((int) auth()->id());
 
         return $this->success(
             FriendRequestResource::collection($requests),
@@ -68,7 +68,7 @@ class NetworkController extends Controller
 
     public function getFriends(Request $request): JsonResponse
     {
-        $friends = $this->networkService->getFriends($request->user()->id);
+        $friends = $this->networkService->getFriends((int) auth()->id());
 
         return $this->success(
             FriendshipResource::collection($friends),
@@ -79,7 +79,7 @@ class NetworkController extends Controller
     public function cancelFriendRequest(Request $request, int $userId): JsonResponse
     {
         try {
-            $this->networkService->cancelFriendRequest($request->user()->id, $userId);
+            $this->networkService->cancelFriendRequest((int) auth()->id(), $userId);
 
             return $this->success(null, 'Đã hủy lời mời kết bạn.');
         } catch (\Exception $e) {
@@ -92,7 +92,7 @@ class NetworkController extends Controller
         try {
             $this->networkService->respondToRequest(
                 $requestId,
-                $request->user()->id,
+                (int) auth()->id(),
                 $request->validated()['action']
             );
 
@@ -109,7 +109,7 @@ class NetworkController extends Controller
     public function unfriend(Request $request, int $userId): JsonResponse
     {
         try {
-            $this->networkService->unfriend($request->user()->id, $userId);
+            $this->networkService->unfriend((int) auth()->id(), $userId);
 
             return $this->success(null, 'Đã hủy kết bạn thành công.');
         } catch (\Exception $e) {
@@ -140,7 +140,7 @@ class NetworkController extends Controller
     public function suggestions(Request $request): JsonResponse
     {
         $suggestions = $this->networkService->getSuggestedFriends(
-            $request->user()->id,
+            (int) auth()->id(),
             $request->query('limit', 10)
         );
 

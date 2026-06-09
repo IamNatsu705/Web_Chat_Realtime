@@ -9,7 +9,7 @@ class Conversation extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'is_group', 'avatar', 'admin_id'];
+    protected $fillable = ['name', 'description', 'is_group', 'join_type', 'category', 'member_count', 'avatar', 'admin_id'];
 
     protected $casts = [
         'is_group' => 'boolean',
@@ -38,5 +38,29 @@ class Conversation extends Model
     public function streak()
     {
         return $this->hasOne(Streak::class);
+    }
+
+    /**
+     * Yêu cầu tham gia nhóm (chỉ dùng cho join_type = 'request').
+     */
+    public function joinRequests()
+    {
+        return $this->hasMany(GroupJoinRequest::class);
+    }
+
+    /**
+     * Tài liệu trong nhóm.
+     */
+    public function resources()
+    {
+        return $this->hasMany(GroupResource::class);
+    }
+
+    /**
+     * Kiểm tra nhóm có phải dạng cộng đồng (mở hoặc yêu cầu) hay không.
+     */
+    public function isCommunity(): bool
+    {
+        return in_array($this->join_type, ['open', 'request']);
     }
 }

@@ -16,9 +16,11 @@ export function HideReasonModal({ isOpen, onClose, onConfirm, isPending, postCon
 
   useEffect(() => {
     if (isOpen) {
-      setReason('');
-      setError('');
-      setTimeout(() => textareaRef.current?.focus(), 100);
+      setTimeout(() => {
+        setReason('');
+        setError('');
+        textareaRef.current?.focus();
+      }, 100);
     }
   }, [isOpen]);
 

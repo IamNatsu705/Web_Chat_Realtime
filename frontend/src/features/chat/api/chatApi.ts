@@ -115,6 +115,41 @@ export const chatApi = {
   },
 
   /**
+   * Send a file message to a conversation
+   */
+  sendFileMessage: async (
+    conversationId: number,
+    file: File,
+    meta?: { title: string; category: string; description: string },
+    onProgress?: (progress: number) => void
+  ): Promise<ChatResponse<{ message: Message }>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'file');
+    if (meta) {
+      if (meta.title) formData.append('file_title', meta.title);
+      if (meta.category) formData.append('file_category', meta.category);
+      if (meta.description) formData.append('file_description', meta.description);
+    }
+
+    const res = await axiosInstance.post<ChatResponse<{ message: Message }>>(
+      `/chat/conversations/${conversationId}/messages`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total && onProgress) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(percentCompleted);
+          }
+        },
+      }
+    );
+    if (res.data.data?.message) normalizeMessage(res.data.data.message);
+    return res.data;
+  },
+
+  /**
    * Mark all messages in a conversation as read
    */
   markRead: async (conversationId: number): Promise<ChatResponse<null>> => {
@@ -136,7 +171,11 @@ export const chatApi = {
   ): Promise<ChatResponse<{ conversation: Conversation }>> => {
     const formData = new FormData();
     formData.append('name', data.name);
-    data.member_ids.forEach((id) => formData.append('member_ids[]', String(id)));
+    if (data.description) formData.append('description', data.description);
+    if (data.join_type) formData.append('join_type', data.join_type);
+    if (data.member_ids) {
+      data.member_ids.forEach((id) => formData.append('member_ids[]', String(id)));
+    }
     if (data.avatar instanceof File) formData.append('avatar', data.avatar);
 
     const res = await axiosInstance.post<ChatResponse<{ conversation: Conversation }>>(
@@ -160,6 +199,10 @@ export const chatApi = {
   ): Promise<ChatResponse<{ conversation: Conversation }>> => {
     const formData = new FormData();
     if (data.name) formData.append('name', data.name);
+    if (data.description !== undefined && data.description !== null) {
+      formData.append('description', data.description);
+    }
+    if (data.join_type) formData.append('join_type', data.join_type);
     if (data.avatar instanceof File) formData.append('avatar', data.avatar);
     formData.append('_method', 'PUT');
 

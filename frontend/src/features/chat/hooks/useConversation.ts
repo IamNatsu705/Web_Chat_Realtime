@@ -20,6 +20,7 @@ interface UseConversationReturn {
   error: string | null;
   sendMessage: (content: string) => Promise<void>;
   sendImageMessage: (file: File) => Promise<void>;
+  sendFileMessage: (file: File, meta?: { title: string; category: string; description: string }, onProgress?: (progress: number) => void) => Promise<void>;
   loadMore: () => Promise<void>;
   markRead: () => Promise<void>;
   handleLocalRecall: (messageId: number | string, recalledMessage: Message) => void;
@@ -185,6 +186,59 @@ export function useConversation(
     [conversationId, user, queryClient]
   );
 
+  // ── 3c. Gửi tin nhắn File (Optimistic UI) ───────────────────────────────────
+  const sendFileMessage = useCallback(
+    async (file: File, meta?: { title: string; category: string; description: string }, onProgress?: (progress: number) => void) => {
+      if (!conversationId || !user) return;
+
+      const tempId = nextTempId();
+      // For file preview, we can just store the filename in content or a JSON string
+      const fileInfo = {
+        name: file.name,
+        size: file.size,
+        type: 'other'
+      };
+      
+      const optimisticMsg: Message = {
+        id: tempId,
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content: JSON.stringify(fileInfo),
+        type: 'file',
+        status: 'sending',
+        created_at: new Date().toISOString(),
+        sender: user,
+        is_optimistic: true,
+      };
+
+      addMessageToCache(queryClient, conversationId, optimisticMsg);
+      updateConversationInCache(queryClient, conversationId, (c) => ({
+        ...c,
+        last_message: optimisticMsg,
+        updated_at: optimisticMsg.created_at,
+      }));
+
+      try {
+        const res = await chatApi.sendFileMessage(conversationId, file, meta, onProgress);
+        const confirmed = res.data.message;
+
+        replaceMessageInCache(queryClient, conversationId, tempId, {
+          ...confirmed,
+          status: 'sent' as const,
+        });
+
+        // Invalidate resources to update the UI instantly
+        queryClient.invalidateQueries({ queryKey: ['resources', conversationId] });
+      } catch {
+        replaceMessageInCache(queryClient, conversationId, tempId, {
+          ...optimisticMsg,
+          status: 'failed' as const,
+        });
+      }
+    },
+    [conversationId, user, queryClient]
+  );
+
   /**
    * Cập nhật trạng thái "Đã đọc" cho toàn bộ tin nhắn trong cuộc trò chuyện.
    */
@@ -206,6 +260,8 @@ export function useConversation(
       updateMessagesInCache(queryClient, conversationId, (msg) =>
         msg.id === messageId ? recalledMessage : msg
       );
+      // Invalidate resources in case a file message was recalled
+      queryClient.invalidateQueries({ queryKey: ['resources', conversationId] });
     },
     [conversationId, queryClient]
   );
@@ -226,6 +282,7 @@ export function useConversation(
     error,
     sendMessage,
     sendImageMessage,
+    sendFileMessage,
     loadMore,
     markRead,
     handleLocalRecall,

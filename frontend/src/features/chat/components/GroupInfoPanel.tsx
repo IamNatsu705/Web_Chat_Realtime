@@ -1,8 +1,14 @@
 import { useState, useRef } from 'react';
-import type { Conversation, UpdateGroupRequest } from '../types';
+import type { Conversation, UpdateGroupRequest, GroupRole } from '../types';
 import type { User } from '../../auth/types';
 import type { Friendship } from '../../network/types';
 import AddMembersModal from './AddMembersModal';
+import ResourcePanel from './ResourcePanel';
+import JoinRequestsTab from './JoinRequestsTab';
+import { HiOutlineEllipsisVertical } from 'react-icons/hi2';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { communityApi } from '../api/communityApi';
+import { CHAT_QUERIES } from '../hooks/queries';
 
 interface GroupInfoPanelProps {
   conversation: Conversation;
@@ -16,16 +22,13 @@ interface GroupInfoPanelProps {
 }
 
 /**
- * GroupInfoPanel — right slide-in panel showing group details.
+ * GroupInfoPanel — panel thông tin bên phải của giao diện chat.
  *
- * Admin sees:
- *   - Change group name / avatar
- *   - List of members with Kick button
- *   - Add members button
+ * Tabs:
+ *  - "Thành viên": danh sách, thêm/kick thành viên, đổi tên/avatar nhóm
+ *  - "Tài liệu": ResourcePanel (xem/upload/download/ghim tài liệu)
  *
- * Regular members see:
- *   - Group name, avatar (read-only)
- *   - Member list (no kick)
+ * Phân quyền hiển thị dựa trên `conversation.my_role` (owner/moderator/member).
  */
 export default function GroupInfoPanel({
   conversation,
@@ -38,11 +41,29 @@ export default function GroupInfoPanel({
   onKickMember,
 }: GroupInfoPanelProps) {
   const isAdmin = conversation.admin_id === currentUser.id;
+  const myRole = (conversation.my_role ?? 'member') as GroupRole;
+  const isOwnerOrMod = isAdmin || myRole === 'moderator';
+  const showRequestsTab = conversation.join_type === 'request' && isOwnerOrMod;
+
+  const [activeTab, setActiveTab] = useState<'members' | 'resources' | 'requests'>('members');
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(conversation.name ?? '');
   const [showAddMembers, setShowAddMembers] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const promoteMutation = useMutation({
+    mutationFn: (userId: number) => communityApi.promoteModerator(conversation.id, userId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() })
+  });
+
+  const demoteMutation = useMutation({
+    mutationFn: (userId: number) => communityApi.demoteModerator(conversation.id, userId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() })
+  });
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,143 +86,217 @@ export default function GroupInfoPanel({
   return (
     <>
       {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black/20 z-10"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/20 z-10" onClick={onClose} />
 
       {/* Panel */}
-      <div className="absolute right-0 top-0 h-full w-72 bg-white border-l border-gray-200 z-20 flex flex-col shadow-xl animate-slide-in-right">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900 text-sm">Thông tin nhóm</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
+      <div className="absolute right-0 top-0 h-full w-[360px] bg-white border-l border-gray-100 z-20 flex flex-col shadow-2xl animate-slide-in-right">
+        {/* ── Header ───────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+          <h3 className="font-extrabold text-[#111827] text-[16px]">Thông tin nhóm</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-[#D70038] hover:bg-[#FFF1F2] p-1.5 rounded-lg transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="flex-grow overflow-y-auto">
-          {/* Group avatar + name */}
-          <div className="flex flex-col items-center py-6 px-4 border-b border-gray-100">
-            <div className="relative mb-3">
-              {avatarPreview || conversation.avatar ? (
-                <img
-                  src={avatarPreview ?? conversation.avatar ?? ''}
-                  alt="group"
-                  className="h-20 w-20 rounded-full object-cover border-2 border-indigo-200"
-                />
-              ) : (
-                <div className="h-20 w-20 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200">
-                  <svg className="w-9 h-9 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        {/* ── Group avatar + name ──────────────────────────────────── */}
+        <div className="flex flex-col items-center py-6 px-5 border-b border-gray-100 flex-shrink-0">
+          <div className="relative mb-3">
+            {avatarPreview || conversation.avatar ? (
+              <img
+                src={avatarPreview ?? conversation.avatar ?? ''}
+                alt="group"
+                className="h-20 w-20 rounded-full object-cover border-2 border-[#FFE4E6] shadow-sm"
+              />
+            ) : (
+              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-[#FFF5F6] to-[#FFF1F2] flex items-center justify-center border-2 border-[#FECDD3] shadow-sm">
+                <svg className="w-10 h-10 text-[#D70038]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            )}
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 h-6 w-6 bg-[#D70038] text-white rounded-full flex items-center justify-center hover:bg-[#990028] shadow-md transition-colors border-2 border-white"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
-                </div>
-              )}
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+              </>
+            )}
+          </div>
+
+          {/* Group name */}
+          {editingName ? (
+            <div className="flex items-center space-x-2 w-full px-2">
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
+                className="flex-grow text-center border border-[#FECDD3] bg-[#FFF5F6] rounded-xl px-3 py-1.5 text-[15px] font-bold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#D70038]/30"
+                autoFocus
+              />
+              <button onClick={handleSaveName} disabled={isProcessing} className="text-[#D70038] hover:text-[#990028] text-[14px] font-bold">
+                Lưu
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1.5">
+              <h4 className="font-extrabold text-[#111827] text-[16px] text-center">{conversation.name ?? 'Nhóm không tên'}</h4>
               {isAdmin && (
-                <>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 h-6 w-6 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-indigo-700 transition-colors"
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-                </>
+                <button onClick={() => setEditingName(true)} className="text-gray-400 hover:text-[#D70038] p-1 rounded transition-colors">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
               )}
             </div>
+          )}
+          <p className="text-[13px] text-gray-500 mt-1 font-medium">{conversation.participants.length} thành viên</p>
+        </div>
 
-            {/* Group name */}
-            {editingName ? (
-              <div className="flex items-center space-x-2 w-full px-2">
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
-                  className="flex-grow text-center border border-indigo-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                  autoFocus
-                />
-                <button onClick={handleSaveName} disabled={isProcessing}
-                  className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Lưu</button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-1">
-                <h4 className="font-bold text-gray-900 text-base text-center">
-                  {conversation.name ?? 'Nhóm không tên'}
-                </h4>
+        {/* ── Tab Navigation ────────────────────────────────────────── */}
+        <div className="flex border-b border-gray-100 flex-shrink-0">
+          <button
+            onClick={() => setActiveTab('members')}
+            className={`flex-1 py-3 text-[14px] font-bold border-b-2 transition-colors ${activeTab === 'members'
+                ? 'border-[#D70038] text-[#D70038]'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+          >
+            Thành viên
+          </button>
+          <button
+            onClick={() => setActiveTab('resources')}
+            className={`flex-1 py-3 text-[14px] font-bold border-b-2 transition-colors ${activeTab === 'resources'
+                ? 'border-[#D70038] text-[#D70038]'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+          >
+            Tài liệu
+          </button>
+          {showRequestsTab && (
+            <button
+              onClick={() => setActiveTab('requests')}
+              className={`flex-1 py-3 text-[14px] font-bold border-b-2 transition-colors ${activeTab === 'requests'
+                  ? 'border-[#D70038] text-[#D70038]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+            >
+              Yêu cầu duyệt
+            </button>
+          )}
+        </div>
+
+        {/* ── Tab Content ──────────────────────────────────────────── */}
+        <div className="flex-grow overflow-hidden flex flex-col">
+          {activeTab === 'members' ? (
+            <div className="overflow-y-auto flex-grow px-3 py-2">
+              {/* Add member button */}
+              <div className="flex items-center justify-between mb-3 mt-1">
+                <h5 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Danh sách thành viên</h5>
                 {isAdmin && (
-                  <button onClick={() => setEditingName(true)} className="text-gray-400 hover:text-gray-600 p-0.5">
+                  <button
+                    onClick={() => setShowAddMembers(true)}
+                    className="text-[13px] text-[#D70038] hover:text-white hover:bg-[#D70038] bg-[#FFF1F2] px-2 py-1 rounded-md font-bold flex items-center gap-1 transition-colors"
+                  >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
+                    Thêm
                   </button>
                 )}
               </div>
-            )}
-            <p className="text-xs text-gray-400 mt-0.5">
-              {conversation.participants.length} thành viên
-            </p>
-          </div>
 
-          {/* Members list */}
-          <div className="px-4 pt-4 pb-2">
-            <div className="flex items-center justify-between mb-2">
-              <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Thành viên
-              </h5>
-              <button
-                onClick={() => setShowAddMembers(true)}
-                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1"
-              >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span>Thêm</span>
-              </button>
-            </div>
-
-            <ul className="space-y-1">
-              {conversation.participants.map((member: User) => (
-                <li key={member.id} className="flex items-center py-2 hover:bg-gray-50 rounded-lg px-2 group">
-                  {member.avatar ? (
-                    <img src={member.avatar} alt={member.name}
-                      className="h-8 w-8 rounded-full object-cover mr-2.5 flex-shrink-0" />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold mr-2.5 flex-shrink-0">
-                      {member.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex-grow min-w-0">
-                    <span className="text-sm text-gray-800 truncate block">{member.name}</span>
-                    {member.id === conversation.admin_id && (
-                      <span className="text-[10px] text-indigo-600 font-semibold">Trưởng nhóm</span>
+              <ul className="space-y-1">
+                {conversation.participants.map((member: User) => (
+                  <li key={member.id} className="flex items-center py-2.5 hover:bg-[#F9FAFB] rounded-xl px-2.5 group transition-colors">
+                    {member.avatar ? (
+                      <img src={member.avatar} alt={member.name}
+                        className="h-10 w-10 rounded-full object-cover mr-3 flex-shrink-0 border border-gray-100" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 text-[14px] font-bold mr-3 flex-shrink-0 border border-gray-200">
+                        {member.name.charAt(0).toUpperCase()}
+                      </div>
                     )}
-                  </div>
-                  {/* Kick button — admin only, not for self */}
-                  {isAdmin && member.id !== currentUser.id && member.id !== conversation.admin_id && (
-                    <button
-                      onClick={() => onKickMember(member.id)}
-                      disabled={isProcessing}
-                      title="Xóa khỏi nhóm"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
-                      </svg>
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
+                    <div className="flex-grow min-w-0">
+                      <span className="text-[14px] font-bold text-[#111827] truncate block">{member.name}</span>
+                      {/* Role label */}
+                      {member.id === conversation.admin_id ? (
+                        <span className="text-[11px] text-[#D70038] font-bold bg-[#FFF1F2] px-1.5 py-0.5 rounded mt-0.5 inline-block">Trưởng nhóm</span>
+                      ) : (conversation.participants as Array<User & { role?: GroupRole }>)
+                        .find(p => p.id === member.id)?.role === 'moderator' ? (
+                        <span className="text-[11px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded mt-0.5 inline-block">Phó nhóm</span>
+                      ) : null}
+                    </div>
+                    {/* Role Management Dropdown */}
+                    {isOwnerOrMod && member.id !== currentUser.id && member.id !== conversation.admin_id && (
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === member.id ? null : member.id)}
+                          className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                        >
+                          <HiOutlineEllipsisVertical className="w-4 h-4" />
+                        </button>
+
+                        {openMenuId === member.id && (
+                          <>
+                            <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
+                            <div className="absolute right-0 top-6 w-36 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-40 animate-fade-in">
+                              {isAdmin && (
+                                <>
+                                  {(conversation.participants as Array<User & { role?: GroupRole }>).find(p => p.id === member.id)?.role === 'moderator' ? (
+                                    <button
+                                      onClick={() => { demoteMutation.mutate(member.id); setOpenMenuId(null); }}
+                                      className="w-full text-left px-3 py-2 text-[13px] font-medium text-gray-700 hover:bg-gray-50 hover:text-[#D70038] transition-colors"
+                                    >
+                                      Giáng chức
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => { promoteMutation.mutate(member.id); setOpenMenuId(null); }}
+                                      className="w-full text-left px-3 py-2 text-[13px] font-medium text-gray-700 hover:bg-gray-50 hover:text-[#D70038] transition-colors"
+                                    >
+                                      Thăng Phó nhóm
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                              <button
+                                onClick={() => { onKickMember(member.id); setOpenMenuId(null); }}
+                                disabled={isProcessing}
+                                className="w-full text-left px-3 py-2 text-[13px] font-bold text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                Xóa khỏi nhóm
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : activeTab === 'resources' ? (
+            /* Tab Tài liệu — ResourcePanel */
+            <ResourcePanel
+              conversationId={conversation.id}
+              currentUser={currentUser}
+              myRole={myRole}
+            />
+          ) : (
+            <JoinRequestsTab conversationId={conversation.id} />
+          )}
         </div>
       </div>
 
@@ -212,10 +307,7 @@ export default function GroupInfoPanel({
           existingMemberIds={memberIds}
           isProcessing={isProcessing}
           onClose={() => setShowAddMembers(false)}
-          onAdd={(userId) => {
-            onAddMember(userId);
-            setShowAddMembers(false);
-          }}
+          onAdd={(userId) => { onAddMember(userId); setShowAddMembers(false); }}
         />
       )}
     </>

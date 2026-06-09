@@ -2,13 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Models\Conversation;
+use App\Models\ConversationParticipant;
+use App\Models\GroupJoinRequest;
+use App\Models\GroupResource;
+use App\Models\Message;
 use Database\Seeders\Traits\SeederHelper;
 use Illuminate\Database\Seeder;
 
-/**
- * Tạo DM + Group conversations kèm messages và read receipts.
- * Tập trung dữ liệu cho 3 acc test: Hương, Khoa, Lan.
- */
 class ConversationSeeder extends Seeder
 {
     use SeederHelper;
@@ -17,358 +18,377 @@ class ConversationSeeder extends Seeder
     {
         $this->loadUsers();
 
-        $huong = $this->user('huong@webchat.vn');
-        $khoa  = $this->user('khoa@webchat.vn');
-        $lan   = $this->user('lan@webchat.vn');
-        $dung  = $this->user('dung.nguyen@gmail.com');
-        $ngoc  = $this->user('ngoc.vo@gmail.com');
-        $toan  = $this->user('toan.dang@gmail.com');
-        $mai   = $this->user('mai.hoang@gmail.com');
-        $minh  = $this->user('minh.bui@gmail.com');
-        $linh  = $this->user('linh.trinh@gmail.com');
-        $dat   = $this->user('dat.dinh@gmail.com');
-        $ha    = $this->user('ha.ngo@gmail.com');
-        $long  = $this->user('long.vu@gmail.com');
-        $ngan  = $this->user('ngan.ly@gmail.com');
-        $huy   = $this->user('huy.tran@gmail.com');
-        $chau  = $this->user('chau.cao@gmail.com');
-        $tu    = $this->user('tu.hoang@gmail.com');
+        $an    = $this->user('an@ptit.edu.vn');
+        $binh  = $this->user('binh@ptit.edu.vn');
+        $cuong = $this->user('cuong@ptit.edu.vn');
+        $duy   = $this->user('duy@ptit.edu.vn');
+        $mai   = $this->user('mai@ptit.edu.vn');
+        $khoa  = $this->user('khoa@ptit.edu.vn');
+        $nga   = $this->user('nga@ptit.edu.vn');
 
-        $this->seedDirectMessages(
-            $huong, $khoa, $lan, $dung, $ngoc, $toan,
-            $mai, $minh, $linh, $dat, $ha, $long, $ngan, $huy, $chau, $tu
-        );
-
-        $this->seedGroups(
-            $huong, $khoa, $lan, $dung, $ngoc, $toan,
-            $mai, $minh, $linh, $dat, $ha, $long, $ngan, $huy, $chau, $tu
-        );
-    }
-
-    private function seedDirectMessages($huong, $khoa, $lan, $dung, $ngoc, $toan, $mai, $minh, $linh, $dat, $ha, $long, $ngan, $huy, $chau, $tu): void
-    {
-        // ── DM: Hương ↔ Khoa ──
-        $this->makeDM($huong, $khoa, [
-            [$huong, 'Khoa ơi, mai mình có họp nhóm không?'],
-            [$khoa,  'Có đó Hương, 9h sáng tại phòng D202 nha'],
-            [$huong, 'Ok, mình nhớ rồi. Mang laptop theo không?'],
-            [$khoa,  'Mang đi cho chắc, thầy hay yêu cầu demo bất ngờ lắm'],
-            [$huong, 'Trời ơi thiệt hả, thôi ok mang theo vậy. Cảm ơn Khoa nha!'],
-            [$khoa,  'Không có gì, mai gặp nha Hương!'],
+        // ═══════════════════════════════════════════════════════════════════
+        //  1. DM An & Bình — cuộc trò chuyện chính, nhiều tin nhắn, có file
+        // ═══════════════════════════════════════════════════════════════════
+        $dm1 = $this->makeDM($an, $binh, [
+            [$an,   'Chào Bình, lâu rồi không nói chuyện 😊'],
+            [$binh, 'Chào An! Mình vẫn khoẻ, dạo này bận project quá.'],
+            [$an,   'Mình cũng vậy. Bạn đang làm đề tài gì thế?'],
+            [$binh, 'Mình đang nghiên cứu bảo mật WebSocket, khá thú vị.'],
+            [$an,   'Hay đấy! Mình đang làm hệ thống chat realtime bằng Laravel Reverb.'],
+            [$binh, 'Ồ Laravel Reverb hả, mình nghe nói hiệu suất tốt lắm.'],
+            [$an,   'Ừ, xử lý được 10k concurrent connections. Bạn có tài liệu OWASP WebSocket không?'],
+            [$binh, 'Có nè, để mình gửi cho.'],
+            [$an,   'Cảm ơn bạn nhiều! Tí mình gửi lại slide bài giảng Laravel cho bạn nhé.'],
+            [$binh, 'Ok bạn ơi, mình đang cần xem phần middleware authentication.'],
+            [$an,   'Xong rồi nha, đã gửi vào nhóm Cộng đồng IT luôn.'],
+            [$binh, 'Tuyệt vời 👍'],
         ]);
 
-        // ── DM: Hương ↔ Lan ──
-        $this->makeDM($huong, $lan, [
-            [$huong, 'Lan ơi cuối tuần này rảnh không? Mình muốn đi cafe'],
-            [$lan,   'Rảnh nè, đi đâu vậy Hương?'],
-            [$huong, 'Quán The Dreamer Coffee ở Q1, nghe nói wifi mạnh lắm'],
-            [$lan,   'Ok hay quá! Mình mang laptop đi làm việc luôn nha'],
-            [$huong, 'Ừ mình cũng tính vậy, 9h sáng thứ 7 nhé'],
-            [$lan,   'Oke hẹn gặp Hương!'],
-            [$huong, 'À mà nhớ mang sạc nha, laptop mình gần hết pin hoài'],
+        // Thêm 1 tin nhắn bị thu hồi (recalled) — demo trạng thái thu hồi
+        Message::create([
+            'conversation_id' => $dm1->id,
+            'sender_id'       => $an->id,
+            'content'         => 'Tin nhắn đã bị thu hồi',
+            'type'            => 'text',
+            'is_recalled'     => true,
+            'created_at'      => now()->subHours(1),
+            'updated_at'      => now()->subHours(1),
         ]);
 
-        // ── DM: Hương ↔ Minh ──
-        $this->makeDM($huong, $minh, [
-            [$huong, 'Anh Minh ơi, em muốn xin anh review CV của em được không ạ?'],
-            [$minh,  'Được chứ Hương! Gửi cho anh qua email đi'],
-            [$huong, 'Dạ em gửi rồi ạ, cảm ơn anh nhiều'],
-            [$minh,  'CV em khá tốt nhưng phần skills cần cụ thể hơn nha'],
-            [$huong, 'Dạ em hiểu rồi ạ, em sẽ update lại. Cảm ơn anh!'],
+        // Tin nhắn gần nhất
+        Message::create([
+            'conversation_id' => $dm1->id,
+            'sender_id'       => $binh->id,
+            'content'         => 'Nhớ ôn DSA cho kỳ thi tới nha!',
+            'type'            => 'text',
+            'created_at'      => now()->subMinutes(15),
+            'updated_at'      => now()->subMinutes(15),
         ]);
 
-        // ── DM: Hương ↔ Mai ──
-        $this->makeDM($huong, $mai, [
-            [$mai,   'Hương ơi mày tập yoga ở đâu vậy? Da mày đẹp quá'],
-            [$huong, 'Tao tập với Adriene trên YouTube thôi, free mà hay lắm'],
-            [$mai,   'Thật không? Mày gửi link cho tao với'],
-            [$huong, 'Oke tao gửi liền, mày tập 20 phút mỗi sáng là thấy khác'],
-            [$mai,   'Cảm ơn mày, bestie thật sự!'],
+        // ═══════════════════════════════════════════════════════════════════
+        //  2. DM An & Cường — cuộc trò chuyện code
+        // ═══════════════════════════════════════════════════════════════════
+        $this->makeDM($an, $cuong, [
+            [$cuong, 'An ơi, bạn dùng React Query hay SWR cho project?'],
+            [$an,    'Mình dùng React Query, caching ngon hơn nhiều.'],
+            [$cuong, 'Oke mình sẽ thử. Cảm ơn bạn!'],
+            [$an,    'Không có chi. Có gì inbox mình nhé 💪'],
         ]);
 
-        // ── DM: Hương ↔ Dũng ──
-        $this->makeDM($huong, $dung, [
-            [$dung,  'Hương ơi bài assignment môn Mạng máy tính làm chưa?'],
-            [$huong, 'Làm gần xong rồi, còn phần diagram. Mày sao?'],
-            [$dung,  'Tao đang kẹt phần routing, OSPF với BGP lẫn hoài'],
-            [$huong, 'OSPF dùng nội bộ, BGP dùng giữa ISP. Tối nay mình làm cùng nhé'],
-            [$dung,  'Ok cảm ơn mày, 8h tối mình call video nha!'],
+        // ═══════════════════════════════════════════════════════════════════
+        //  3. DM An & Mai — cuộc trò chuyện nhẹ (giúp sidebar có nhiều mục)
+        // ═══════════════════════════════════════════════════════════════════
+        $this->makeDM($an, $mai, [
+            [$mai, 'An ơi, bạn có template Figma cho dashboard admin không?'],
+            [$an,  'Mình có một bộ free trên Figma Community, để mình share link.'],
+            [$mai, 'Cảm ơn bạn nhiều 🎨'],
         ]);
 
-        // ── DM: Khoa ↔ Lan ──
-        $this->makeDM($khoa, $lan, [
-            [$khoa, 'Lan ơi, tao vừa push code mới rồi nha'],
-            [$lan,  'Oke tao pull về test liền. Bug hôm qua fix chưa?'],
-            [$khoa, 'Fix rồi, mày check branch feature/login-fix nhé'],
-            [$lan,  'OK tao thấy rồi, code sạch hơn nhiều! Good job'],
-            [$khoa, 'Cảm ơn, cuối tuần merge vào main nhé'],
+        // ═══════════════════════════════════════════════════════════════════
+        //  4. DM Bình & Duy — để Duy có chat hiển thị
+        // ═══════════════════════════════════════════════════════════════════
+        $this->makeDM($binh, $duy, [
+            [$duy,  'Bình ơi, bài Lab hôm nay nộp chưa?'],
+            [$binh, 'Nộp rồi nha, bạn nộp chưa?'],
+            [$duy,  'Đang làm, gần xong rồi 😅'],
+            [$binh, 'Cố lên nha, deadline 23:59 đó!'],
         ]);
 
-        // ── DM: Khoa ↔ Dũng ──
-        $this->makeDM($khoa, $dung, [
-            [$khoa, 'Dũng ơi, tao đang code API login bị lỗi 401 hoài'],
-            [$dung, 'Mày check Authorization header chưa? Thường quên Bearer prefix'],
-            [$khoa, 'Ồ đúng rồi, mày tài vãi! Fix được liền'],
-            [$dung, 'Nhớ lần sau coi log response nha, tiết kiệm thời gian hơn'],
-            [$khoa, 'Oke cảm ơn mày. Tối nay nhậu không? Rủ thêm Lan và Ngọc'],
-            [$dung, 'Đi chứ, 7h nhà hàng Xưa nha'],
+        // ═══════════════════════════════════════════════════════════════════
+        //  5. DM từ người lạ — demo trạng thái pending stranger
+        // ═══════════════════════════════════════════════════════════════════
+        $strangerDM = Conversation::create([
+            'name'         => null,
+            'is_group'     => false,
+            'admin_id'     => null,
+            'member_count' => 2,
+            'created_at'   => now()->subHours(3),
+        ]);
+        ConversationParticipant::create([
+            'conversation_id' => $strangerDM->id,
+            'user_id'         => $nga->id,
+            'status'          => 'active',
+        ]);
+        ConversationParticipant::create([
+            'conversation_id' => $strangerDM->id,
+            'user_id'         => $cuong->id,
+            'status'          => 'pending', // Cường chưa kết bạn Nga → pending
+        ]);
+        Message::create([
+            'conversation_id' => $strangerDM->id,
+            'sender_id'       => $nga->id,
+            'content'         => 'Chào anh, em thấy anh cùng khoa CNTT, cho em hỏi về môn Mạng được không ạ?',
+            'type'            => 'text',
+            'created_at'      => now()->subHours(2),
+            'updated_at'      => now()->subHours(2),
         ]);
 
-        // ── DM: Khoa ↔ Đạt ──
-        $this->makeDM($khoa, $dat, [
-            [$khoa, 'Đạt ơi, portfolio website mới của mày đẹp quá!'],
-            [$dat,  'Cảm ơn Khoa! React + TypeScript + Tailwind, stack quen thuộc'],
-            [$khoa, 'Animation scroll mượt thật sự, dùng Framer Motion hả?'],
-            [$dat,  'Đúng rồi, Framer Motion giúp rất nhiều. Mày cũng thử đi'],
-            [$khoa, 'Oke để tao research thêm, cảm ơn nha!'],
-        ]);
-
-        // ── DM: Lan ↔ Ngọc ──
-        $this->makeDM($lan, $ngoc, [
-            [$lan,  'Ngọc ơi, bài assignment môn KTPM mày làm chưa?'],
-            [$ngoc, 'Làm rồi nhưng chưa xong phần diagram'],
-            [$lan,  'Mình làm cùng nhau đi, mình đang ở thư viện'],
-            [$ngoc, 'Ok tao sang liền, 10 phút nữa tao tới nha'],
-            [$lan,  'Oke mình giữ chỗ cho mày rồi. Nhớ mang charger nha!'],
-            [$ngoc, 'Mang rồi, cảm ơn mày!'],
-        ]);
-
-        // ── DM: Lan ↔ Linh ──
-        $this->makeDM($lan, $linh, [
-            [$lan,  'Linh ơi, mày dùng skincare gì vậy? Da mày đẹp quá'],
-            [$linh, 'Tao dùng Anessa sunscreen với CeraVe moisturizer thôi'],
-            [$lan,  'Mua ở đâu vậy? Online hay tiệm?'],
-            [$linh, 'Shopee đó, hay có voucher 20% lắm. Để tao gửi link'],
-            [$lan,  'Ok cảm ơn mày, bestie thật sự!'],
-        ]);
-
-        // ── DM: Minh ↔ Linh ──
-        $this->makeDM($minh, $linh, [
-            [$minh, 'Linh ơi, em đã push code lên chưa? Mình đang chờ review'],
-            [$linh, 'Rồi anh ơi, em push lên branch feature/login-fix rồi ạ'],
-            [$minh, 'OK để anh xem. À em nhớ viết unit test nha'],
-            [$linh, 'Dạ em viết rồi ạ, coverage 85%'],
-            [$minh, 'Ngon! Approve rồi, em merge đi nhé'],
-            [$linh, 'Cảm ơn anh! Em merge liền ạ'],
-        ]);
-
-        // ── DM: Long ↔ Ngân ──
-        $this->makeDM($long, $ngan, [
-            [$long, 'Ngân ơi hôm nay mưa to quá, em đi làm về chưa?'],
-            [$ngan, 'Chưa anh ơi, đang kẹt xe ở Nguyễn Văn Linh'],
-            [$long, 'Thôi ráng chịu đi em, về đến nhà nhắn anh nha'],
-            [$ngan, 'Dạ anh. Anh ăn cơm chưa? Em mua bánh mì mang về không?'],
-            [$long, 'Mua 1 cái cho anh, bánh mì thịt nguội nhé'],
-            [$ngan, 'Ok anh, em mua cho!'],
-        ]);
-
-        // ── DM: Đạt ↔ Hà ──
-        $this->makeDM($dat, $ha, [
-            [$dat, 'Hà ơi, deadline dự án là thứ 6 này đúng không?'],
-            [$ha,  'Đúng rồi Đạt ơi, 5pm thứ 6. Còn phần báo cáo chưa?'],
-            [$dat, 'Còn khoảng 3 trang nữa. Chiều nay hop video call 3h nhé'],
-            [$ha,  'Oke mình set Google Meet liền. Thêm Linh và Minh vào nữa nha'],
-            [$dat, 'Done, sent link rồi!'],
-        ]);
-
-        // ── DM: Huy ↔ Châu ──
-        $this->makeDM($huy, $chau, [
-            [$huy,  'Châu ơi mình xem phim gì tối nay nhỉ?'],
-            [$chau, 'Xem Inside Out 2 chưa? Mình nghe hay lắm'],
-            [$huy,  'Chưa xem, chiều CN nhé, 3h CGV Vincom'],
-            [$chau, 'Oke confirmed! Mua bắp rang chưa?'],
-            [$huy,  'Chưa, em mua ngay đây. Mua thêm nước cam nha'],
-        ]);
-
-        // ── DM: Tú ↔ Châu ──
-        $this->makeDM($tu, $chau, [
-            [$tu,   'Châu ơi đơn hàng ship chưa vậy?'],
-            [$chau, 'Tao check rồi, đang ở kho HCM, chiều nay giao thôi'],
-            [$tu,   'Oke good, mình đang cần gấp mấy cái đó'],
-            [$chau, 'Sao không tự đi mua cho lẹ?'],
-            [$tu,   'Online rẻ hơn mà thôi!'],
-        ]);
-
-        // ── DM: Mai ↔ Linh ──
-        $this->makeDM($mai, $linh, [
-            [$mai,  'Linh ơi, cuối tuần này đi chạy bộ cùng mình không?'],
-            [$linh, 'Được chứ! Mấy giờ và ở đâu vậy Mai?'],
-            [$mai,  '6h sáng công viên Gia Định, chạy 5km nhé'],
-            [$linh, 'Oke mình đi, mang thêm bình nước nha'],
-        ]);
-
-        // ── DM: Toàn ↔ Châu ──
-        $this->makeDM($toan, $chau, [
-            [$toan, 'Châu ơi, mày đang dùng laptop gì vậy? Mình xem mua mới'],
-            [$chau, 'MacBook Air M2 nè, dùng gần 1 năm rồi, hài lòng lắm'],
-            [$toan, 'Pin có trâu không? Mình cần dùng cả ngày'],
-            [$chau, 'Khoảng 14-16 tiếng nếu dùng nhẹ, code và browse bình thường'],
-            [$toan, 'Ngon vậy! Thôi mua 16GB cho chắc'],
-        ]);
-    }
-
-    private function seedGroups($huong, $khoa, $lan, $dung, $ngoc, $toan, $mai, $minh, $linh, $dat, $ha, $long, $ngan, $huy, $chau, $tu): void
-    {
-        // ── Group 1: Dự Án KTPM (Hương + Khoa + Lan đều có) ──
-        $this->makeGroup(
-            'Nhóm Dự Án KTPM - HK2',
-            $this->avatar('KTPM', '3b82f6'),
-            $khoa, [$huong, $lan, $dung, $ngoc, $toan],
+        // ═══════════════════════════════════════════════════════════════════
+        //  6. Private Group — Nhóm bạn thân (invite-only)
+        // ═══════════════════════════════════════════════════════════════════
+        $privateGroup = $this->makeGroup(
+            'Nhóm Đồ Án Web',
+            null,
+            $an,
+            [$binh, $cuong],
             [
-                [$khoa,  'Chào cả nhóm! Tạo group tiện liên lạc về đồ án nhé'],
-                [$huong, 'Hay quá! Vậy ai nhận phần nào rồi?'],
-                [$dung,  'Tao nhận phần backend API, Khoa mày làm database design nha'],
-                [$lan,   'Mình làm frontend nhé, mình quen React rồi'],
-                [$ngoc,  'Mình làm frontend cùng Lan nha, chia nhau component'],
-                [$toan,  'Để tao làm phần testing và documentation'],
-                [$khoa,  'Perfect! Mọi người dùng GitHub nhé, mình tạo repo rồi'],
-                [$huong, 'Gửi link đây Khoa ơi'],
-                [$khoa,  'https://github.com/ktpm-nhom5/project - request access nha'],
-                [$dung,  'Done, tao đã request rồi'],
-                [$lan,   'Mình cũng xong. Deadline first sprint khi nào?'],
-                [$khoa,  'Thứ 6 tuần sau, mình họp review nhé'],
-            ],
+                [$an,    'Chào team, mình lập nhóm để quản lý đồ án nha!'],
+                [$binh,  'Nhận, mình phụ trách phần backend.'],
+                [$cuong, 'Mình lo phần frontend React nhé.'],
+                [$an,    'Tuyệt vời! Mình sẽ setup repo GitHub tối nay.'],
+                [$binh,  'Ok anh, nhớ thêm file .env.example nha.'],
+                [$cuong, 'Mình đã push xong phần layout, anh em review giúp 🙏'],
+                [$an,    'Review xong rồi, nhìn clean lắm 👍'],
+            ]
         );
+        $privateGroup->update(['join_type' => 'invite']);
 
-        // ── Group 2: Team Backend VietSoft (Hương là member) ──
-        $this->makeGroup(
-            'Team Backend - Công ty VietSoft',
-            $this->avatar('VS', '16a34a'),
-            $minh, [$huong, $linh, $dat, $ha, $huy],
-            [
-                [$minh,  'Team ơi, server production đang bị slow, ai đang trực?'],
-                [$dat,   'Anh Minh ơi em đang online, em check ngay'],
-                [$ha,    'Em cũng online, query database hay traffic cao vậy anh?'],
-                [$minh,  'Check Datadog đi, tao thấy response time lên 3s rồi'],
-                [$dat,   'Found it! Query N+1 ở endpoint /api/orders, đang fix'],
-                [$linh,  'Em thêm eager loading vào được không anh?'],
-                [$huy,   'Em vừa deploy hotfix lên staging, test thử nhé'],
-                [$minh,  'Response time xuống 180ms rồi! Merge lên production đi'],
-                [$huong, 'Hú hồn, may mà phát hiện sớm. Team mình giỏi quá!'],
-            ],
-        );
+        // Đặt role cho participants
+        ConversationParticipant::where('conversation_id', $privateGroup->id)
+            ->where('user_id', $an->id)
+            ->update(['role' => 'owner']);
+        ConversationParticipant::where('conversation_id', $privateGroup->id)
+            ->where('user_id', $binh->id)
+            ->update(['role' => 'moderator']);
+        ConversationParticipant::where('conversation_id', $privateGroup->id)
+            ->where('user_id', $cuong->id)
+            ->update(['role' => 'member']);
 
-        // ── Group 3: Hội Yêu Phim (Hương + Khoa + Lan) ──
-        $this->makeGroup(
-            'Hội Yêu Phim',
-            $this->avatar('Film', 'e11d48'),
-            $huy, [$huong, $khoa, $lan, $chau, $tu, $mai],
-            [
-                [$huy,   'Hội phim ơi, tuần này xem gì nào?'],
-                [$chau,  'Mình muốn xem Inside Out 2, nghe hay lắm'],
-                [$tu,    'Mình xem trailer rồi, khóc từ trailer luôn'],
-                [$huong, 'Thế thì xem thôi, chắc chắn hay!'],
-                [$lan,   'Khi nào đi? Cuối tuần này được không?'],
-                [$khoa,  'Mình bận sáng thứ 7, chiều được không?'],
-                [$huy,   'Chiều CN nhé, 3h CGV Vincom'],
-                [$mai,   'Mình book vé nhé, ai muốn ghế nào?'],
-                [$lan,   'Hàng G giữa nha, tầm nhìn tốt nhất'],
-                [$huong, 'G7 đến G13, 7 vé. Mỗi người 95k chuyển khoản Mai nha'],
-            ],
-        );
+        // System message (thêm thành viên)
+        Message::create([
+            'conversation_id' => $privateGroup->id,
+            'sender_id'       => null,
+            'content'         => 'Nguyễn Văn An đã tạo nhóm với Trần Thị Bình, Lê Minh Cường',
+            'type'            => 'system',
+            'created_at'      => $privateGroup->created_at,
+            'updated_at'      => $privateGroup->created_at,
+        ]);
 
-        // ── Group 4: Xóm Trọ (Khoa là member) ──
-        $this->makeGroup(
-            'Xóm Trọ 18B Nguyễn Trãi',
-            $this->avatar('Xom Tro', 'f59e0b'),
-            $long, [$khoa, $ngan, $toan, $dat],
+        // ═══════════════════════════════════════════════════════════════════
+        //  7. Community Open — Cộng đồng IT PTIT (nhiều thành viên)
+        // ═══════════════════════════════════════════════════════════════════
+        $communityOpen = $this->makeGroup(
+            'Cộng Đồng IT PTIT',
+            null,
+            $cuong,
+            [$an, $binh, $duy, $mai],
             [
-                [$long, 'Mọi người ơi, tiền điện tháng này ai chưa đóng?'],
-                [$ngan, 'Em chưa anh ơi, bao nhiêu vậy?'],
-                [$long, '450k/phòng, tháng này xài điều hòa nhiều'],
-                [$toan, 'Mình chuyển ngay, STK VPBank 0123456789 đúng không?'],
-                [$khoa, 'Mình cũng chuyển rồi anh Long nha'],
-                [$dat,  'Anh Long ơi bồn nước tầng 3 bị rỉ nước'],
-                [$long, 'Trời ơi, để anh gọi thợ. Thứ 7 sửa hết một lần nhé'],
-                [$ngan, 'Cảm ơn anh Long nhé!'],
-            ],
+                [$cuong, 'Chào mừng mọi người đến với cộng đồng IT PTIT! 🎉'],
+                [$an,    'Nhóm này có cho phép share tài liệu không admin?'],
+                [$cuong, 'Có nhé bạn, mọi thành viên đều có thể upload tài liệu vào phần Tài nguyên.'],
+                [$duy,   'Mình mới share bộ đề thi OOP năm ngoái, mọi người xem thử nha.'],
+                [$mai,   'Có ai có slide môn UX/UI Design không ạ? 🙏'],
+                [$binh,  'Mình có tài liệu OWASP Top 10, upload cho nhóm luôn nhé.'],
+                [$an,    'Tuyệt vời! Nhóm này ngày càng hữu ích 👏'],
+                [$cuong, 'Anh em nhớ ghim tài liệu quan trọng nha, để mọi người dễ tìm.'],
+            ]
         );
+        $communityOpen->update([
+            'description' => 'Nơi chia sẻ kiến thức, tài liệu và kinh nghiệm học tập IT cho sinh viên PTIT. Tham gia tự do, cùng nhau phát triển! 🚀',
+            'join_type'   => 'open',
+            'category'    => 'department',
+        ]);
 
-        // ── Group 5: Gia Đình Nhỏ (Hương admin) ──
-        $this->makeGroup(
-            'Gia Đình Nhỏ',
-            $this->avatar('Gia Dinh', '8b5cf6'),
-            $huong, [$lan, $minh, $chau],
-            [
-                [$huong, 'Mọi người ăn tối chưa? Nay mình nấu canh chua cá lóc'],
-                [$lan,   'Chưa đây chị, thơm chưa?'],
-                [$chau,  'Cá lóc! Tuyệt vời, em về liền'],
-                [$huong, 'Còn 20 phút nữa xong, mọi người về ăn cơm nha'],
-                [$minh,  'Anh mua thêm nước ngọt nha chị'],
-                [$huong, 'Mua Sting đỏ nha, tủ lạnh hết rồi'],
-                [$chau,  'Em về rồi! Mùi thơm quá trời'],
-                [$huong, 'Vào rửa tay ăn cơm nào mọi người!'],
-            ],
-        );
+        ConversationParticipant::where('conversation_id', $communityOpen->id)
+            ->where('user_id', $cuong->id)
+            ->update(['role' => 'owner']);
+        ConversationParticipant::where('conversation_id', $communityOpen->id)
+            ->where('user_id', $an->id)
+            ->update(['role' => 'moderator']);
 
-        // ── Group 6: Book Club (Hương + Khoa) ──
-        $this->makeGroup(
-            'Book Club Sài Gòn',
-            $this->avatar('Book', 'dc2626'),
-            $huong, [$khoa, $dung, $chau, $tu, $linh],
-            [
-                [$huong, 'Chào book lovers! Group chia sẻ sách hay nha'],
-                [$dung,  'Mình đang đọc Atomic Habits, hay đó mọi người'],
-                [$chau,  'Mình đang đọc Người Giàu Nhất Thành Babylon'],
-                [$khoa,  'Deep Work của Cal Newport nha, dân IT nên đọc'],
-                [$linh,  'Mình đọc Sapiens, không thể đặt xuống được'],
-                [$tu,    'Mình có bản epub share cho mọi người được không?'],
-                [$huong, 'Tháng này đọc cùng Sapiens nhé? Thảo luận cuối tháng'],
-                [$dung,  'Sapiens hay lắm, đọc lại vẫn oke!'],
-            ],
-        );
+        // ── Tài liệu nhóm (đa dạng loại file) ────────────────────────────
+        GroupResource::create([
+            'conversation_id' => $communityOpen->id,
+            'uploader_id'     => $an->id,
+            'title'           => 'Slide Lập Trình Web - Chương 1-5',
+            'description'     => 'Slide bài giảng lập trình Web từ chương 1 đến chương 5, bao gồm HTML, CSS, JavaScript cơ bản.',
+            'file_url'        => 'group_resources/sample/slide-web.pdf',
+            'file_type'       => 'pdf',
+            'file_size'       => 4500000,
+            'category'        => 'lecture',
+            'download_count'  => 24,
+            'is_pinned'       => true,
+            'created_at'      => now()->subDays(5),
+            'updated_at'      => now()->subDays(5),
+        ]);
 
-        // ── Group 7: Runners Club (Hương + Lan) ──
-        $this->makeGroup(
-            'Runners Club HCM',
-            $this->avatar('Run', '16a34a'),
-            $mai, [$huong, $lan, $huy, $linh, $chau],
-            [
-                [$mai,   'Group này để cùng nhau lên kế hoạch chạy bộ nha!'],
-                [$huy,   'Một mình thiếu motivation, chạy nhóm vui hơn'],
-                [$huong, 'Mình mới bắt đầu 2 tuần, còn yếu lắm mọi người ơi'],
-                [$mai,   'Không sao, chạy theo pace của mình là được nha'],
-                [$lan,   'Chạy sáng hay chiều? Mình prefer sáng sớm'],
-                [$chau,  'Sáng 6h được không? Kịp về tắm rồi đi làm'],
-                [$linh,  'Công viên Gia Định rộng, track rõ ràng hơn'],
-                [$huy,   'Thứ 7 đầu tiên 8h sáng, starter run 3km nhé'],
-            ],
-        );
+        GroupResource::create([
+            'conversation_id' => $communityOpen->id,
+            'uploader_id'     => $duy->id,
+            'title'           => 'Đề thi OOP 2025 - Đề chính thức',
+            'description'     => 'Đề thi Lập trình hướng đối tượng kỳ 2 năm 2025, có đáp án tham khảo.',
+            'file_url'        => 'group_resources/sample/de-thi-oop.pdf',
+            'file_type'       => 'pdf',
+            'file_size'       => 2200000,
+            'category'        => 'exam',
+            'download_count'  => 18,
+            'is_pinned'       => true,
+            'created_at'      => now()->subDays(3),
+            'updated_at'      => now()->subDays(3),
+        ]);
 
-        // ── Group 8: Hội Nấu Ăn (Lan admin) ──
-        $this->makeGroup(
-            'Hội Nấu Ăn Cuối Tuần',
-            $this->avatar('Cook', 'ea580c'),
-            $lan, [$huong, $ngan, $mai, $ha, $ngoc],
-            [
-                [$lan,   'Hội chị em! Share công thức và nấu ăn cùng nhau nha'],
-                [$mai,   'Hay quá! Cuối tuần mình hay không biết nấu gì'],
-                [$ngan,  'Mình mới học cách làm phở bò chuẩn vị'],
-                [$ha,    'Phở bò nghe hấp dẫn! Ninh xương bao lâu vậy Ngân?'],
-                [$ngan,  'Ít nhất 6 tiếng, bù lại nước dùng ngọt lắm'],
-                [$ngoc,  'Mình biết làm bánh flan, ai muốn học không?'],
-                [$huong, 'Mình muốn học! Thứ 7 này nhà Lan nhé'],
-                [$lan,   'Oke mọi người, thứ 7 tụ họp nha!'],
-            ],
-        );
+        GroupResource::create([
+            'conversation_id' => $communityOpen->id,
+            'uploader_id'     => $binh->id,
+            'title'           => 'OWASP Top 10 - 2024 (Tiếng Việt)',
+            'description'     => 'Tài liệu dịch OWASP Top 10 các lỗ hổng bảo mật web phổ biến nhất.',
+            'file_url'        => 'group_resources/sample/owasp-top-10.pdf',
+            'file_type'       => 'pdf',
+            'file_size'       => 3100000,
+            'category'        => 'lecture',
+            'download_count'  => 12,
+            'is_pinned'       => false,
+            'created_at'      => now()->subDays(2),
+            'updated_at'      => now()->subDays(2),
+        ]);
 
-        // ── Group 9: Cựu Sinh Viên K18 (Khoa + Hương + Lan) ──
-        $this->makeGroup(
-            'Cựu Sinh Viên CNTT K18',
-            $this->avatar('K18', '2563eb'),
-            $khoa, [$huong, $lan, $dung, $ngoc, $toan, $minh],
+        GroupResource::create([
+            'conversation_id' => $communityOpen->id,
+            'uploader_id'     => $cuong->id,
+            'title'           => 'Template Báo Cáo Đồ Án',
+            'description'     => 'Mẫu báo cáo đồ án tốt nghiệp chuẩn format PTIT 2026.',
+            'file_url'        => 'group_resources/sample/template-bao-cao.docx',
+            'file_type'       => 'doc',
+            'file_size'       => 850000,
+            'category'        => 'other',
+            'download_count'  => 31,
+            'is_pinned'       => false,
+            'created_at'      => now()->subDays(7),
+            'updated_at'      => now()->subDays(7),
+        ]);
+
+        GroupResource::create([
+            'conversation_id' => $communityOpen->id,
+            'uploader_id'     => $mai->id,
+            'title'           => 'Bảng tổng hợp điểm môn CSDL',
+            'description'     => 'Bảng điểm tham khảo các kỳ, format Excel dễ tra cứu.',
+            'file_url'        => 'group_resources/sample/bang-diem-csdl.xlsx',
+            'file_type'       => 'excel',
+            'file_size'       => 420000,
+            'category'        => 'other',
+            'download_count'  => 7,
+            'is_pinned'       => false,
+            'created_at'      => now()->subDays(1),
+            'updated_at'      => now()->subDays(1),
+        ]);
+
+        GroupResource::create([
+            'conversation_id' => $communityOpen->id,
+            'uploader_id'     => $duy->id,
+            'title'           => 'Bài thuyết trình Machine Learning',
+            'description'     => 'Slide thuyết trình môn ML, chủ đề Neural Networks.',
+            'file_url'        => 'group_resources/sample/ml-presentation.pptx',
+            'file_type'       => 'ppt',
+            'file_size'       => 6200000,
+            'category'        => 'lecture',
+            'download_count'  => 9,
+            'is_pinned'       => false,
+            'created_at'      => now()->subHours(12),
+            'updated_at'      => now()->subHours(12),
+        ]);
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  8. Community Request — Luyện thi DSA (cần duyệt)
+        // ═══════════════════════════════════════════════════════════════════
+        $communityRequest = $this->makeGroup(
+            'CLB Luyện Thi DSA',
+            null,
+            $binh,
+            [$an, $duy],
             [
-                [$khoa,  'Chào cả lớp K18! Group liên lạc và tụ họp nha'],
-                [$huong, 'Lâu rồi không gặp cả lớp, nhớ quá!'],
-                [$lan,   'Ai đang làm ở đâu rồi? Check-in đi mọi người!'],
-                [$toan,  'Mình đang Software Engineer tại FPT Software'],
-                [$minh,  'Senior Backend tại VietSoft, cần refer việc nhắn anh'],
-                [$dung,  'Năm nay tốt nghiệp được 2 năm rồi, thấy già thật'],
-                [$ngoc,  'Mình cũng muốn đi họp lớp!'],
-                [$khoa,  'Tháng 6 này họp lớp không mọi người?'],
-                [$lan,   'Đi chứ!! Nhớ hồi còn đi học quá'],
-                [$huong, 'Vote thứ 7 28/6, nhà hàng hay quán nào đó?'],
-            ],
+                [$binh, 'Chào mọi người, nhóm này chuyên luyện DSA để chuẩn bị phỏng vấn.'],
+                [$an,   'Hay quá! Mình sẽ share bài tập LeetCode hàng tuần.'],
+                [$duy,  'Mình cũng muốn tham gia, đang ôn cho kỳ thi cuối kỳ.'],
+                [$binh, 'Anh em nhớ giải ít nhất 3 bài/tuần nha 💪'],
+                [$an,   'Bài hôm nay: Two Sum, khá dễ để warm-up.'],
+                [$duy,  'Xong rồi, mình AC được cả 2 approach.'],
+            ]
         );
+        $communityRequest->update([
+            'description' => 'Nhóm kín ôn luyện Cấu trúc dữ liệu & Giải thuật. Giải bài LeetCode hàng tuần, chia sẻ kinh nghiệm phỏng vấn BigTech.',
+            'join_type'   => 'request',
+            'category'    => 'subject',
+        ]);
+
+        ConversationParticipant::where('conversation_id', $communityRequest->id)
+            ->where('user_id', $binh->id)
+            ->update(['role' => 'owner']);
+        ConversationParticipant::where('conversation_id', $communityRequest->id)
+            ->where('user_id', $an->id)
+            ->update(['role' => 'moderator']);
+
+        // Yêu cầu tham gia nhóm (pending) — demo UI duyệt
+        GroupJoinRequest::create([
+            'conversation_id' => $communityRequest->id,
+            'user_id'         => $cuong->id,
+            'status'          => 'pending',
+            'created_at'      => now()->subHours(4),
+        ]);
+        GroupJoinRequest::create([
+            'conversation_id' => $communityRequest->id,
+            'user_id'         => $khoa->id,
+            'status'          => 'pending',
+            'created_at'      => now()->subHours(1),
+        ]);
+
+        // Tài liệu nhóm DSA
+        GroupResource::create([
+            'conversation_id' => $communityRequest->id,
+            'uploader_id'     => $binh->id,
+            'title'           => 'Roadmap DSA cho phỏng vấn',
+            'description'     => 'Lộ trình ôn DSA 8 tuần dành cho phỏng vấn Software Engineer.',
+            'file_url'        => 'group_resources/sample/dsa-roadmap.pdf',
+            'file_type'       => 'pdf',
+            'file_size'       => 1800000,
+            'category'        => 'lecture',
+            'download_count'  => 15,
+            'is_pinned'       => true,
+            'created_at'      => now()->subDays(4),
+            'updated_at'      => now()->subDays(4),
+        ]);
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  9. Community Open — CLB Tiếng Anh (thêm đa dạng nhóm Khám phá)
+        // ═══════════════════════════════════════════════════════════════════
+        $englishClub = $this->makeGroup(
+            'CLB Tiếng Anh PTIT',
+            null,
+            $nga,
+            [$mai],
+            [
+                [$nga, 'Welcome to English Club! Let\'s practice together 🌍'],
+                [$mai, 'Excited to join! Can we do weekly speaking sessions?'],
+                [$nga, 'Sure! Every Saturday 9 AM. See you there!'],
+            ]
+        );
+        $englishClub->update([
+            'description' => 'CLB Tiếng Anh PTIT — Luyện speaking, writing, IELTS/TOEIC hàng tuần. Open for all students!',
+            'join_type'   => 'open',
+            'category'    => 'language',
+        ]);
+        ConversationParticipant::where('conversation_id', $englishClub->id)
+            ->where('user_id', $nga->id)
+            ->update(['role' => 'owner']);
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  10. Community Request — CLB Design (thêm đa dạng)
+        // ═══════════════════════════════════════════════════════════════════
+        $designClub = $this->makeGroup(
+            'Design & Creative PTIT',
+            null,
+            $mai,
+            [],
+            [
+                [$mai, 'Chào mừng đến CLB Design! Chia sẻ portfolio và nhận feedback từ anh chị nhé 🎨'],
+            ]
+        );
+        $designClub->update([
+            'description' => 'CLB thiết kế sáng tạo — UI/UX, Graphic Design, Portfolio Review. Yêu cầu duyệt để đảm bảo chất lượng thành viên.',
+            'join_type'   => 'request',
+            'category'    => 'other',
+        ]);
+        ConversationParticipant::where('conversation_id', $designClub->id)
+            ->where('user_id', $mai->id)
+            ->update(['role' => 'owner']);
     }
 }

@@ -18,6 +18,7 @@ import ChatInput from '../../features/chat/components/ChatInput';
 import MessageBubble from '../../features/chat/components/MessageBubble';
 import CreateGroupModal from '../../features/chat/components/CreateGroupModal';
 import GroupInfoPanel from '../../features/chat/components/GroupInfoPanel';
+import ResourcePanel from '../../features/chat/components/ResourcePanel';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import TypingIndicator from '../../features/chat/components/TypingIndicator';
 
@@ -41,6 +42,8 @@ export default function ChatPage() {
 
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const [showResourcePanel, setShowResourcePanel] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   // ── Confirm Dialog state ────────────────────────────────────────────────
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -82,6 +85,7 @@ export default function ChatPage() {
     error: msgError,
     sendMessage,
     sendImageMessage,
+    sendFileMessage,
     loadMore,
     markRead,
     handleLocalRecall,
@@ -194,6 +198,7 @@ export default function ChatPage() {
     setActiveConversationId(conv.id);
     setSearchParams({ conversationId: conv.id.toString() });
     setShowGroupInfo(false);
+    setShowResourcePanel(false);
   };
 
   // ── Group actions ─────────────────────────────────────────────────────────
@@ -301,6 +306,18 @@ export default function ChatPage() {
     });
   };
 
+  const handleSendFile = async (file: File, meta?: { title: string; category: string; description: string }) => {
+    if (!activeConversation) return;
+    try {
+      setUploadProgress(0);
+      await sendFileMessage(file, meta, (progress) => {
+        setUploadProgress(progress);
+      });
+    } finally {
+      setUploadProgress(null);
+    }
+  };
+
   // ── Group panel check ─────────────────────────────────────────────────────
   const isGroup = activeConversation?.is_group ?? false;
 
@@ -341,7 +358,18 @@ export default function ChatPage() {
                   <ChatHeader
                     conversation={activeConversation}
                     currentUser={user}
-                    onInfoClick={() => setShowGroupInfo((v) => !v)}
+                    onInfoClick={() => {
+                      if (isGroup) {
+                        setShowGroupInfo((v) => !v);
+                        setShowResourcePanel(false);
+                      } else {
+                        setShowResourcePanel((v) => !v);
+                      }
+                    }}
+                    onResourceClick={() => {
+                      setShowResourcePanel((v) => !v);
+                      setShowGroupInfo(false);
+                    }}
                     onLeaveGroup={handleLeaveGroup}
                     onDissolveGroup={handleDissolveGroup}
                     onClearChat={handleClearChat}
@@ -507,11 +535,22 @@ export default function ChatPage() {
                           <TypingIndicator text={typingText} />
                         </div>
                       )}
+                      
+                      {/* Upload progress */}
+                      {uploadProgress !== null && (
+                        <div className="px-4 py-2 bg-indigo-50 border-t border-indigo-100 flex items-center justify-between">
+                          <span className="text-xs font-medium text-indigo-700">Đang tải tài liệu lên...</span>
+                          <span className="text-xs font-bold text-indigo-700">{uploadProgress}%</span>
+                          <div className="absolute bottom-0 left-0 h-1 bg-indigo-500 transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                        </div>
+                      )}
+
                       <ChatInput
                         onSend={sendMessage}
                         onSendImage={sendImageMessage}
+                        onSendFile={handleSendFile}
                         onTyping={emitTyping}
-                        disabled={isLoadingMsgs}
+                        disabled={isLoadingMsgs || uploadProgress !== null}
                       />
                     </>
                   )}
@@ -531,6 +570,28 @@ export default function ChatPage() {
                       />
                     </div>
                   )}
+
+                  {/* Resource panel — dùng cho cả DM và Group (khi không mở GroupInfoPanel) */}
+                  {showResourcePanel && !showGroupInfo && (
+                    <div className="absolute inset-y-0 right-0 w-72 z-10 flex flex-col bg-white border-l border-gray-200 shadow-xl">
+                      {/* Panel header */}
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+                        <h3 className="font-bold text-gray-900 text-sm">Tài liệu</h3>
+                        <button onClick={() => setShowResourcePanel(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="flex-grow overflow-hidden">
+                        <ResourcePanel
+                          conversationId={activeConversation.id}
+                          currentUser={user}
+                          myRole={activeConversation.my_role ?? (activeConversation.admin_id === user.id ? 'owner' : 'member')}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 /* Empty state */
@@ -541,9 +602,9 @@ export default function ChatPage() {
                         d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-700 mb-2">Chào mừng đến Chatify</h3>
+                  <h3 className="text-xl font-bold text-gray-700 mb-2">Chào mừng đến PTIT Social</h3>
                   <p className="text-sm text-gray-500 max-w-xs leading-relaxed">
-                    Chọn một cuộc trò chuyện từ danh sách bên trái để bắt đầu nhắn tin, hoặc tạo nhóm mới.
+                    Chọn một cuộc trò chuyện hoặc khám phá <strong>Cộng đồng</strong> trong tab bên trái để bắt đầu.
                   </p>
                   <button
                     onClick={() => setShowCreateGroup(true)}
