@@ -12,6 +12,12 @@ use App\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Controller Hồ sơ cá nhân (Profile Controller).
+ *
+ * Xử lý các API endpoint liên quan đến hồ sơ người dùng:
+ * cập nhật thông tin, đổi mật khẩu, lấy bài đăng của mình.
+ */
 class ProfileController extends Controller
 {
     use ApiResponses;
@@ -20,6 +26,10 @@ class ProfileController extends Controller
         protected ProfileServiceInterface $profileService
     ) {}
 
+    /**
+     * PUT /api/v1/profile
+     * Cập nhật thông tin hồ sơ cá nhân (tên, bio, MSSV, khoa, avatar).
+     */
     public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {
         $user = $this->profileService->updateProfile(
@@ -33,6 +43,10 @@ class ProfileController extends Controller
         );
     }
 
+    /**
+     * PUT /api/v1/profile/password
+     * Đổi mật khẩu (yêu cầu nhập mật khẩu cũ).
+     */
     public function updatePassword(UpdatePasswordRequest $request): JsonResponse
     {
         $this->profileService->updatePassword(
@@ -43,6 +57,10 @@ class ProfileController extends Controller
         return $this->success(null, 'Đổi mật khẩu thành công.');
     }
 
+    /**
+     * GET /api/v1/profile/posts
+     * Lấy danh sách bài đăng của mình.
+     */
     public function getMyPosts(Request $request): JsonResponse
     {
         $posts = $this->profileService->getMyPosts((int) auth()->id());

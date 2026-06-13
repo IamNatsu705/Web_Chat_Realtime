@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { useAuth } from '../../providers/AuthProvider';
 import { useNavigate, Link } from 'react-router-dom';
 
+/**
+ * RegisterPage — Trang đăng ký tài khoản mới.
+ *
+ * Thu thập thông tin: họ tên, email, mật khẩu, thông tin sinh viên PTIT (tùy chọn).
+ * Sau khi đăng ký thành công, tự động đăng nhập và chuyển về trang chủ.
+ */
 export default function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -33,7 +39,7 @@ export default function RegisterPage() {
         student_id: studentId || undefined,
         department: department || undefined,
       });
-      navigate('/'); // Redirect to dashboard or home
+      navigate('/'); // Chuyển hướng về trang chủ
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       if (err.response?.data?.message) {

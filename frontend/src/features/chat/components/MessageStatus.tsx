@@ -2,17 +2,17 @@ import type { MessageStatus } from '../types';
 
 interface MessageStatusProps {
   status: MessageStatus;
-  /** Show as small inline icons */
+  /** Hiển thị dạng biểu tượng nhỏ */
   size?: 'sm' | 'xs';
 }
 
 /**
- * MessageStatus — renders tick icons based on message status:
- *   sending   → clock icon (gray)
- *   sent      → single tick (gray)
- *   delivered → double tick (gray)
- *   read      → double tick (blue)
- *   failed    → exclamation (red)
+ * MessageStatus — hiển thị biểu tượng dựa trên trạng thái tin nhắn:
+ *   sending   → biểu tượng đồng hồ (xám)
+ *   sent      → một dấu tích (xám)
+ *   delivered → hai dấu tích (xám)
+ *   read      → hai dấu tích (xanh lam)
+ *   failed    → dấu chấm than (đỏ)
  */
 export default function MessageStatus({ status, size = 'xs' }: MessageStatusProps) {
   const dim = size === 'xs' ? 'w-3.5 h-3.5' : 'w-4 h-4';
@@ -36,7 +36,7 @@ export default function MessageStatus({ status, size = 'xs' }: MessageStatusProp
   }
 
   if (status === 'sent') {
-    // Single tick
+    // Một dấu tích
     return (
       <svg className={`${dim} text-indigo-200 inline`} viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd"
@@ -47,7 +47,7 @@ export default function MessageStatus({ status, size = 'xs' }: MessageStatusProp
   }
 
   if (status === 'delivered') {
-    // Double tick gray
+    // Hai dấu tích xám
     return (
       <span className="inline-flex items-center -space-x-1">
         <svg className={`${dim} text-gray-400`} viewBox="0 0 20 20" fill="currentColor">
@@ -65,7 +65,7 @@ export default function MessageStatus({ status, size = 'xs' }: MessageStatusProp
   }
 
   if (status === 'read') {
-    // Double tick blue
+    // Hai dấu tích xanh lam
     return (
       <span className="inline-flex items-center -space-x-1">
         <svg className={`${dim} text-blue-400`} viewBox="0 0 20 20" fill="currentColor">

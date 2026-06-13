@@ -14,13 +14,13 @@ import toast from 'react-hot-toast';
 
 interface GroupUpdatedPayload {
   type:
-    | 'group_created'
-    | 'member_added'
-    | 'member_removed'
-    | 'member_left'
-    | 'group_renamed'
-    | 'group_avatar_changed'
-    | 'group_dissolved';
+  | 'group_created'
+  | 'member_added'
+  | 'member_removed'
+  | 'member_left'
+  | 'group_renamed'
+  | 'group_avatar_changed'
+  | 'group_dissolved';
   conversationId: number;
   actor: { id: number; name: string };
   target?: { id: number; name: string } | null;
@@ -30,8 +30,8 @@ interface GroupUpdatedPayload {
 /**
  * `WebSocketProvider` — Trái tim xử lý Real-time (Thời gian thực) của ứng dụng Chat.
  *
- * Nhiệm vụ chính của Provider này là lắng nghe (Subscribe) các sự kiện (Events) được phát 
- * từ Laravel Reverb qua giao thức WebSockets, và ngay lập tức phản ánh sự thay đổi đó 
+ * Nhiệm vụ chính của Provider này là lắng nghe (Subscribe) các sự kiện (Events) được phát
+ * từ Laravel Reverb qua giao thức WebSockets, và ngay lập tức phản ánh sự thay đổi đó
  * lên giao diện người dùng thông qua việc can thiệp vào bộ nhớ đệm Cache (TanStack Query).
  *
  * **Các nhóm Event đang xử lý:**
@@ -95,7 +95,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
               (old = []) => old.filter((c) => c.id !== conversationId)
             );
             // Xóa hoàn toàn cache tin nhắn (messages cache) của cuộc trò chuyện này.
-            // Điều này cực kỳ quan trọng để ngăn chặn lỗi hiển thị dữ liệu "bóng ma" (stale data) 
+            // Điều này cực kỳ quan trọng để ngăn chặn lỗi hiển thị dữ liệu "bóng ma" (stale data)
             // trong trường hợp user bị kích (kick) và sau đó được mời lại vào chính nhóm này.
             queryClient.removeQueries({ queryKey: CHAT_QUERIES.messages(conversationId) });
             // BUG-15 FIX: Toast thông báo bị kick
@@ -120,7 +120,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
               CHAT_QUERIES.conversations(),
               (old = []) => old.filter((c) => c.id !== conversationId)
             );
-            // BUG-C2 FIX: Xóa messages cache để tránh memory leak
+            // Xóa messages cache để tránh memory leak
             queryClient.removeQueries({ queryKey: CHAT_QUERIES.messages(conversationId) });
           } else {
             // Người khác rời → refetch để cập nhật members
@@ -132,7 +132,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         }
 
         case 'group_renamed': {
-          // BUG-C4 FIX: invalidate thay vì chỉ setQueryData để đảm bảo đồng bộ
+          // invalidate thay vì chỉ setQueryData để đảm bảo đồng bộ
           // với system message có thể đến trước/sau event này
           queryClient.invalidateQueries({
             queryKey: CHAT_QUERIES.conversations(),
@@ -186,7 +186,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       const conversations = queryClient.getQueryData<Conversation[]>(CHAT_QUERIES.conversations()) || [];
       const exists = conversations.some(c => c.id === convId);
 
-      // Khi nhận được tin nhắn toàn cục (Global Message), nếu conversation_id chưa tồn tại 
+      // Khi nhận được tin nhắn toàn cục (Global Message), nếu conversation_id chưa tồn tại
       // trong sidebar cache (có thể do đây là nhóm mới hoặc đã bị xóa lịch sử / ẩn trước đó),
       // thực hiện Invalidate Query để fetch lại danh sách trò chuyện và hiển thị nó lên giao diện.
       if (!exists) {
@@ -261,7 +261,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         // Cập nhật trạng thái 'read' cho tin nhắn của user gửi đi
         updateMessagesInCache(queryClient, convId, (msg) =>
           msg.sender_id === user.id &&
-          (msg.status === 'sent' || msg.status === 'delivered')
+            (msg.status === 'sent' || msg.status === 'delivered')
             ? { ...msg, status: 'read' as const }
             : msg
         );
@@ -330,7 +330,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     return () => {
       // BUG-10 FIX (Memory Leak & 403 Forbidden Prevention):
       // Khi component unmount hoặc conversationIds thay đổi, BẮT BUỘC phải gỡ bỏ các Event Listeners
-      // (.stopListening) để giải phóng bộ nhớ. Nếu không, Echo sẽ cố gắng kết nối lại hoặc 
+      // (.stopListening) để giải phóng bộ nhớ. Nếu không, Echo sẽ cố gắng kết nối lại hoặc
       // nhận sự kiện từ các kênh (channels) mà user không còn quyền truy cập, gây lỗi 403 Authentication.
       channels.forEach((channel) => {
         channel.stopListening('.MessageSent');

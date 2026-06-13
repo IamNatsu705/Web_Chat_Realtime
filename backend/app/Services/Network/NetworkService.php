@@ -13,6 +13,15 @@ use App\Repositories\MessageRepo\MessageRepositoryInterface;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Service Mạng lưới bạn bè (Network Service).
+ *
+ * Xử lý toàn bộ nghiệp vụ liên quan đến mạng lưới bạn bè:
+ * - Gửi/hủy/phản hồi lời mời kết bạn.
+ * - Quản lý danh sách bạn bè (lấy danh sách, hủy kết bạn).
+ * - Gợi ý kết bạn thông minh (mutual friends + fallback department).
+ * - Tự động tạo cuộc trò chuyện khi trở thành bạn bè.
+ */
 class NetworkService implements NetworkServiceInterface
 {
     public function __construct(
@@ -23,6 +32,10 @@ class NetworkService implements NetworkServiceInterface
         protected ConversationParticipantRepositoryInterface $participantRepo
     ) {}
 
+    /**
+     * Gửi lời mời kết bạn.
+     * Kiểm tra: đã là bạn bè, đã có lời mời từ đối phương, đã gửi lời mời trước đó.
+     */
     public function sendFriendRequest(int $senderId, int $receiverId)
     {
         $isFriend = $this->friendshipRepo->checkIsFriend($senderId, $receiverId);
@@ -40,27 +53,34 @@ class NetworkService implements NetworkServiceInterface
             throw new Exception('Bạn đã gửi lời mời rồi.');
         }
 
-        $request = $this->friendRequestRepo->create([
-            'sender_id'   => $senderId,
-            'receiver_id' => $receiverId,
-            'status'      => 'pending',
-        ]);
+        // Dùng firstOrCreate để tránh lỗi Unique Constraint Violation khi spam click
+        $request = $this->friendRequestRepo->firstOrCreate(
+            ['sender_id' => $senderId, 'receiver_id' => $receiverId],
+            ['status' => 'pending']
+        );
 
+        // Phát sự kiện real-time để cập nhật badge lời mời kết bạn
         broadcast(new FriendRequestReceived($receiverId))->toOthers();
 
         return $request;
     }
 
+    /** {@inheritdoc} */
     public function getIncomingRequests(int $userId)
     {
         return $this->friendRequestRepo->getIncomingRequests($userId);
     }
 
+    /** {@inheritdoc} */
     public function getFriends(int $userId)
     {
         return $this->friendshipRepo->getFriendsByUserId($userId);
     }
 
+    /**
+     * Hủy lời mời kết bạn đã gửi.
+     * Phát sự kiện để cập nhật UI phía người nhận.
+     */
     public function cancelFriendRequest(int $senderId, int $receiverId): void
     {
         $request = $this->friendRequestRepo->findSentRequest($senderId, $receiverId);
@@ -75,6 +95,10 @@ class NetworkService implements NetworkServiceInterface
         broadcast(new FriendRequestUpdated($receiverId))->toOthers();
     }
 
+    /**
+     * Phản hồi lời mời kết bạn (accept/reject).
+     * Nếu accept: tạo bản ghi bạn bè + cuộc trò chuyện + tin nhắn hệ thống trong 1 transaction.
+     */
     public function respondToRequest(int $requestId, int $currentUserId, string $action): void
     {
         $friendRequest = $this->friendRequestRepo->findOrFail($requestId);
@@ -92,6 +116,7 @@ class NetworkService implements NetworkServiceInterface
             $receiverId = $friendRequest->receiver_id;
 
             DB::transaction(function () use ($friendRequest, $senderId, $receiverId) {
+                // Tạo quan hệ bạn bè
                 $this->friendshipRepo->create([
                     'user_id'   => $senderId,
                     'friend_id' => $receiverId,
@@ -115,7 +140,7 @@ class NetworkService implements NetworkServiceInterface
     /**
      * Khi hai người dùng trở thành bạn bè, tạo (hoặc tái sử dụng) cuộc trò chuyện 1-1
      * và gửi tin nhắn hệ thống "Hai bạn đã trở thành bạn bè".
-     * Xử lý luôn chuyển đổi người lạ => bạn bè bằng cách cập nhật trạng thái pending thành active.
+     * Xử lý luôn chuyển đổi người lạ → bạn bè bằng cách cập nhật trạng thái pending → active.
      */
     protected function createFriendConversation(int $userId, int $friendId): void
     {
@@ -123,7 +148,7 @@ class NetworkService implements NetworkServiceInterface
         $conversation = $this->conversationRepo->getDirectConversation($userId, $friendId);
 
         if ($conversation) {
-            // Cập nhật trạng thái participant từ pending/rejected thành active (người lạ => bạn bè)
+            // Cập nhật trạng thái participant từ pending/rejected → active (người lạ → bạn bè)
             $this->participantRepo->activateParticipants($conversation->id, [$userId, $friendId]);
         } else {
             // Tạo cuộc trò chuyện mới
@@ -137,7 +162,7 @@ class NetworkService implements NetworkServiceInterface
             ]);
         }
 
-        // Tạo tin nhắn hệ thống
+        // Tạo tin nhắn hệ thống thông báo kết bạn thành công
         $systemMessage = $this->messageRepo->create([
             'conversation_id' => $conversation->id,
             'sender_id' => null,
@@ -153,6 +178,7 @@ class NetworkService implements NetworkServiceInterface
         broadcast(new MessageSent($systemMessage, $participantIds));
     }
 
+    /** {@inheritdoc} */
     public function unfriend(int $userId, int $friendId): void
     {
         $deleted = $this->friendshipRepo->deleteFriendship($userId, $friendId);
@@ -165,51 +191,30 @@ class NetworkService implements NetworkServiceInterface
     /**
      * Gợi ý kết bạn thông minh dựa trên Mutual Friends.
      *
-     * Tối ưu: Lấy friend IDs + pending request IDs trước (2 query nhẹ),
-     * rồi truyền vào repository để chạy 1 query GROUP BY đếm mutual.
+     * Luồng xử lý tối ưu:
+     * B1: Lấy danh sách friend IDs hiện tại (indexed query).
+     * B2: Lấy IDs của những user đang có pending request (loại trừ khỏi gợi ý).
+     * B3: Query mutual friends (tối ưu — xem FriendshipRepository).
      */
     public function getSuggestedFriends(int $userId, int $limit = 10)
     {
         // B1: Lấy danh sách friend IDs hiện tại (indexed query)
         $friendIds = $this->friendshipRepo->getFriendIds($userId);
 
-        // B2: Lấy IDs của những user đang có pending request (cả sent + received)
-        // để loại trừ khỏi gợi ý
+        // B2: Lấy IDs của những user đang có incoming request để loại trừ (để tránh xuất hiện ở gợi ý khi đã có ở Lời mời kết bạn)
         $pendingRequestIds = $this->friendRequestRepo
             ->getIncomingRequests($userId)
             ->pluck('sender_id')
-            ->merge(
-                $this->friendRequestRepo->getSentPendingRequestIds($userId)
-            )
             ->unique()
             ->all();
 
-        // B3: Query mutual friends (optimized — xem FriendshipRepository)
+        // B3: Query mutual friends (tối ưu — xem FriendshipRepository)
         $suggestions = $this->friendshipRepo->getSuggestedFriends(
             $userId,
             $friendIds,
             $pendingRequestIds,
             $limit
         );
-
-        // B4: Fallback cho tân sinh viên — nếu chưa đủ gợi ý, bổ sung theo cùng department
-        if ($suggestions->count() < $limit) {
-            $remaining = $limit - $suggestions->count();
-            $existingIds = $suggestions->pluck('id')
-                ->merge($friendIds)
-                ->merge($pendingRequestIds)
-                ->push($userId)
-                ->unique()
-                ->all();
-
-            $departmentSuggestions = $this->friendshipRepo->getSuggestionsByDepartment(
-                $userId,
-                $existingIds,
-                $remaining
-            );
-
-            $suggestions = $suggestions->concat($departmentSuggestions);
-        }
 
         return $suggestions;
     }

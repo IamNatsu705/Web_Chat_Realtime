@@ -2,6 +2,13 @@ import { NavLink, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { LayoutDashboard, Users, FileText, LogOut, ShieldAlert, Home } from 'lucide-react';
 
+/**
+ * AdminLayout — Bố cục giao diện trang quản trị.
+ *
+ * Gồm:
+ * - Sidebar cố định bên trái: Logo, thông tin admin, menu điều hướng, nút đăng xuất.
+ * - Vùng nội dung chính bên phải: Top bar + Outlet (render page con).
+ */
 export default function AdminLayout() {
   const { user, logout } = useAuth();
 
@@ -13,7 +20,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen flex bg-gray-100">
-      {/* Sidebar */}
+      {/* Thanh bên (Sidebar) */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col sticky top-0 h-screen shrink-0">
         {/* Logo */}
         <div className="p-6 border-b border-slate-700/50">
@@ -26,7 +33,7 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        {/* User Info */}
+        {/* Thông tin người dùng */}
         <div className="px-4 py-3 mx-4 mt-4 bg-slate-800 rounded-xl border border-slate-700/50">
           <p className="text-xs text-slate-400 mb-0.5">Đăng nhập với tư cách</p>
           <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
@@ -35,7 +42,7 @@ export default function AdminLayout() {
           </span>
         </div>
 
-        {/* Navigation */}
+        {/* Menu điều hướng */}
         <nav className="flex-1 p-4 space-y-1 mt-2">
           <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest px-3 mb-2">Điều hướng</p>
           {navItems.map((item) => (
@@ -61,7 +68,7 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        {/* Logout */}
+        {/* Đăng xuất */}
         <div className="p-4 border-t border-slate-700/50">
           <button
             onClick={() => logout()}
@@ -73,9 +80,9 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Nội dung chính */}
       <main className="flex-1 overflow-y-auto">
-        {/* Top Bar */}
+        {/* Thanh trên cùng */}
         <div className="bg-white border-b border-gray-200 px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/" className="text-gray-400 hover:text-indigo-500 transition-colors" title="Về trang chính">

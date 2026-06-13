@@ -47,7 +47,7 @@ export const chatApi = {
   },
 
   /**
-   * Get-or-create a direct (1-1) conversation with a friend
+   * Lấy hoặc tạo cuộc trò chuyện 1-1 với một người bạn.
    */
   getOrCreateDirect: async (
     friendId: number
@@ -61,7 +61,7 @@ export const chatApi = {
   },
 
   /**
-   * Get messages with cursor-based pagination (20 per page)
+   * Lấy tin nhắn với phân trang cursor (20 tin/trang).
    */
   getMessages: async (
     conversationId: number,
@@ -79,7 +79,7 @@ export const chatApi = {
   },
 
   /**
-   * Send a message to a conversation
+   * Gửi tin nhắn text đến cuộc trò chuyện.
    */
   sendMessage: async (
     conversationId: number,
@@ -95,7 +95,7 @@ export const chatApi = {
   },
 
   /**
-   * Send an image message to a conversation
+   * Gửi tin nhắn hình ảnh đến cuộc trò chuyện.
    */
   sendImageMessage: async (
     conversationId: number,
@@ -115,7 +115,7 @@ export const chatApi = {
   },
 
   /**
-   * Send a file message to a conversation
+   * Gửi tin nhắn file/tài liệu đến cuộc trò chuyện.
    */
   sendFileMessage: async (
     conversationId: number,
@@ -150,7 +150,7 @@ export const chatApi = {
   },
 
   /**
-   * Mark all messages in a conversation as read
+   * Đánh dấu tất cả tin nhắn trong cuộc trò chuyện là đã đọc.
    */
   markRead: async (conversationId: number): Promise<ChatResponse<null>> => {
     const res = await axiosInstance.post<ChatResponse<null>>(
@@ -216,7 +216,7 @@ export const chatApi = {
   },
 
   /**
-   * Add a member to a group (admin only)
+   * Thêm thành viên vào nhóm.
    */
   addGroupMember: async (
     groupId: number,
@@ -230,7 +230,7 @@ export const chatApi = {
   },
 
   /**
-   * Remove (kick) a member from a group (admin only)
+   * Xóa (kick) thành viên khỏi nhóm.
    */
   removeGroupMember: async (
     groupId: number,
@@ -243,7 +243,7 @@ export const chatApi = {
   },
 
   /**
-   * Leave a group (current user)
+   * Rời nhóm (người dùng hiện tại).
    */
   leaveGroup: async (groupId: number): Promise<ChatResponse<null>> => {
     const res = await axiosInstance.post<ChatResponse<null>>(`/chat/groups/${groupId}/leave`);
@@ -251,7 +251,7 @@ export const chatApi = {
   },
 
   /**
-   * Dissolve / delete a group (admin only)
+   * Giải tán / xóa nhóm (chỉ admin nhóm).
    */
   dissolveGroup: async (groupId: number): Promise<ChatResponse<null>> => {
     const res = await axiosInstance.delete<ChatResponse<null>>(`/chat/groups/${groupId}`);

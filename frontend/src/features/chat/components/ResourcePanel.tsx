@@ -63,7 +63,7 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
   const [showUpload, setShowUpload] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
-  // Form upload
+  // Form tải lên
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadDesc, setUploadDesc] = useState('');
   const [uploadCat, setUploadCat] = useState('other');
@@ -106,6 +106,12 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['resources', conversationId] }),
   });
 
+  // ── Mutation: ghim/bỏ ghim ────────────────────────────────────────────────
+  const pinMutation = useMutation({
+    mutationFn: (resourceId: number) => resourceApi.togglePin(conversationId, resourceId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['resources', conversationId] }),
+  });
+
   const handleUploadSubmit = () => {
     if (!uploadTitle.trim() || !uploadFile) return;
     uploadMutation.mutate({
@@ -140,7 +146,7 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
     <div className="flex flex-col h-full">
       {/* ── Thanh công cụ ─────────────────────────────────────────────── */}
       <div className="px-3 pt-3 pb-2 border-b border-gray-100 flex-shrink-0 space-y-2">
-        {/* Search */}
+        {/* Ô tìm kiếm */}
         <div className="relative">
           <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -154,7 +160,7 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
           />
         </div>
 
-        {/* Category filter */}
+        {/* Lọc theo danh mục */}
         <div className="flex gap-1 flex-wrap">
           {CATEGORIES.map((cat) => (
             <button
@@ -195,14 +201,21 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
             <p className="mt-0.5 text-gray-300">Bấm "Upload" để thêm.</p>
           </div>
         ) : (
-          resources.map((resource) => (
+          /* BUG-G FIX: Sắp xếp tài liệu ghim lên đầu */
+          [...resources].sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0)).map((resource) => (
             <div
               key={resource.id}
-              className="flex items-start gap-2.5 p-2 rounded-lg border border-gray-100 bg-white transition-colors hover:bg-gray-50"
+              className={`flex items-start gap-2.5 p-2 rounded-lg border transition-colors hover:bg-gray-50 ${
+                resource.is_pinned ? 'border-indigo-200 bg-indigo-50/30' : 'border-gray-100 bg-white'
+              }`}
             >
               <FileTypeIcon type={resource.file_type} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
+                  {/* BUG-G FIX: Badge ghim */}
+                  {resource.is_pinned && (
+                    <span className="text-[9px] bg-indigo-100 text-indigo-600 font-bold px-1.5 py-0.5 rounded-full shrink-0">📌</span>
+                  )}
                   <p className="text-xs font-medium text-gray-800 truncate">{resource.title}</p>
                 </div>
                 <p className="text-[10px] text-gray-400 mt-0.5">
@@ -211,9 +224,26 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
                   {resource.uploader && ` · ${resource.uploader.name}`}
                 </p>
               </div>
-              {/* Actions */}
+              {/* Nút hành động */}
               <div className="flex items-center gap-0.5 flex-shrink-0">
-                {/* Download */}
+                {/* BUG-G FIX: Nút ghim — chỉ owner/mod thấy */}
+                {isOwnerOrMod && (
+                  <button
+                    onClick={() => pinMutation.mutate(resource.id)}
+                    disabled={pinMutation.isPending}
+                    title={resource.is_pinned ? 'Bỏ ghim' : 'Ghim tài liệu'}
+                    className={`p-1 rounded transition-colors ${
+                      resource.is_pinned
+                        ? 'text-indigo-500 hover:text-indigo-700 hover:bg-indigo-100'
+                        : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
+                    }`}
+                  >
+                    <svg className="w-3.5 h-3.5" fill={resource.is_pinned ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    </svg>
+                  </button>
+                )}
+                {/* Tải xuống */}
                 <button
                   onClick={() => handleDownload(resource)}
                   title="Tải xuống"
@@ -224,7 +254,7 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
                   </svg>
                 </button>
 
-                {/* Delete */}
+                {/* Xoá */}
                 {canDelete(resource) && (
                   <button
                     onClick={() => deleteMutation.mutate(resource.id)}
@@ -271,7 +301,7 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
             <option value="exercise">Bài tập</option>
             <option value="note">Ghi chú</option>
           </select>
-          {/* File picker */}
+          {/* Nút chọn tệp */}
           <div>
             <button
               type="button"
@@ -289,7 +319,7 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
             />
           </div>
 
-          {/* Progress bar */}
+          {/* Thanh tiến trình */}
           {uploadProgress !== null && (
             <div className="w-full bg-gray-100 rounded-full h-1.5">
               <div
@@ -299,7 +329,7 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
             </div>
           )}
 
-          {/* Buttons */}
+          {/* Các nút hành động */}
           <div className="flex gap-2">
             <button
               onClick={() => { setShowUpload(false); setUploadProgress(null); }}

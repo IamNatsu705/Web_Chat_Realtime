@@ -4,6 +4,11 @@ namespace App\Http\Requests\Network;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Request Lấy lời mời kết bạn (Get Incoming Requests).
+ *
+ * Xác thực phân trang: số bản ghi mỗi trang (tối đa 100) và số trang.
+ */
 class GetIncomingRequests extends FormRequest
 {
     public function authorize(): bool

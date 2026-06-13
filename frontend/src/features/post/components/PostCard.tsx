@@ -4,7 +4,6 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useToggleLikeMutation, useDeletePostMutation } from '../hooks/queries';
 import { getImageUrl } from '@/utils/getImageUrl';
 import type { Post } from '../api/postApi';
-import { BsPinAngleFill } from 'react-icons/bs';
 import CommentSection from './CommentSection';
 
 function timeAgo(dateStr: string): string {
@@ -21,6 +20,14 @@ function timeAgo(dateStr: string): string {
 interface PostCardProps {
   post: Post;
 }
+
+/**
+ * PostCard — Component hiển thị một bài viết.
+ *
+ * Bao gồm: thông tin người đăng, nội dung, đa phương tiện (ảnh/video),
+ * số lượt thích/bình luận, và các nút tương tác.
+ * Nếu là bài viết của chính người dùng, cung cấp thêm menu ẩn/xoá bài.
+ */
 
 const PostCard = memo(function PostCard({ post }: PostCardProps) {
   const { user } = useAuth();
@@ -48,7 +55,7 @@ const PostCard = memo(function PostCard({ post }: PostCardProps) {
 
   return (
     <div className="bg-white rounded-[16px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-[#E5E7EB] overflow-hidden transition-shadow hover:shadow-[0_8px_24px_rgba(215,0,56,0.06)]">
-      {/* Header */}
+      {/* Phần đầu: Thông tin người dùng & Menu tùy chọn */}
       <div className="flex items-center justify-between p-5 pb-3">
         <div className="flex items-center space-x-3.5">
           <Link to={`/profile/${post.user_id}`} className="h-11 w-11 rounded-[14px] bg-gradient-to-br from-[#FFF5F6] to-[#FFF1F2] shrink-0 flex items-center justify-center text-[#D70038] font-bold overflow-hidden border border-[#FFE4E6] shadow-sm hover:scale-105 transition-transform">
@@ -81,22 +88,14 @@ const PostCard = memo(function PostCard({ post }: PostCardProps) {
         )}
       </div>
 
-      {/* Pin badge */}
-      {post.is_pinned && (
-        <div className="px-5 pb-2">
-          <span className="inline-flex items-center text-[12px] text-[#D70038] bg-[#FFF1F2] border border-[#FECDD3] px-2.5 py-1 rounded-md font-semibold tracking-wide">
-            <BsPinAngleFill className="w-3.5 h-3.5 mr-1.5" />
-            BÀI GHIM
-          </span>
-        </div>
-      )}
 
-      {/* Content */}
+
+      {/* Nội dung bài viết */}
       <div className="px-5 pb-4">
         <p className="text-[#374151] text-[15px] leading-relaxed whitespace-pre-wrap">{post.content}</p>
       </div>
 
-      {/* Media */}
+      {/* Tệp đính kèm (Ảnh/Video) */}
       {post.media && post.media.length > 0 && (
         <div className={`px-5 pb-4 ${post.media.length === 1 ? '' : 'grid grid-cols-2 gap-2'}`}>
           {post.media.map((m) => (
@@ -111,7 +110,7 @@ const PostCard = memo(function PostCard({ post }: PostCardProps) {
         </div>
       )}
 
-      {/* Stats */}
+      {/* Thống kê (Lượt thích, Bình luận) */}
       <div className="px-4 py-2 flex items-center justify-between text-xs text-gray-500 border-t border-gray-50">
         <span>{post.likes_count > 0 ? `${post.likes_count} lượt thích` : ''}</span>
         <button onClick={() => setShowComments(!showComments)} className="hover:underline">
@@ -119,7 +118,7 @@ const PostCard = memo(function PostCard({ post }: PostCardProps) {
         </button>
       </div>
 
-      {/* Actions */}
+      {/* Các nút tương tác (Thích, Bình luận) */}
       <div className="border-t border-[#F3F4F6] px-5 py-2.5 flex justify-around">
         <button
           onClick={handleLike}
@@ -146,7 +145,7 @@ const PostCard = memo(function PostCard({ post }: PostCardProps) {
         </button>
       </div>
 
-      {/* Comments Section */}
+      {/* Khu vực Bình luận */}
       {showComments && (
         <CommentSection postId={post.id} postOwnerId={post.user_id} />
       )}

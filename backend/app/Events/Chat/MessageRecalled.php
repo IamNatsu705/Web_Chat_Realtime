@@ -8,6 +8,12 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * Sự kiện thu hồi tin nhắn (MessageRecalled).
+ *
+ * Phát qua WebSocket khi người gửi thu hồi tin nhắn.
+ * Frontend nhận sự kiện này để thay thế nội dung tin nhắn thành "Tin nhắn đã bị thu hồi".
+ */
 class MessageRecalled implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
@@ -21,6 +27,9 @@ class MessageRecalled implements ShouldBroadcast
         $this->conversationId = $conversationId;
     }
 
+    /**
+     * Broadcast đến kênh cuộc trò chuyện.
+     */
     public function broadcastOn(): array
     {
         return [

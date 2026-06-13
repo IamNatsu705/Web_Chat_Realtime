@@ -12,6 +12,12 @@ use App\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Controller Bài đăng (Post Controller).
+ *
+ * Xử lý các API endpoint liên quan đến bài đăng:
+ * bảng tin (feed), CRUD bài viết, lượt thích, bình luận.
+ */
 class PostController extends Controller
 {
     use ApiResponses;
@@ -20,6 +26,10 @@ class PostController extends Controller
         protected PostServiceInterface $postService
     ) {}
 
+    /**
+     * GET /api/v1/posts/feed
+     * Lấy bảng tin (feed) với phân trang cursor.
+     */
     public function feed(Request $request): JsonResponse
     {
         $cursor = $request->input('cursor');
@@ -32,6 +42,10 @@ class PostController extends Controller
         ], 'Lấy danh sách bài viết thành công.');
     }
 
+    /**
+     * GET /api/v1/posts/{postId}
+     * Lấy chi tiết bài đăng.
+     */
     public function show(Request $request, int $postId): JsonResponse
     {
         $post = $this->postService->getPostById($postId, (int) auth()->id());
@@ -42,6 +56,10 @@ class PostController extends Controller
         );
     }
 
+    /**
+     * POST /api/v1/posts
+     * Tạo bài đăng mới (hỗ trợ đính kèm ảnh/video).
+     */
     public function store(CreatePostRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -59,6 +77,10 @@ class PostController extends Controller
         );
     }
 
+    /**
+     * PUT /api/v1/posts/{postId}
+     * Cập nhật nội dung bài đăng.
+     */
     public function update(Request $request, int $postId): JsonResponse
     {
         $data = $request->validate([
@@ -73,6 +95,10 @@ class PostController extends Controller
         );
     }
 
+    /**
+     * DELETE /api/v1/posts/{postId}
+     * Xóa bài đăng.
+     */
     public function destroy(Request $request, int $postId): JsonResponse
     {
         $this->postService->deletePost($postId, (int) auth()->id());
@@ -80,6 +106,10 @@ class PostController extends Controller
         return $this->success(null, 'Xoá bài viết thành công.');
     }
 
+    /**
+     * POST /api/v1/posts/{postId}/like
+     * Thích/bỏ thích bài đăng (toggle).
+     */
     public function toggleLike(Request $request, int $postId): JsonResponse
     {
         $result = $this->postService->toggleLike($postId, (int) auth()->id());
@@ -87,6 +117,10 @@ class PostController extends Controller
         return $this->success($result, $result['liked'] ? 'Đã thích bài viết.' : 'Đã bỏ thích bài viết.');
     }
 
+    /**
+     * GET /api/v1/posts/{postId}/comments
+     * Lấy danh sách bình luận của bài đăng.
+     */
     public function getComments(int $postId): JsonResponse
     {
         $comments = $this->postService->getComments($postId);
@@ -98,6 +132,10 @@ class PostController extends Controller
         ], 'Lấy danh sách bình luận thành công.');
     }
 
+    /**
+     * POST /api/v1/posts/{postId}/comments
+     * Thêm bình luận mới.
+     */
     public function storeComment(CreateCommentRequest $request, int $postId): JsonResponse
     {
         $comment = $this->postService->createComment(
@@ -113,6 +151,10 @@ class PostController extends Controller
         );
     }
 
+    /**
+     * PUT /api/v1/posts/comments/{commentId}
+     * Cập nhật nội dung bình luận.
+     */
     public function updateComment(Request $request, int $commentId): JsonResponse
     {
         $data = $request->validate([
@@ -127,6 +169,10 @@ class PostController extends Controller
         );
     }
 
+    /**
+     * DELETE /api/v1/posts/comments/{commentId}
+     * Xóa bình luận.
+     */
     public function destroyComment(Request $request, int $commentId): JsonResponse
     {
         $this->postService->deleteComment($commentId, (int) auth()->id());
@@ -134,6 +180,10 @@ class PostController extends Controller
         return $this->success(null, 'Xoá bình luận thành công.');
     }
 
+    /**
+     * GET /api/v1/posts/users/{userId}
+     * Lấy bài viết của một người dùng (trang cá nhân).
+     */
     public function userPosts(Request $request, int $userId): JsonResponse
     {
         $posts = $this->postService->getUserPosts($userId, (int) auth()->id());

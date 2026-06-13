@@ -26,7 +26,7 @@ export default function SuggestionCard({
 
   return (
     <div className="border border-gray-200 rounded-xl hover:shadow-md transition-all bg-white flex flex-col relative group overflow-hidden">
-      {/* Text background banner */}
+      {/* Banner nền văn bản */}
       <div className="h-14 bg-[#FFF1F2] rounded-t-xl w-full relative overflow-hidden flex items-center justify-center">
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(#D70038 1px, transparent 1px)', backgroundSize: '12px 12px' }}></div>
         <div className="absolute inset-0 flex items-center justify-center">
@@ -37,7 +37,7 @@ export default function SuggestionCard({
       </div>
 
       <div className="flex flex-col items-center px-4 -mt-9 pb-4 flex-grow">
-        {/* Avatar with online dot */}
+        {/* Avatar kèm chấm trạng thái online */}
         <Link to={`/profile/${user.id}`} className="h-[72px] w-[72px] rounded-full relative z-10 bg-white p-1 mb-2 hover:opacity-90 transition-opacity">
           {user.avatar ? (
             <img src={user.avatar} alt={user.name} className="h-full w-full rounded-full object-cover border border-indigo-100 shadow-sm" />
@@ -46,18 +46,18 @@ export default function SuggestionCard({
               {getAvatarLetter(user.name)}
             </div>
           )}
-          {/* Online indicator */}
+          {/* Chỉ báo online */}
           <span className={`absolute bottom-1 right-1 h-3 w-3 rounded-full border-2 border-white transition-colors ${
             userIsOnline ? 'bg-green-500' : 'bg-gray-300'
           }`} />
         </Link>
 
-        {/* Name */}
+        {/* Tên người dùng */}
         <Link to={`/profile/${user.id}`} className="text-sm font-bold text-gray-900 text-center hover:underline hover:text-indigo-600 transition-colors truncate max-w-full">
           {user.name}
         </Link>
 
-        {/* Mutual friends count */}
+        {/* Số lượng bạn chung */}
         <div className="flex items-center mt-1 mb-3">
           <svg className="w-3.5 h-3.5 text-[#D70038] mr-1 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -68,7 +68,7 @@ export default function SuggestionCard({
           </span>
         </div>
 
-        {/* Action buttons */}
+        {/* Các nút hành động */}
         <div className="mt-auto w-full space-y-2">
           <button
             onClick={() => onAddFriend(user.id)}

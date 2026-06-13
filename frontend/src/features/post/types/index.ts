@@ -1,4 +1,4 @@
-// ─── Post Feature Types ───────────────────────────────────────────────────────
+// ─── Kiểu dữ liệu Bài viết ──────────────────────────────────────────────────
 
 export interface PostMedia {
   id: number;
@@ -20,7 +20,6 @@ export interface Post {
   media_url: string | null;
   likes_count: number;
   comments_count: number;
-  is_pinned: boolean;
   status: 'active' | 'hidden';
   hide_reason: string | null;
   hidden_by_admin: string | null;

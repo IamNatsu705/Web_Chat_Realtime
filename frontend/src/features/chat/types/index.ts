@@ -1,33 +1,33 @@
 import type { User } from '../../auth/types';
 
-// ─── Message ─────────────────────────────────────────────────────────────────
+// ─── Tin nhắn ─────────────────────────────────────────────────────────────────
 
 export type MessageType = 'text' | 'image' | 'file' | 'system';
 export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
 
-// ─── Community / Group Types ─────────────────────────────────────────────────
+// ─── Kiểu dữ liệu Cộng đồng / Nhóm ─────────────────────────────────────────
 
 export type JoinType = 'invite' | 'open' | 'request';
 export type GroupRole = 'owner' | 'moderator' | 'member';
 export type CommunityCategory = 'subject' | 'department' | 'project' | 'research' | 'club' | 'other';
 
 export interface Message {
-  id: number | string; // string for optimistic (temp_id)
+  id: number | string; // string cho optimistic (temp_id)
   conversation_id: number;
-  sender_id: number;
+  sender_id: number | null;
   content: string;
   type: MessageType;
   status: MessageStatus;
   created_at: string;
   sender?: User;
-  is_optimistic?: boolean; // true when not yet confirmed by server
+  is_optimistic?: boolean; // true khi chưa được server xác nhận
   is_recalled?: boolean;
   deleted_by?: number[];
   read_at?: string;
   updated_at?: string;
 }
 
-// ─── Streak ───────────────────────────────────────────────────────────────────
+// ─── Chuỗi nhắn tin (Streak) ──────────────────────────────────────────────────
 
 export interface StreakData {
   current_streak: number;
@@ -35,8 +35,8 @@ export interface StreakData {
   restore_days: number;
   tier: string;
   is_milestone?: boolean;
-  today_completed?: boolean; // Whether both users messaged today (streak incremented)
-  // Enriched fields (returned by dedicated GET /streaks/{id} API)
+  today_completed?: boolean; // Cả 2 user đã nhắn hôm nay chưa (streak đã tăng)
+  // Trường mở rộng (trả về bởi API GET /streaks/{id} chi tiết)
   last_completed_date?: string | null;
   user_messaged_today?: boolean;
   partner_messaged_today?: boolean;
@@ -44,7 +44,7 @@ export interface StreakData {
   days_to_next_milestone?: number;
 }
 
-// ─── Conversation ─────────────────────────────────────────────────────────────
+// ─── Cuộc trò chuyện ──────────────────────────────────────────────────────────
 
 export interface ConversationParticipant {
   id: number;
@@ -77,7 +77,7 @@ export interface Conversation {
   updated_at: string;
 }
 
-// ─── Pagination ───────────────────────────────────────────────────────────────
+// ─── Phân trang ───────────────────────────────────────────────────────────────
 
 export interface MessagePage {
   messages: Message[];
@@ -85,7 +85,7 @@ export interface MessagePage {
   next_cursor: string | null;
 }
 
-// ─── API Response wrappers ────────────────────────────────────────────────────
+// ─── Wrapper phản hồi API ─────────────────────────────────────────────────────
 
 import type { ApiResponse } from '@/types/api';
 
@@ -94,7 +94,7 @@ import type { ApiResponse } from '@/types/api';
  */
 export type ChatResponse<T> = ApiResponse<T>;
 
-// ─── WebSocket event payloads ─────────────────────────────────────────────────
+// ─── Payload sự kiện WebSocket ────────────────────────────────────────────────
 
 export interface WsPresenceOnline {
   user_id: number;
@@ -102,7 +102,7 @@ export interface WsPresenceOnline {
 
 export interface WsPresenceOffline {
   user_id: number;
-  last_seen: string; // ISO timestamp
+  last_seen: string; // Chuỗi ISO timestamp
 }
 
 export interface WsMessageNew {
@@ -145,7 +145,7 @@ export interface WsGroupEvent {
   newName?: string | null;
 }
 
-// ─── Presence state ───────────────────────────────────────────────────────────
+// ─── Trạng thái hoạt động (Presence) ──────────────────────────────────────────
 
 export interface PresenceEntry {
   user_id: number;
@@ -153,7 +153,7 @@ export interface PresenceEntry {
   last_seen?: string;
 }
 
-// ─── Group management ─────────────────────────────────────────────────────────
+// ─── Quản lý nhóm ─────────────────────────────────────────────────────────────
 
 export interface CreateGroupRequest {
   name: string;
@@ -190,7 +190,7 @@ export interface GroupResource {
   uploader?: User;
 }
 
-// ─── Join Request ─────────────────────────────────────────────────────────────
+// ─── Yêu cầu tham gia ────────────────────────────────────────────────────────
 
 export interface GroupJoinRequest {
   id: number;

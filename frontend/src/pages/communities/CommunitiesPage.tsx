@@ -5,8 +5,8 @@ import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import { communityApi } from '@/features/chat/api/communityApi';
 import { useAuth } from '@/providers/AuthProvider';
-import type { Conversation, CommunityCategory } from '@/features/chat/types';
-import { HiOutlineMagnifyingGlass, HiOutlineUserGroup, HiOutlineLockClosed, HiOutlineLockOpen, HiOutlineInformationCircle } from 'react-icons/hi2';
+import type { Conversation } from '@/features/chat/types';
+import { HiOutlineMagnifyingGlass, HiOutlineUserGroup, HiOutlineLockClosed, HiOutlineLockOpen } from 'react-icons/hi2';
 import { useDebounce } from '@/hooks/useDebounce';
 
 // Label tiếng Việt cho từng danh mục cộng đồng
@@ -20,6 +20,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   other: 'Khác',
 };
 
+/**
+ * CommunitiesPage — Trang khám phá cộng đồng.
+ *
+ * Hiển thị danh sách cộng đồng (nhóm học tập, CLB, đồ án, NCKH...),
+ * hỗ trợ tìm kiếm, lọc theo danh mục, tham gia/hủy yêu cầu,
+ * và xem chi tiết cộng đồng qua modal.
+ */
 export default function CommunitiesPage() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 400);
@@ -56,7 +63,7 @@ export default function CommunitiesPage() {
   const communities = data?.communities ?? [];
   const totalCommunities = data?.pagination?.total ?? communities.length;
 
-  // Kiểm tra trạng thái tham gia của user
+  // Kiểm tra trạng thái tham gia của người dùng
   const getJoinStatus = (community: Conversation) => {
     if (!user) return 'none';
     if (community.my_status === 'active') return 'joined';
@@ -311,11 +318,51 @@ export default function CommunitiesPage() {
               </div>
 
               {/* Desc */}
-              <div className="mb-2">
+              <div className="mb-6">
                 <h3 className="text-[13px] font-bold text-[#D70038] uppercase tracking-wider mb-2">Giới thiệu</h3>
                 <p className="text-[15px] text-[#4B5563] leading-relaxed bg-[#F9FAFB] p-4 rounded-2xl border border-[#F3F4F6]">
                   {selectedCommunity.description || <span className="italic text-[#9CA3AF]">Chưa có mô tả chi tiết.</span>}
                 </p>
+              </div>
+
+              {/* BUG-J FIX: Nút hành động trong modal */}
+              <div>
+                {getJoinStatus(selectedCommunity) === 'joined' ? (
+                  <button
+                    onClick={() => { setSelectedCommunity(null); navigate(`/messages?conversationId=${selectedCommunity.id}`); }}
+                    className="w-full py-3 text-[15px] font-bold text-white bg-gradient-to-r from-[#D70038] to-[#E6003C] rounded-2xl hover:shadow-[0_4px_12px_rgba(215,0,56,0.3)] transition-all"
+                  >
+                    Vào nhóm chat
+                  </button>
+                ) : selectedCommunity.my_join_request_status === 'pending' ? (
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Hủy yêu cầu tham gia?')) {
+                        cancelMutation.mutate(selectedCommunity.id);
+                        setSelectedCommunity(null);
+                      }
+                    }}
+                    disabled={cancelMutation.isPending}
+                    className="w-full py-3 text-[15px] font-bold text-[#D70038] bg-[#FFF1F2] border-2 border-[#FECDD3] rounded-2xl hover:bg-[#FFE4E6] transition-all"
+                  >
+                    Đang chờ duyệt — Nhấn để hủy
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      joinMutation.mutate(selectedCommunity.id, {
+                        onSuccess: () => {
+                          setSelectedCommunity(null);
+                          if (selectedCommunity.join_type === 'open') navigate(`/messages?conversationId=${selectedCommunity.id}`);
+                        }
+                      });
+                    }}
+                    disabled={joinMutation.isPending}
+                    className="w-full py-3 text-[15px] font-bold text-white bg-gradient-to-r from-[#D70038] to-[#E6003C] rounded-2xl hover:shadow-[0_4px_12px_rgba(215,0,56,0.3)] transition-all disabled:opacity-50"
+                  >
+                    {selectedCommunity.join_type === 'open' ? 'Tham gia ngay' : 'Gửi yêu cầu tham gia'}
+                  </button>
+                )}
               </div>
             </div>
           </div>

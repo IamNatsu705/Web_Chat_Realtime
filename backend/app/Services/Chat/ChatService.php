@@ -12,6 +12,16 @@ use App\Repositories\ConversationParticipantRepo\ConversationParticipantReposito
 use Illuminate\Support\Facades\DB;
 use Exception;
 
+/**
+ * Service Chat (Chat Service).
+ *
+ * Xử lý toàn bộ nghiệp vụ liên quan đến trò chuyện 1-1 và nhóm:
+ * - Quản lý cuộc trò chuyện (lấy danh sách, tạo mới).
+ * - Gửi tin nhắn (text, image, file) kèm broadcast sự kiện real-time.
+ * - Thu hồi, xóa phía mình, xóa lịch sử.
+ * - Xử lý cuộc trò chuyện từ người lạ (accept/reject).
+ * - Tích hợp StreakService để cập nhật chuỗi nhắn tin.
+ */
 class ChatService implements ChatServiceInterface
 {
     public function __construct(
@@ -22,11 +32,17 @@ class ChatService implements ChatServiceInterface
         protected StreakServiceInterface $streakService,
     ) {}
 
+    /** {@inheritdoc} */
     public function getUserConversations(int $userId)
     {
         return $this->conversationRepository->getUserConversations($userId);
     }
 
+    /**
+     * Lấy hoặc tạo cuộc trò chuyện 1-1.
+     * Nếu chưa tồn tại: tạo mới với trạng thái 'active' cho người gửi,
+     * 'active' nếu đã là bạn bè hoặc 'pending' nếu là người lạ.
+     */
     public function getOrCreateDirectConversation(int $userId, int $friendId)
     {
         $conversation = $this->conversationRepository->getDirectConversation($userId, $friendId);
@@ -38,8 +54,8 @@ class ChatService implements ChatServiceInterface
                     'is_group' => false,
                 ]);
 
+                // Kiểm tra quan hệ bạn bè để xác định trạng thái ban đầu
                 $isFriend = $this->friendshipRepository->getFriendshipStatus($userId, $friendId);
-
                 $receiverStatus = $isFriend ? 'active' : 'pending';
 
                 $this->participantRepository->createConversationParticipant($conversation->id, $userId, 'active');
@@ -56,16 +72,29 @@ class ChatService implements ChatServiceInterface
         return $conversation;
     }
 
+    /** {@inheritdoc} */
     public function getMessages(int $conversationId, int $userId, int $limit, ?string $cursor)
     {
         $this->checkParticipation($conversationId, $userId, allowRejected: true);
         return $this->messageRepository->getMessagesByConversationId($conversationId, $userId, $limit, $cursor);
     }
 
+    /**
+     * Gửi tin nhắn mới.
+     *
+     * Luồng xử lý:
+     * 1. Kiểm tra quyền tham gia cuộc trò chuyện.
+     * 2. Kiểm tra người nhận có từ chối tin nhắn không (chat 1-1).
+     * 3. Xử lý upload ảnh/file nếu có.
+     * 4. Lưu tin nhắn vào database.
+     * 5. Broadcast sự kiện MessageSent qua WebSocket.
+     * 6. Cập nhật Streak (nếu là chat 1-1).
+     */
     public function sendMessage(int $conversationId, int $userId, array $data)
     {
         $this->checkParticipation($conversationId, $userId);
 
+        // Kiểm tra người nhận có từ chối tin nhắn không (chỉ áp dụng chat 1-1)
         $conversation = $this->conversationRepository->findOrFail($conversationId);
         if (!$conversation->is_group) {
             $otherParticipant = $this->participantRepository->getOtherParticipant($conversationId, $userId);
@@ -84,7 +113,7 @@ class ChatService implements ChatServiceInterface
             $type = 'image';
         }
 
-        // Xử lý upload file (Tài liệu)
+        // Xử lý upload file (tài liệu)
         if (isset($data['file']) && $data['file'] instanceof \Illuminate\Http\UploadedFile) {
             $uploadedFile = $data['file'];
             $path = $uploadedFile->store('chat_files', 'public');
@@ -93,7 +122,7 @@ class ChatService implements ChatServiceInterface
             $fileName = $uploadedFile->getClientOriginalName();
             $fileSize = $uploadedFile->getSize();
             
-            // Map extension to resource type
+            // Xác định loại file dựa trên extension
             $ext = strtolower($fileExtension);
             $resourceType = 'other';
             if (in_array($ext, ['pdf'])) $resourceType = 'pdf';
@@ -115,7 +144,7 @@ class ChatService implements ChatServiceInterface
                 'file_size' => $fileSize,
             ]);
 
-            // Save JSON payload for frontend
+            // Lưu JSON metadata để frontend hiển thị
             $content = json_encode([
                 'resource_id' => $resource->id,
                 'name' => $fileName,
@@ -138,9 +167,10 @@ class ChatService implements ChatServiceInterface
 
         $participantIds = $this->participantRepository->getParticipantIds($conversationId);
 
+        // Phát sự kiện real-time tới tất cả thành viên (trừ người gửi)
         broadcast(new MessageSent($message, $participantIds))->toOthers();
 
-        // Gọi hàm xử lý Streak
+        // Cập nhật Streak (bắt lỗi để không ảnh hưởng việc gửi tin nhắn)
         try {
             $this->streakService->handleMessageSent($conversationId, $userId);
         } catch (Exception $e) {
@@ -150,6 +180,9 @@ class ChatService implements ChatServiceInterface
         return $message;
     }
 
+    /**
+     * Đánh dấu đã đọc — phân biệt logic giữa chat 1-1 và nhóm.
+     */
     public function markAsRead(int $conversationId, int $userId)
     {
         $this->checkParticipation($conversationId, $userId);
@@ -184,14 +217,23 @@ class ChatService implements ChatServiceInterface
         }
     }
 
+    /**
+     * Thu hồi tin nhắn — chỉ người gửi mới được thu hồi.
+     * Nếu tin nhắn chứa file, xóa file trên storage và bản ghi GroupResource.
+     */
     public function recallMessage(int $messageId, int $userId)
     {
         $message = $this->messageRepository->findOrFail($messageId);
+
+        // Kiểm tra user còn là thành viên của cuộc hội thoại không
+        // (Ngăn user đã bị kick thu hồi tin nhắn cũ)
+        $this->checkParticipation($message->conversation_id, $userId);
 
         if ($message->sender_id !== $userId) {
             throw new Exception('Bạn không thể thu hồi tin nhắn của người khác.');
         }
 
+        // Nếu tin nhắn chứa file → xóa file trên storage và bản ghi tài liệu
         if ($message->type === 'file') {
             $content = json_decode($message->content, true);
             if (isset($content['resource_id'])) {
@@ -214,6 +256,9 @@ class ChatService implements ChatServiceInterface
         return $message;
     }
 
+    /**
+     * Xóa tin nhắn chỉ ở phía mình — thêm userId vào mảng deleted_by.
+     */
     public function deleteMessageForMe(int $messageId, int $userId)
     {
         $message = $this->messageRepository->findOrFail($messageId);
@@ -229,6 +274,9 @@ class ChatService implements ChatServiceInterface
         return $message;
     }
 
+    /**
+     * Xóa toàn bộ lịch sử trò chuyện phía mình (cập nhật cleared_at = now()).
+     */
     public function clearConversation(int $conversationId, int $userId)
     {
         $this->checkParticipation($conversationId, $userId, allowRejected: true);
@@ -236,6 +284,10 @@ class ChatService implements ChatServiceInterface
         $this->participantRepository->updateClearedAt($conversationId, $userId);
     }
 
+    /**
+     * Chấp nhận cuộc trò chuyện từ người lạ — chuyển trạng thái pending → active.
+     * Đánh dấu đã đọc ngay để đồng bộ trạng thái đọc về phía người gửi.
+     */
     public function acceptStrangerConversation(int $conversationId, int $userId)
     {
         $participant = $this->participantRepository->getParticipant($conversationId, $userId);
@@ -250,6 +302,9 @@ class ChatService implements ChatServiceInterface
         $this->markAsRead($conversationId, $userId);
     }
 
+    /**
+     * Từ chối cuộc trò chuyện từ người lạ — chuyển trạng thái pending → rejected.
+     */
     public function rejectStrangerConversation(int $conversationId, int $userId)
     {
         $participant = $this->participantRepository->getParticipant($conversationId, $userId);

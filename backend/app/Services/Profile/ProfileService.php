@@ -9,12 +9,22 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Service Hồ sơ cá nhân (Profile Service).
+ *
+ * Xử lý nghiệp vụ liên quan đến hồ sơ người dùng:
+ * cập nhật thông tin, upload avatar, đổi mật khẩu.
+ */
 class ProfileService implements ProfileServiceInterface
 {
     public function __construct(
         protected PostRepositoryInterface $postRepository
     ) {}
 
+    /**
+     * Cập nhật thông tin hồ sơ cá nhân.
+     * Nếu có avatar mới: xóa avatar cũ trên storage rồi upload avatar mới.
+     */
     public function updateProfile(User $user, array $data): User
     {
         $updateData = ['name' => $data['name']];
@@ -30,7 +40,9 @@ class ProfileService implements ProfileServiceInterface
             $updateData['department'] = $data['department'];
         }
 
+        // Xử lý upload avatar mới
         if (!empty($data['avatar'])) {
+            // Xóa avatar cũ trên storage (nếu có)
             if ($user->avatar) {
                 Storage::disk('public')->delete($user->avatar);
             }
@@ -43,6 +55,10 @@ class ProfileService implements ProfileServiceInterface
 
         return $user->fresh();
     }
+
+    /**
+     * Đổi mật khẩu — kiểm tra mật khẩu cũ trước khi cập nhật.
+     */
     public function updatePassword(User $user, array $data): void
     {
         if (!Hash::check($data['old_password'], $user->password)) {
@@ -56,6 +72,7 @@ class ProfileService implements ProfileServiceInterface
         ]);
     }
 
+    /** {@inheritdoc} */
     public function getMyPosts(int $userId): Collection
     {
         return $this->postRepository->getByUserId($userId);

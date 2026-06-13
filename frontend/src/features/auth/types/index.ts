@@ -20,7 +20,7 @@ export interface AuthResponse {
   message: string;
   data: {
     user: User;
-    token?: string; // Token might only be present on login/register, not /me
+    token?: string; // Token chỉ có trong response đăng nhập/đăng ký, không có ở /me
   };
 }
 

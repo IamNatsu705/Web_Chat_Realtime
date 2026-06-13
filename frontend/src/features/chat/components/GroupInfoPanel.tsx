@@ -85,10 +85,10 @@ export default function GroupInfoPanel({
 
   return (
     <>
-      {/* Overlay */}
+      {/* Lớp phủ (Overlay) */}
       <div className="absolute inset-0 bg-black/20 z-10" onClick={onClose} />
 
-      {/* Panel */}
+      {/* Bảng điều khiển (Panel) */}
       <div className="absolute right-0 top-0 h-full w-[360px] bg-white border-l border-gray-100 z-20 flex flex-col shadow-2xl animate-slide-in-right">
         {/* ── Header ───────────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
@@ -133,7 +133,7 @@ export default function GroupInfoPanel({
             )}
           </div>
 
-          {/* Group name */}
+          {/* Tên nhóm */}
           {editingName ? (
             <div className="flex items-center space-x-2 w-full px-2">
               <input
@@ -201,20 +201,19 @@ export default function GroupInfoPanel({
         <div className="flex-grow overflow-hidden flex flex-col">
           {activeTab === 'members' ? (
             <div className="overflow-y-auto flex-grow px-3 py-2">
-              {/* Add member button */}
+              {/* Nút Thêm thành viên */}
               <div className="flex items-center justify-between mb-3 mt-1">
                 <h5 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Danh sách thành viên</h5>
-                {isAdmin && (
-                  <button
-                    onClick={() => setShowAddMembers(true)}
-                    className="text-[13px] text-[#D70038] hover:text-white hover:bg-[#D70038] bg-[#FFF1F2] px-2 py-1 rounded-md font-bold flex items-center gap-1 transition-colors"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Thêm
-                  </button>
-                )}
+                {/* Nút Thêm thành viên — Mọi thành viên đều có thể thêm bạn bè vào nhóm */}
+                <button
+                  onClick={() => setShowAddMembers(true)}
+                  className="text-[13px] text-[#D70038] hover:text-white hover:bg-[#D70038] bg-[#FFF1F2] px-2 py-1 rounded-md font-bold flex items-center gap-1 transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Thêm
+                </button>
               </div>
 
               <ul className="space-y-1">
@@ -230,7 +229,7 @@ export default function GroupInfoPanel({
                     )}
                     <div className="flex-grow min-w-0">
                       <span className="text-[14px] font-bold text-[#111827] truncate block">{member.name}</span>
-                      {/* Role label */}
+                      {/* Nhãn chức vụ */}
                       {member.id === conversation.admin_id ? (
                         <span className="text-[11px] text-[#D70038] font-bold bg-[#FFF1F2] px-1.5 py-0.5 rounded mt-0.5 inline-block">Trưởng nhóm</span>
                       ) : (conversation.participants as Array<User & { role?: GroupRole }>)
@@ -238,7 +237,7 @@ export default function GroupInfoPanel({
                         <span className="text-[11px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded mt-0.5 inline-block">Phó nhóm</span>
                       ) : null}
                     </div>
-                    {/* Role Management Dropdown */}
+                    {/* Dropdown Quản lý chức vụ */}
                     {isOwnerOrMod && member.id !== currentUser.id && member.id !== conversation.admin_id && (
                       <div className="relative">
                         <button
@@ -272,7 +271,12 @@ export default function GroupInfoPanel({
                                 </>
                               )}
                               <button
-                                onClick={() => { onKickMember(member.id); setOpenMenuId(null); }}
+                                onClick={() => { 
+                                  if (window.confirm('Bạn có chắc chắn muốn xóa thành viên này khỏi nhóm?')) {
+                                    onKickMember(member.id); 
+                                    setOpenMenuId(null); 
+                                  }
+                                }}
                                 disabled={isProcessing}
                                 className="w-full text-left px-3 py-2 text-[13px] font-bold text-red-600 hover:bg-red-50 transition-colors"
                               >
@@ -300,7 +304,7 @@ export default function GroupInfoPanel({
         </div>
       </div>
 
-      {/* Add members modal */}
+      {/* Modal thêm thành viên */}
       {showAddMembers && (
         <AddMembersModal
           friends={friends}

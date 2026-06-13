@@ -65,9 +65,9 @@ export default function ChatHeader({
 
   return (
     <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-white shadow-sm z-10 shrink-0">
-      {/* Left: avatar + info */}
+      {/* Trái: Hình đại diện + Thông tin */}
       <div className="flex items-center space-x-3 min-w-0">
-        {/* Avatar */}
+        {/* Hình đại diện */}
         <div className="relative shrink-0">
           {avatarUrl ? (
             <img
@@ -92,17 +92,17 @@ export default function ChatHeader({
               )}
             </div>
           )}
-          {/* Online dot for 1-1 */}
+          {/* Chấm trạng thái online cho chat 1-1 */}
           {!isGroup && otherUser && isOnline(otherUser.id) && (
             <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white" />
           )}
         </div>
 
-        {/* Name & status */}
+        {/* Tên & Trạng thái */}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <h2 className="text-sm font-bold text-gray-900 truncate leading-tight">{displayName}</h2>
-            {/* Streak badge — clickable to open StreakInfoPanel */}
+            {/* Huy hiệu chuỗi ngày - Nhấn để mở StreakInfoPanel */}
             {hasStreak && (
               <div className="relative">
                 <button
@@ -126,7 +126,7 @@ export default function ChatHeader({
                   <span>{conversation.streak!.current_streak}</span>
                 </button>
 
-                {/* StreakInfoPanel popup */}
+                {/* Popup StreakInfoPanel */}
                 {streakPanelOpen && (
                   <StreakInfoPanel
                     conversationId={conversation.id}
@@ -147,9 +147,9 @@ export default function ChatHeader({
         </div>
       </div>
 
-      {/* Right: action buttons */}
+      {/* Phải: Các nút hành động */}
       <div className="flex items-center space-x-1 shrink-0">
-        {/* Go to profile (1-1 only) */}
+        {/* Đi đến hồ sơ (chỉ chat 1-1) */}
         {!isGroup && otherUser && (
           <button
             onClick={() => navigate(`/profile/${otherUser.id}`)}
@@ -175,7 +175,7 @@ export default function ChatHeader({
           </svg>
         </button>
 
-        {/* More options dropdown */}
+        {/* Nút tùy chọn mở rộng */}
         <div className="relative">
           <button
             onClick={() => setDropdownOpen((v) => !v)}
@@ -188,7 +188,7 @@ export default function ChatHeader({
 
           {dropdownOpen && (
             <>
-              {/* Backdrop */}
+              {/* Lớp phủ (Backdrop) */}
               <div
                 className="fixed inset-0 z-10"
                 onClick={() => setDropdownOpen(false)}
@@ -207,7 +207,12 @@ export default function ChatHeader({
                     </button>
                     {!isAdmin && (
                       <button
-                        onClick={() => { onLeaveGroup?.(); setDropdownOpen(false); }}
+                        onClick={() => { 
+                          if (window.confirm('Bạn có chắc chắn muốn rời khỏi nhóm này?')) {
+                            onLeaveGroup?.(); 
+                            setDropdownOpen(false); 
+                          }
+                        }}
                         className="w-full text-left px-4 py-2 hover:bg-red-50 text-red-500 flex items-center space-x-2"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -218,7 +223,12 @@ export default function ChatHeader({
                     )}
                     {isAdmin && (
                       <button
-                        onClick={() => { onDissolveGroup?.(); setDropdownOpen(false); }}
+                        onClick={() => { 
+                          if (window.confirm('Bạn có chắc chắn muốn giải tán nhóm này? Hành động này không thể hoàn tác.')) {
+                            onDissolveGroup?.(); 
+                            setDropdownOpen(false); 
+                          }
+                        }}
                         className="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 font-medium flex items-center space-x-2"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -230,9 +240,14 @@ export default function ChatHeader({
                     <div className="border-t border-gray-100 my-1" />
                   </>
                 )}
-                {/* Clear chat — available for both 1-1 and group */}
+                {/* Xóa lịch sử trò chuyện — dùng cho cả 1-1 và nhóm */}
                 <button
-                  onClick={() => { onClearChat?.(); setDropdownOpen(false); }}
+                  onClick={() => { 
+                    if (window.confirm('Bạn có chắc chắn muốn xóa lịch sử trò chuyện này?')) {
+                      onClearChat?.(); 
+                      setDropdownOpen(false); 
+                    }
+                  }}
                   className="w-full text-left px-4 py-2 hover:bg-red-50 text-red-500 flex items-center space-x-2"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

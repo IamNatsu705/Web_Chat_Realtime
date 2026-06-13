@@ -4,6 +4,14 @@ namespace App\Http\Requests\Chat;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Request Gửi tin nhắn (Send Message Request).
+ *
+ * Xác thực dữ liệu tin nhắn: bắt buộc ít nhất 1 trong 3 (content, image, file).
+ * - content: Nội dung text.
+ * - image: Ảnh (tối đa 10MB).
+ * - file: Tài liệu (tối đa 30MB).
+ */
 class SendMessageRequest extends FormRequest
 {
     public function authorize(): bool
@@ -24,4 +32,3 @@ class SendMessageRequest extends FormRequest
         ];
     }
 }
-

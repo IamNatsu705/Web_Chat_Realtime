@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../providers/AuthProvider';
 import { Link, useLocation } from 'react-router-dom';
 import { getEcho } from '../../lib/echo';
@@ -6,16 +6,24 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useFriendRequestsQuery, NETWORK_QUERIES } from '../../features/network/hooks/queries';
 import { useConversationsQuery } from '../../features/chat/hooks/queries';
 
+/**
+ * Header — Thanh điều hướng chính của ứng dụng.
+ *
+ * Hiển thị logo, các mục điều hướng (Trang chủ, Cộng đồng, Tin nhắn, Mạng lưới),
+ * badge thông báo (tin nhắn chưa đọc, lời mời kết bạn), và thông tin người dùng.
+ * Lắng nghe WebSocket để cập nhật badge real-time.
+ */
 export default function Header() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // ── Badge: Friend requests ──────────────────────────────────────────────
+  // ── Badge: Lời mời kết bạn ──────────────────────────────────────────────
   const { data: requests = [] } = useFriendRequestsQuery();
   const requestCount = requests.length;
 
-  // ── Badge: Unread messages ─────────────────────────────────────
+  // ── Badge: Tin nhắn chưa đọc ─────────────────────────────────────
   const { data: conversations = [] } = useConversationsQuery();
   const unreadConversationCount = useMemo(
     () => conversations.filter(c => (c.unread_count ?? 0) > 0 && c.my_status === 'active').length,
@@ -58,14 +66,14 @@ export default function Header() {
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center h-16 relative">
           
-          {/* Left: Logo */}
+          {/* Trái: Logo */}
           <div className="w-1/4 flex justify-start shrink-0">
-            <Link to="/" className="flex items-center gap-2 text-[22px] font-extrabold text-[#D70038] tracking-tight hover:opacity-80 transition-opacity">
+            <Link to="/" className="flex items-center gap-2 text-[20px] md:text-[22px] font-extrabold text-[#D70038] tracking-tight hover:opacity-80 transition-opacity">
               PTIT Social
             </Link>
           </div>
 
-          {/* Center: Navigation */}
+          {/* Giữa: Menu điều hướng */}
           <nav className="hidden md:flex h-full items-center justify-center space-x-8 flex-1">
             <Link to="/" className={navLinkClass("/")}>Trang chủ</Link>
             <Link to="/communities" className={navLinkClass("/communities")}>Cộng đồng</Link>
@@ -86,7 +94,7 @@ export default function Header() {
               )}
             </Link>
 
-            {/* Admin link */}
+            {/* Liên kết quản trị */}
             {user?.role === 'admin' && (
               <Link to="/admin" className={`${navLinkClass("/admin")} !text-purple-600 !border-purple-600`}>
                 Admin
@@ -94,7 +102,7 @@ export default function Header() {
             )}
           </nav>
 
-          {/* Right: Profile */}
+          {/* Phải: Hồ sơ người dùng */}
           <div className="w-1/4 flex justify-end items-center shrink-0">
             {user ? (
               <div className="flex items-center gap-4">
@@ -133,9 +141,52 @@ export default function Header() {
                 </Link>
               </div>
             )}
+            
+            {/* Hamburger button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden ml-3 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg focus:outline-none"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden border-t border-[#E2E8F0] bg-white">
+          <div className="px-2 pt-2 pb-3 space-y-1 shadow-inner">
+            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/') ? 'bg-red-50 text-[#D70038]' : 'text-gray-900 hover:bg-gray-50'}`}>Trang chủ</Link>
+            <Link to="/communities" onClick={() => setIsMobileMenuOpen(false)} className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/communities') ? 'bg-red-50 text-[#D70038]' : 'text-gray-900 hover:bg-gray-50'}`}>Cộng đồng</Link>
+            <Link to="/messages" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${isActive('/messages') ? 'bg-red-50 text-[#D70038]' : 'text-gray-900 hover:bg-gray-50'}`}>
+              Tin nhắn
+              {unreadConversationCount > 0 && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#D70038] text-white">{unreadConversationCount > 99 ? '99+' : unreadConversationCount}</span>}
+            </Link>
+            <Link to="/network" onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${isActive('/network') ? 'bg-red-50 text-[#D70038]' : 'text-gray-900 hover:bg-gray-50'}`}>
+              Mạng lưới
+              {requestCount > 0 && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#D70038] text-white">{requestCount > 99 ? '99+' : requestCount}</span>}
+            </Link>
+            {user?.role === 'admin' && (
+              <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/admin') ? 'bg-purple-50 text-purple-600' : 'text-purple-600 hover:bg-purple-50'}`}>Admin</Link>
+            )}
+            {user && (
+              <button
+                onClick={() => { setIsMobileMenuOpen(false); logout(); }}
+                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:bg-gray-50 mt-4 border-t border-gray-100"
+              >
+                Đăng xuất
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

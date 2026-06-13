@@ -2,7 +2,7 @@ import axiosInstance from '@/lib/axios';
 import type { AuthResponse, LoginCredentials, RegisterCredentials } from '../types';
 import { getImageUrl } from '@/utils/getImageUrl';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Hàm hỗ trợ ──────────────────────────────────────────────────────────────
 
 function normalizeUserAvatar(data: AuthResponse): AuthResponse {
   if (data.data.user.avatar) {
@@ -11,7 +11,7 @@ function normalizeUserAvatar(data: AuthResponse): AuthResponse {
   return data;
 }
 
-// ─── Auth API ─────────────────────────────────────────────────────────────────
+// ─── API Xác thực ─────────────────────────────────────────────────────────────
 
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
@@ -29,7 +29,7 @@ export const authApi = {
     return normalizeUserAvatar(response.data);
   },
 
-  // Không chỉ xóa token ở local mà còn báo cho server biết để hủy token.
+  /** Đăng xuất — không chỉ xóa token ở local mà còn báo cho server để hủy token. */
   logout: async (): Promise<void> => {
     await axiosInstance.post('/auth/logout');
   },

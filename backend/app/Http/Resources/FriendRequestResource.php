@@ -5,10 +5,15 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Resource Lời mời kết bạn (FriendRequest Resource).
+ *
+ * Biến đổi model FriendRequest thành JSON cho API response.
+ */
 class FriendRequestResource extends JsonResource
 {
     /**
-     * Transform the resource into an array.
+     * Biến đổi lời mời kết bạn thành mảng dữ liệu.
      *
      * @return array<string, mixed>
      */

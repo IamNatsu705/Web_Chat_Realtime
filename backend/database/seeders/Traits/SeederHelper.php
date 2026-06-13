@@ -275,7 +275,6 @@ trait SeederHelper
         array $mediaUrls = [],
         array $likers = [],
         array $comments = [],
-        bool $isPinned = false,
         int $daysAgo = 1,
     ): Post {
         $postTime = now()->subDays($daysAgo)->subHours(rand(0, 8));
@@ -286,7 +285,6 @@ trait SeederHelper
             'media_url'      => $mediaUrls[0] ?? null,
             'likes_count'    => count($likers),
             'comments_count' => $this->countAllComments($comments),
-            'is_pinned'      => $isPinned,
             'status'         => 'active',
             'created_at'     => $postTime,
             'updated_at'     => $postTime,

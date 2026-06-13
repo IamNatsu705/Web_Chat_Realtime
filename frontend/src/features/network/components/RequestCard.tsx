@@ -2,6 +2,12 @@ import { Link } from 'react-router-dom';
 import type { FriendRequest } from '../types';
 import { USER_CARD_TEXTS } from '../constants';
 
+/**
+ * RequestCard — Component hiển thị một lời mời kết bạn.
+ *
+ * Hiển thị thông tin người gửi kèm theo hai nút: Chấp nhận và Từ chối.
+ */
+
 interface RequestCardProps {
   request: FriendRequest;
   onAccept: (requestId: number) => void;

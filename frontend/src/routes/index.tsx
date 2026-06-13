@@ -16,7 +16,10 @@ import AdminPosts from '../pages/admin/AdminPosts';
 
 import CommunitiesPage from '../pages/communities/CommunitiesPage';
 
-// Protected Route wrapper for authenticated pages
+/**
+ * Route bảo vệ — chỉ cho phép truy cập khi đã đăng nhập.
+ * Tự động chuyển hướng admin sang /admin, user chưa đăng nhập sang /login.
+ */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
 
@@ -35,7 +38,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Admin Route wrapper - requires admin role
+/**
+ * Route quản trị viên — yêu cầu role admin.
+ * User thường bị chuyển hướng về trang chủ.
+ */
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading } = useAuth();
 
@@ -54,7 +60,10 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Auth Route wrapper to prevent logged-in users from seeing login/register
+/**
+ * Route xác thực — ngăn user đã đăng nhập truy cập trang login/register.
+ * Tự động chuyển hướng admin sang /admin, user thường sang trang chủ.
+ */
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
 
@@ -72,7 +81,13 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Global Event Listener Component to handle 401 Unauthorized globally
+/**
+ * Component lắng nghe sự kiện 401 Unauthorized toàn cục.
+ *
+ * Khi axios interceptor phát hiện 401, dispatch event `auth:unauthorized`.
+ * Component này bắt event đó, thực hiện đăng xuất và chuyển về trang login.
+ * Dùng cờ `hasLoggedOut` để tránh gọi logout nhiều lần cùng lúc.
+ */
 function GlobalAuthListener() {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -97,6 +112,17 @@ function GlobalAuthListener() {
   return null;
 }
 
+/**
+ * Component gốc định nghĩa toàn bộ cấu trúc routing của ứng dụng.
+ *
+ * Cấu trúc Provider:
+ * AuthProvider → BrowserRouter → GlobalAuthListener + WebSocketProvider → Routes
+ *
+ * Các nhóm route:
+ * - /login, /register: Trang xác thực (AuthRoute).
+ * - /, /messages, /communities, /network, /profile: Trang chính (ProtectedRoute).
+ * - /admin/*: Trang quản trị (AdminRoute + AdminLayout).
+ */
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -104,6 +130,7 @@ export default function AppRoutes() {
           <GlobalAuthListener />
           <WebSocketProvider>
             <Routes>
+              {/* ── Trang xác thực ── */}
               <Route
                 path="/login"
                 element={
@@ -120,6 +147,8 @@ export default function AppRoutes() {
                   </AuthRoute>
                 }
               />
+
+              {/* ── Trang chính (yêu cầu đăng nhập) ── */}
               <Route
                 path="/"
                 element={
@@ -177,7 +206,7 @@ export default function AppRoutes() {
                 }
               />
 
-              {/* Admin Routes - Separate layout */}
+              {/* ── Trang quản trị (yêu cầu role admin) ── */}
               <Route
                 path="/admin"
                 element={

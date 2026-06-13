@@ -4,7 +4,7 @@ import type { ProfileResponse, UpdateProfileRequest, UpdatePasswordRequest } fro
 import type { Post } from '../../post/types';
 import { getImageUrl } from '@/utils/getImageUrl';
 
-// ─── Profile API ──────────────────────────────────────────────────────────────
+// ─── API Hồ sơ cá nhân ───────────────────────────────────────────────────────
 
 export const profileApi = {
   updateProfile: async (data: UpdateProfileRequest): Promise<ProfileResponse<{ user: User }>> => {

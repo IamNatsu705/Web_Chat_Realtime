@@ -1,18 +1,26 @@
 import axios from 'axios';
 
-// Create an Axios instance with base URL pointing to Laravel backend
+/**
+ * Tạo instance Axios với base URL trỏ đến Laravel backend.
+ * Tất cả API request trong ứng dụng đều đi qua instance này.
+ */
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
   headers: {
-    'Content-Type': 'application/json',       // Thông báo cho server biết dạng dữ liệu gửi là Json
-    'Accept': 'application/json',             // Mong muốn server trả về dữ liệu dạng là Json
+    'Content-Type': 'application/json',       // Thông báo cho server biết dạng dữ liệu gửi là JSON
+    'Accept': 'application/json',             // Mong muốn server trả về dữ liệu dạng JSON
   },
-  withCredentials: true, // Important for Sanctum CSRF cookies if used later, or just general cookies
+  withCredentials: true, // Gửi kèm cookie cho xác thực CSRF (Sanctum) nếu cần
 });
 
 import { getSocketId } from './echo';
 
-// Request Interceptor (Can thiệp trước khi gửi request): Attach Token automatically
+/**
+ * Request Interceptor — Can thiệp TRƯỚC khi gửi request.
+ *
+ * - Tự động đính kèm Bearer Token từ LocalStorage vào header Authorization.
+ * - Tự động đính kèm X-Socket-ID để server loại bỏ event gửi lại cho chính người gửi.
+ */
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -30,7 +38,7 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ── Anti-spam logout: chỉ fire event 1 lần duy nhất ──────────────────────
+// ── Chống spam logout: chỉ fire event 1 lần duy nhất ──────────────────────
 let isLoggingOut = false;
 
 /**
@@ -41,13 +49,19 @@ export function setLoggingOut(value: boolean) {
   isLoggingOut = value;
 }
 
-// Response Interceptor: Handle Global 401 Unauthorized
+/**
+ * Response Interceptor — Xử lý lỗi 401 Unauthorized toàn cục.
+ *
+ * Khi nhận 401 (token hết hạn hoặc không hợp lệ):
+ * - Xóa token khỏi LocalStorage.
+ * - Dispatch event `auth:unauthorized` để AuthProvider xử lý đăng xuất.
+ * - Dùng cờ `isLoggingOut` để tránh vòng lặp vô hạn: logout → 401 → logout → ∞
+ */
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Nếu đang trong quá trình logout, KHÔNG fire event lại (tránh vòng lặp vô hạn)
-      // Cũng bỏ qua nếu request là tới endpoint logout
+      // Bỏ qua nếu đang logout hoặc request là tới endpoint logout
       const requestUrl = error.config?.url || '';
       const isLogoutRequest = requestUrl.includes('/auth/logout');
 

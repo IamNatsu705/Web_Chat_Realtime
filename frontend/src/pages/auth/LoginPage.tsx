@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { useAuth } from '../../providers/AuthProvider';
 import { useNavigate, Link } from 'react-router-dom';
 
+/**
+ * LoginPage — Trang đăng nhập.
+ *
+ * Xử lý nhập email/mật khẩu, gọi API đăng nhập, điều hướng
+ * về trang chủ (user) hoặc trang quản trị (admin) sau khi thành công.
+ */
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();

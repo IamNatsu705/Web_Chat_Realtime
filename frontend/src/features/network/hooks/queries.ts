@@ -18,7 +18,7 @@ export function useFriendsQuery() {
       return res.data ?? [];
     },
     enabled: isAuthenticated,
-    // Friends list rarely changes — 2 min stale window
+    // Danh sách bạn bè ít thay đổi — stale window 2 phút
     staleTime: 120_000,
   });
 }
@@ -33,7 +33,7 @@ export function useFriendRequestsQuery() {
       return res.data ?? [];
     },
     enabled: isAuthenticated,
-    // Friend requests change occasionally — 1 min stale window
+    // Lời mời kết bạn thay đổi thỉnh thoảng — stale window 1 phút
     staleTime: 60_000,
   });
 }
@@ -48,7 +48,7 @@ export function useSuggestionsQuery() {
       return res.data ?? [];
     },
     enabled: isAuthenticated,
-    // Suggestions are computed from mutual friends — 5 min stale window
+    // Gợi ý kết bạn tính từ bạn chung — stale window 5 phút
     staleTime: 300_000,
   });
 }

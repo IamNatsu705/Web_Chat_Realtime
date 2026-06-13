@@ -4,6 +4,12 @@ import { useCreatePostMutation } from '../hooks/queries';
 import { getImageUrl } from '@/utils/getImageUrl';
 import { HiXMark } from 'react-icons/hi2';
 
+/**
+ * CreatePost — Component đăng bài viết mới.
+ *
+ * Cho phép nhập nội dung văn bản và đính kèm tối đa 4 tệp (ảnh/video).
+ */
+
 export default function CreatePost() {
   const { user } = useAuth();
   const [content, setContent] = useState('');
@@ -64,7 +70,7 @@ export default function CreatePost() {
         />
       </div>
 
-      {/* Media previews */}
+      {/* Xem trước tệp đính kèm */}
       {previews.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {previews.map((preview, i) => (

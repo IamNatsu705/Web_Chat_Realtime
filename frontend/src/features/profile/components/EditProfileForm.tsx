@@ -2,6 +2,12 @@ import React, { useState, useRef } from 'react';
 import { useAuth } from '../../../providers/AuthProvider';
 import { profileApi } from '../api/profileApi';
 
+/**
+ * EditProfileForm — Form chỉnh sửa thông tin cá nhân.
+ *
+ * Cập nhật họ tên, tiểu sử, ảnh đại diện, mã sinh viên và khoa.
+ */
+
 export default function EditProfileForm() {
     const { user, updateUser } = useAuth();
     const [name, setName] = useState(user?.name || '');
@@ -65,7 +71,7 @@ export default function EditProfileForm() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="flex flex-col md:flex-row gap-6 items-start">
-                    {/* Avatar Upload */}
+                    {/* Tải lên ảnh đại diện */}
                     <div className="flex flex-col items-center gap-3">
                         <div className="relative h-24 w-24 rounded-full bg-gray-100 border-2 border-indigo-100 overflow-hidden flex items-center justify-center">
                             {avatarPreview ? (
@@ -92,7 +98,7 @@ export default function EditProfileForm() {
                         />
                     </div>
 
-                    {/* Form Fields */}
+                    {/* Các trường thông tin Form */}
                     <div className="flex-grow space-y-4 w-full">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>

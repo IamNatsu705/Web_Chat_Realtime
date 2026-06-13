@@ -11,7 +11,7 @@ export const POST_QUERIES = {
 };
 
 /**
- * Feed với cursor-based infinite scrolling
+ * Bảng tin với cuộn trang vô hạn dựa trên cursor
  */
 export function useFeedQuery() {
   const { isAuthenticated } = useAuth();
@@ -64,7 +64,7 @@ export function useCreatePostMutation() {
   });
 }
 
-// ── Helper: Optimistic update cho cả feed và userPosts ──────────────────────
+// ── Hàm hỗ trợ: Optimistic update cho cả feed và userPosts ────────────────────
 
 interface InfiniteFeedData {
   pages: FeedPage[];
@@ -78,7 +78,7 @@ interface UserPostsData {
 }
 
 function optimisticUpdatePost(queryClient: ReturnType<typeof useQueryClient>, postId: number, updater: (post: Post) => Post) {
-  // Update trong feed (infinite query)
+  // Cập nhật trong feed (infinite query)
   queryClient.setQueriesData<InfiniteFeedData>(
     { queryKey: POST_QUERIES.feed() },
     (old) => {
@@ -93,7 +93,7 @@ function optimisticUpdatePost(queryClient: ReturnType<typeof useQueryClient>, po
     }
   );
 
-  // Update trong tất cả userPosts queries
+  // Cập nhật trong tất cả userPosts queries
   queryClient.setQueriesData<UserPostsData>(
     {
       predicate: (query) => {
@@ -112,7 +112,7 @@ function optimisticUpdatePost(queryClient: ReturnType<typeof useQueryClient>, po
 }
 
 /**
- * Mutation: Toggle like — Optimistic Update
+ * Mutation: Toggle like — Cập nhật giao diện ngay lập tức (Optimistic Update)
  */
 export function useToggleLikeMutation() {
   const queryClient = useQueryClient();
@@ -120,7 +120,7 @@ export function useToggleLikeMutation() {
   return useMutation({
     mutationFn: (postId: number) => postApi.toggleLike(postId),
     onMutate: async (postId) => {
-      // Cancel cả feed lẫn userPosts để tránh race condition
+      // Hủy cả feed lẫn userPosts để tránh race condition
       await queryClient.cancelQueries({ queryKey: POST_QUERIES.feed() });
       await queryClient.cancelQueries({
         predicate: (query) => {
@@ -221,7 +221,7 @@ export function useDeletePostMutation() {
 }
 
 /**
- * Mutation: Xoá comment (cascade deletes replies via BE)
+ * Mutation: Xóa comment (cascade xóa replies qua Backend)
  */
 export function useDeleteCommentMutation() {
   const queryClient = useQueryClient();
@@ -230,11 +230,11 @@ export function useDeleteCommentMutation() {
     mutationFn: ({ commentId }: { commentId: number; postId: number }) =>
       postApi.deleteComment(commentId),
     onSuccess: (_data, variables) => {
-      // Invalidate comments to refetch fresh list
+      // Invalidate comments để fetch lại danh sách mới nhất
       queryClient.invalidateQueries({
         queryKey: POST_QUERIES.comments(variables.postId),
       });
-      // Also invalidate feed + userPosts to sync comments_count
+      // Cũng invalidate feed + userPosts để đồng bộ comments_count
       queryClient.invalidateQueries({ queryKey: POST_QUERIES.feed() });
       queryClient.invalidateQueries({ queryKey: ['user'], exact: false });
     },

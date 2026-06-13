@@ -7,12 +7,14 @@ window.Pusher = Pusher;
 
 type ReverbEcho = Echo<'reverb'>;
 
+/** Instance Echo duy nhất trong toàn bộ ứng dụng (Singleton Pattern) */
 let echoInstance: ReverbEcho | null = null;
 
 /**
- * Create a fresh Echo instance using the current auth token.
- * Called after login/register so the WebSocket connection
- * authenticates with the correct Bearer token.
+ * Tạo một instance Echo mới sử dụng token xác thực hiện tại.
+ *
+ * Được gọi sau khi đăng nhập/đăng ký để kết nối WebSocket
+ * xác thực đúng với Bearer token của người dùng.
  */
 function createEchoInstance(): ReverbEcho {
     const token = localStorage.getItem('token');
@@ -36,7 +38,7 @@ function createEchoInstance(): ReverbEcho {
 }
 
 /**
- * Get the current Echo instance (lazy-created on first access).
+ * Lấy instance Echo hiện tại (tạo mới nếu chưa có — Lazy Initialization).
  */
 export function getEcho(): ReverbEcho {
     if (!echoInstance) {
@@ -46,15 +48,15 @@ export function getEcho(): ReverbEcho {
 }
 
 /**
- * Tear down the old instance and create a new one with the latest token.
- * Call this after login / register so private-channel auth works.
+ * Hủy instance cũ và tạo instance mới với token mới nhất.
+ * Gọi sau khi đăng nhập / đăng ký để xác thực private channel hoạt động đúng.
  */
 export function reinitializeEcho(): ReverbEcho {
     if (echoInstance) {
         try {
             echoInstance.disconnect();
         } catch {
-            // ignore disconnect errors
+            // Bỏ qua lỗi ngắt kết nối
         }
     }
     echoInstance = createEchoInstance();
@@ -62,22 +64,24 @@ export function reinitializeEcho(): ReverbEcho {
 }
 
 /**
- * Disconnect and destroy the Echo instance.
- * Call this on logout.
+ * Ngắt kết nối và hủy instance Echo.
+ * Gọi khi đăng xuất để giải phóng tài nguyên WebSocket.
  */
 export function destroyEcho(): void {
     if (echoInstance) {
         try {
             echoInstance.disconnect();
         } catch {
-            // ignore
+            // Bỏ qua lỗi
         }
         echoInstance = null;
     }
 }
 
-// Backward-compat proxy: `import { echo } from './echo'`
-// Delegates all property access to the lazily-created instance.
+/**
+ * Proxy tương thích ngược: `import { echo } from './echo'`
+ * Ủy quyền (delegate) tất cả truy cập thuộc tính đến instance tạo lười (lazy-created).
+ */
 export const echo = new Proxy({} as ReverbEcho, {
     get(_target, prop) {
         return Reflect.get(getEcho(), prop);
@@ -85,9 +89,9 @@ export const echo = new Proxy({} as ReverbEcho, {
 });
 
 /**
- * Safely get the current socket ID without forcing Echo initialization.
+ * Lấy Socket ID hiện tại một cách an toàn mà không ép khởi tạo Echo.
+ * Dùng để gửi kèm header X-Socket-ID trong HTTP request (tránh nhận lại event của chính mình).
  */
 export function getSocketId(): string | undefined {
     return echoInstance?.socketId();
 }
-

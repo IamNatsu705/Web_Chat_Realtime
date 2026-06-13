@@ -11,8 +11,10 @@ interface AddMembersModalProps {
 }
 
 /**
- * AddMembersModal — lets the group admin pick a friend (not already in the group)
- * and add them.
+ * AddMembersModal — Modal thêm thành viên vào nhóm.
+ *
+ * Cho phép quản trị viên nhóm chọn một người bạn (chưa có trong nhóm)
+ * để thêm vào nhóm.
  */
 export default function AddMembersModal({
   friends,
@@ -28,7 +30,7 @@ export default function AddMembersModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[80vh]">
-        {/* Header */}
+        {/* Phần tiêu đề */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h3 className="text-base font-bold text-gray-900">Thêm thành viên</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
@@ -38,7 +40,7 @@ export default function AddMembersModal({
           </button>
         </div>
 
-        {/* List */}
+        {/* Danh sách bạn bè */}
         <div className="grow overflow-y-auto">
           {eligible.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-gray-400 text-sm px-4 text-center">
@@ -77,7 +79,7 @@ export default function AddMembersModal({
           )}
         </div>
 
-        {/* Footer */}
+        {/* Phần chân */}
         <div className="px-5 py-3 border-t border-gray-100">
           <button
             onClick={onClose}

@@ -4,6 +4,16 @@ namespace App\Http\Requests\Profile;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Request Cập nhật hồ sơ (Update Profile Request).
+ *
+ * Xác thực dữ liệu cập nhật hồ sơ cá nhân:
+ * - name: Họ tên (bắt buộc).
+ * - avatar: Ảnh đại diện (tối đa 2MB, định dạng jpg/jpeg/png/webp).
+ * - bio: Tiểu sử (tối đa 300 ký tự).
+ * - student_id: Mã số sinh viên (tối đa 20 ký tự).
+ * - department: Khoa/Ngành (tối đa 100 ký tự).
+ */
 class UpdateProfileRequest extends FormRequest
 {
     public function authorize(): bool
@@ -11,9 +21,6 @@ class UpdateProfileRequest extends FormRequest
         return true;
     }
 
-    /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [

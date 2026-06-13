@@ -5,10 +5,21 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Resource Cuộc trò chuyện (Conversation Resource).
+ *
+ * Biến đổi model Conversation thành JSON cho API response.
+ * Xử lý nhiều trường tính toán phức tạp:
+ * - Danh sách thành viên (lọc tài khoản đã xóa).
+ * - Trạng thái tham gia (my_status), vai trò (my_role).
+ * - Tin nhắn cuối cùng (ẩn nếu đã xóa lịch sử).
+ * - Số tin nhắn chưa đọc (pre-computed, tránh N+1).
+ * - Thông tin Streak (chỉ hiển thị khi >= 3 ngày).
+ */
 class ConversationResource extends JsonResource
 {
     /**
-     * Transform the resource into an array.
+     * Biến đổi cuộc trò chuyện thành mảng dữ liệu.
      *
      * @return array<string, mixed>
      */
@@ -26,16 +37,16 @@ class ConversationResource extends JsonResource
             'member_count' => $this->member_count,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            // Trạng thái yêu cầu tham gia của user hiện tại
-            // BUG-02 FIX: Chỉ trả về khi relation đã được eager load, tránh N+1 query
+
+            // Trạng thái yêu cầu tham gia của user hiện tại (cho trang Khám phá)
             'my_join_request_status' => $this->whenLoaded('joinRequests', function () use ($request) {
                 return $this->joinRequests
                     ->where('user_id', $request->user()?->id)
                     ->first()?->status;
             }),
             
+            // Danh sách thành viên — lọc tài khoản đã xóa để tránh FE crash
             'participants' => $this->whenLoaded('participants', function() {
-                // Filter out null users (deleted accounts) to prevent FE crash
                 return $this->participants->map(function($participant) {
                     if (!$participant->user) return null;
                     return [
@@ -51,30 +62,34 @@ class ConversationResource extends JsonResource
                     ];
                 })->filter()->values();
             }),
+
+            // Trạng thái tham gia của user hiện tại (active/pending/rejected)
             'my_status' => $this->whenLoaded('participants', function() use ($request) {
                 $participant = $this->participants->firstWhere('user_id', $request->user()?->id);
                 return $participant ? $participant->status : null;
             }),
+
             // Vai trò của user hiện tại trong nhóm (owner/moderator/member)
             'my_role' => $this->whenLoaded('participants', function() use ($request) {
                 $participant = $this->participants->firstWhere('user_id', $request->user()?->id);
                 return $participant ? ($participant->role ?? 'member') : null;
             }),
+
+            // Tin nhắn cuối cùng — ẩn nếu user đã xóa lịch sử (cleared_at)
             'last_message' => $this->whenLoaded('lastMessage', function () use ($request) {
                 if (!$this->lastMessage) return null;
                 $participant = $this->participants->firstWhere('user_id', $request->user()?->id);
                 $clearedAt = $participant ? $participant->cleared_at : null;
-                // If the message is older than when the user cleared the chat, hide it
                 if ($clearedAt && $this->lastMessage->created_at < $clearedAt) {
                     return null;
                 }
                 return new MessageResource($this->lastMessage);
             }),
-            // Use pre-computed value from Repository (no N+1 query)
-            // Falls back to 0 if attribute not available (e.g. single conversation fetch)
+
+            // Số tin nhắn chưa đọc (pre-computed từ Repository, tránh N+1)
             'unread_count' => $this->preloaded_unread_count ?? 0,
 
-            // Streak data for 1-1 chats (only included when streak >= 3)
+            // Thông tin Streak cho chat 1-1 (chỉ hiển thị khi chuỗi >= 3 ngày)
             'streak' => $this->whenLoaded('streak', function () {
                 if (!$this->streak || $this->streak->current_streak < 3) {
                     return null;
@@ -85,7 +100,7 @@ class ConversationResource extends JsonResource
                     'restore_days' => $this->streak->restore_days,
                     'tier' => $this->streak->getMilestoneTier(),
                     'is_milestone' => $this->streak->isMilestone(),
-                    // Whether both users have completed the streak today (last_completed_date = today)
+                    // Cả 2 user đã hoàn thành streak hôm nay chưa
                     'today_completed' => $this->streak->last_completed_date
                         && $this->streak->last_completed_date->isToday(),
                 ];

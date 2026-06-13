@@ -4,6 +4,12 @@ import { UsersTable } from '@/features/admin/components/users/UsersTable';
 import { BanUserModal } from '@/features/admin/components/users/BanUserModal';
 import { AdminPagination } from '@/features/admin/components/shared/AdminPagination';
 
+/**
+ * AdminUsers — Trang quản lý người dùng dành cho Admin.
+ *
+ * Cung cấp các tính năng xem danh sách, lọc, tìm kiếm người dùng,
+ * đồng thời cho phép cấm (ban) hoặc gỡ cấm (unban) người dùng vi phạm.
+ */
 export default function AdminUsers() {
   const {
     search,
@@ -21,7 +27,7 @@ export default function AdminUsers() {
 
   return (
     <div>
-      {/* Header */}
+      {/* Tiêu đề */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Quản lý Người Dùng</h1>
         <p className="text-gray-500 mt-1 text-sm">
@@ -29,7 +35,7 @@ export default function AdminUsers() {
         </p>
       </div>
 
-      {/* Filter */}
+      {/* Bộ lọc */}
       <UsersFilter
         search={search}
         onSearchChange={(val) => { setSearch(val); setPage(1); }}
@@ -38,7 +44,7 @@ export default function AdminUsers() {
         total={data?.total}
       />
 
-      {/* Table */}
+      {/* Bảng dữ liệu */}
       <UsersTable
         users={data?.users}
         isLoading={isLoading}
@@ -47,7 +53,7 @@ export default function AdminUsers() {
         isUnbanPending={unbanMutation.isPending}
       />
 
-      {/* Pagination */}
+      {/* Phân trang */}
       {data && (
         <AdminPagination
           currentPage={data.current_page}
@@ -56,7 +62,7 @@ export default function AdminUsers() {
         />
       )}
 
-      {/* Modals */}
+      {/* Các hộp thoại (Modals) */}
       {banModal && (
         <BanUserModal
           user={banModal}

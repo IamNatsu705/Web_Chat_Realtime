@@ -5,6 +5,11 @@ namespace App\Repositories\FriendRequestRepo;
 use App\Models\FriendRequest;
 use App\Repositories\BaseRepo\BaseRepository;
 
+/**
+ * Repository Lời mời kết bạn (Friend Request Repository).
+ *
+ * Triển khai các truy vấn liên quan đến bảng friend_requests.
+ */
 class FriendRequestRepository extends BaseRepository implements FriendRequestRepositoryInterface
 {
     public function getModel(): string
@@ -12,6 +17,7 @@ class FriendRequestRepository extends BaseRepository implements FriendRequestRep
         return FriendRequest::class;
     }
 
+    /** {@inheritdoc} */
     public function findPendingRequest(int $senderId, int $receiverId)
     {
         return $this->model->where([
@@ -21,6 +27,10 @@ class FriendRequestRepository extends BaseRepository implements FriendRequestRep
         ])->first();
     }
 
+    /**
+     * Lấy danh sách lời mời đang chờ duyệt, sắp xếp mới nhất trước.
+     * Eager load thông tin người gửi (sender) để hiển thị trên UI.
+     */
     public function getIncomingRequests(int $userId)
     {
         return $this->model
@@ -31,11 +41,16 @@ class FriendRequestRepository extends BaseRepository implements FriendRequestRep
             ->get();
     }
 
+    /** {@inheritdoc} */
     public function findSentRequest(int $senderId, int $receiverId)
     {
         return $this->findPendingRequest($senderId, $receiverId);
     }
 
+    /**
+     * Lấy danh sách ID người nhận mà user đã gửi lời mời (pending).
+     * Dùng để loại trừ khỏi gợi ý kết bạn — tránh gợi ý người đã gửi lời mời.
+     */
     public function getSentPendingRequestIds(int $userId): \Illuminate\Support\Collection
     {
         return $this->model

@@ -7,6 +7,13 @@ use App\Repositories\BaseRepo\BaseRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Repository Quan hệ bạn bè (Friendship Repository).
+ *
+ * Triển khai các truy vấn liên quan đến bảng friendships.
+ * Lưu ý: Quan hệ bạn bè lưu 1 chiều, nên mọi truy vấn đều phải kiểm tra cả hai chiều
+ * (user_id, friend_id) và (friend_id, user_id).
+ */
 class FriendshipRepository extends BaseRepository implements FriendshipRepositoryInterface
 {
     public function getModel(): string
@@ -14,6 +21,9 @@ class FriendshipRepository extends BaseRepository implements FriendshipRepositor
         return Friendship::class;
     }
 
+    /**
+     * Kiểm tra hai người dùng có phải bạn bè không (kiểm tra cả hai chiều).
+     */
     public function checkIsFriend(int $userId, int $friendId)
     {
         return $this->model->where(function ($q) use ($userId, $friendId) {
@@ -23,6 +33,9 @@ class FriendshipRepository extends BaseRepository implements FriendshipRepositor
         })->first();
     }
 
+    /**
+     * Lấy danh sách bạn bè kèm thông tin user (eager load), sắp xếp theo thời gian kết bạn.
+     */
     public function getFriendsByUserId(int $userId): Collection
     {
         return $this->model
@@ -35,6 +48,9 @@ class FriendshipRepository extends BaseRepository implements FriendshipRepositor
             ->get();
     }
 
+    /**
+     * Xóa quan hệ bạn bè giữa hai người dùng (kiểm tra cả hai chiều).
+     */
     public function deleteFriendship(int $userId, int $friendId): bool
     {
         $deleted = $this->model->where(function ($q) use ($userId, $friendId) {
@@ -47,9 +63,8 @@ class FriendshipRepository extends BaseRepository implements FriendshipRepositor
     }
 
     /**
-     * Lấy tất cả friend IDs của user (1 query nhẹ, indexed).
-     *
-     * @return int[]
+     * Lấy tất cả ID bạn bè của user (1 truy vấn nhẹ, indexed).
+     * Query cả 2 chiều rồi merge lại.
      */
     public function getFriendIds(int $userId): array
     {
@@ -68,7 +83,7 @@ class FriendshipRepository extends BaseRepository implements FriendshipRepositor
      * Gợi ý kết bạn dựa trên bạn chung (mutual friends).
      *
      * ╔══════════════════════════════════════════════════════════════════════╗
-     * ║  GIẢI THUẬT TỐI ƯU (2-step, không correlated subquery):              ║
+     * ║  GIẢI THUẬT TỐI ƯU (2 bước, không correlated subquery):             ║
      * ║                                                                      ║
      * ║  B1: Gọi getFriendIds() lấy danh sách friend_ids (đã indexed)        ║
      * ║  B2: Query friendships WHERE user_id IN (friend_ids)                 ║
@@ -86,8 +101,10 @@ class FriendshipRepository extends BaseRepository implements FriendshipRepositor
             return collect();
         }
 
+        // Tổng hợp tất cả ID cần loại trừ: chính mình + bạn bè hiện tại + pending requests
         $allExcludeIds = array_unique(array_merge([$userId], $friendIds, $excludeIds));
 
+        // Tìm bạn-của-bạn (friend-of-friend) và đếm số bạn chung
         $suggestedUsers = DB::table('friendships')
             ->select('candidate_id', DB::raw('COUNT(*) as mutual_friends_count'))
             ->fromSub(function ($query) use ($friendIds, $allExcludeIds) {
@@ -114,59 +131,44 @@ class FriendshipRepository extends BaseRepository implements FriendshipRepositor
         $candidateIds = $suggestedUsers->pluck('candidate_id')->all();
         $mutualCounts = $suggestedUsers->pluck('mutual_friends_count', 'candidate_id');
 
+        // Lấy thông tin chi tiết user và gắn số bạn chung
         $users = \App\Models\User::whereIn('id', $candidateIds)
             ->where('is_banned', false)
             ->where('role', '!=', 'admin')
             ->get();
 
-        return $users->map(function ($user) use ($mutualCounts) {
+        $pendingRequests = \App\Models\FriendRequest::where('status', 'pending')
+            ->where(function($q) use ($userId, $candidateIds) {
+                $q->where(function($q2) use ($userId, $candidateIds) {
+                    $q2->where('sender_id', $userId)->whereIn('receiver_id', $candidateIds);
+                })->orWhere(function($q2) use ($userId, $candidateIds) {
+                    $q2->where('receiver_id', $userId)->whereIn('sender_id', $candidateIds);
+                });
+            })->get();
+
+        return $users->map(function ($user) use ($mutualCounts, $pendingRequests, $userId) {
             $user->mutual_friends_count = $mutualCounts[$user->id] ?? 0;
-            $user->relationship_status = 'none';
+            
+            $req = $pendingRequests->first(function($r) use ($user, $userId) {
+                return ($r->sender_id == $userId && $r->receiver_id == $user->id) ||
+                       ($r->receiver_id == $userId && $r->sender_id == $user->id);
+            });
+
+            if ($req) {
+                $user->relationship_status = 'pending';
+                $user->is_sender = (bool) ($req->sender_id == $userId);
+                $user->friend_request_id = $req->id;
+            } else {
+                $user->relationship_status = 'none';
+            }
             return $user;
         })->sortByDesc('mutual_friends_count')->values();
     }
 
     /**
-     * Fallback gợi ý cho tân sinh viên: gợi ý theo cùng khoa/ngành (department).
-     * Dùng khi user chưa có bạn bè (mutual friends trả rỗng).
-     *
-     * @param int   $userId      ID user hiện tại
-     * @param array $excludeIds  Các user IDs cần loại trừ (đã là bạn, pending request, chính mình)
-     * @param int   $limit       Số lượng gợi ý tối đa
+     * Kiểm tra trạng thái quan hệ bạn bè (tồn tại hay không).
+     * Trả về true nếu hai người dùng đã là bạn bè.
      */
-    public function getSuggestionsByDepartment(int $userId, array $excludeIds, int $limit = 10): Collection
-    {
-        $currentUser = \App\Models\User::find($userId);
-
-        if (!$currentUser || !$currentUser->department) {
-            // Không có thông tin department → gợi ý ngẫu nhiên các user mới nhất
-            return \App\Models\User::whereNotIn('id', array_merge($excludeIds, [$userId]))
-                ->where('is_banned', false)
-                ->where('role', '!=', 'admin')
-                ->orderByDesc('created_at')
-                ->limit($limit)
-                ->get()
-                ->map(function ($user) {
-                    $user->mutual_friends_count = 0;
-                    $user->relationship_status = 'none';
-                    return $user;
-                });
-        }
-
-        return \App\Models\User::where('department', $currentUser->department)
-            ->whereNotIn('id', array_merge($excludeIds, [$userId]))
-            ->where('is_banned', false)
-            ->where('role', '!=', 'admin')
-            ->orderByDesc('created_at')
-            ->limit($limit)
-            ->get()
-            ->map(function ($user) {
-                $user->mutual_friends_count = 0;
-                $user->relationship_status = 'none';
-                return $user;
-            });
-    }
-
     public function getFriendshipStatus(int $userId, int $friendId)
     {
         return $this->model->where(function ($query) use ($userId, $friendId) {

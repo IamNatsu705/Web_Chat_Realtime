@@ -39,7 +39,6 @@ class PostSeeder extends Seeder
                 [$duy, 'Hay quá! Mình cũng đang tìm hiểu WebSocket cho project ML.'],
                 [$mai, 'UI nhìn clean lắm bạn ơi 🎨 Dùng Tailwind hay CSS thuần?'],
             ],
-            false,
             0 // hôm nay
         );
 
@@ -59,7 +58,6 @@ class PostSeeder extends Seeder
                     [$binh, 'Có nhé, API Security nằm ở mục A1 và A7.'],
                 ]],
             ],
-            false,
             1
         );
 
@@ -96,7 +94,6 @@ class PostSeeder extends Seeder
                     [$duy, 'Có nha, mình sẽ share trên GitHub. Watch repo của mình nhé!'],
                 ]],
             ],
-            false,
             2
         );
 
@@ -112,7 +109,6 @@ class PostSeeder extends Seeder
                 [$an, 'UI đẹp quá Mai ơi! Dark mode nhìn rất premium 🤩'],
                 [$nga, 'Glassmorphism trendy lắm bạn ơi, nhìn rất sang!'],
             ],
-            false,
             3
         );
 
@@ -129,7 +125,6 @@ class PostSeeder extends Seeder
                     [$khoa, 'Bản production mình dùng trực tiếp, bản dev mới Docker. Free tier EC2 ram ít nên Docker hơi nặng.'],
                 ]],
             ],
-            false,
             2
         );
 
@@ -144,7 +139,6 @@ class PostSeeder extends Seeder
             [
                 [$mai, 'Hay quá! Mình đang luyện IELTS 6.5, rất cần tips kiểu này.'],
             ],
-            false,
             4
         );
 
@@ -160,7 +154,6 @@ class PostSeeder extends Seeder
                 [$cuong, 'Siêu ghê, 15 ngày liên tục! 🔥🔥🔥'],
                 [$binh, 'Cố lên 30 ngày nào team! 💪'],
             ],
-            false,
             0
         );
 
@@ -173,7 +166,6 @@ class PostSeeder extends Seeder
             [],
             [],
             [],
-            false,
             1
         );
         $hiddenPost->update([
@@ -195,7 +187,6 @@ class PostSeeder extends Seeder
                 [$an, 'Điểm 3 là mình hay vi phạm nhất 😂'],
                 [$mai, 'Cảm ơn bạn, đúng lúc mình cần motivation 🥲'],
             ],
-            false,
             3
         );
 
@@ -207,7 +198,6 @@ class PostSeeder extends Seeder
             [
                 [$binh, 'Python versatile hơn đúng rồi. Nhưng R thì ggplot đẹp thật.'],
             ],
-            false,
             5
         );
 
@@ -219,7 +209,6 @@ class PostSeeder extends Seeder
             [
                 [$khoa, 'pnpm nhanh hơn npm rất nhiều, chọn đúng rồi 👍'],
             ],
-            false,
             4
         );
     }

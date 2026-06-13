@@ -8,6 +8,12 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
+/**
+ * Repository Bài đăng (Post Repository).
+ *
+ * Triển khai các truy vấn liên quan đến bảng posts.
+ * Hỗ trợ bảng tin, trang cá nhân, trang quản trị, và thống kê hoạt động.
+ */
 class PostRepository extends BaseRepository implements PostRepositoryInterface
 {
     public function getModel(): string
@@ -15,6 +21,7 @@ class PostRepository extends BaseRepository implements PostRepositoryInterface
         return Post::class;
     }
 
+    /** {@inheritdoc} */
     public function getByUserId(int $userId): Collection
     {
         return $this->model
@@ -26,7 +33,7 @@ class PostRepository extends BaseRepository implements PostRepositoryInterface
 
     /**
      * Lấy bảng tin (feed) với phân trang dạng cursor.
-     * Bài ghim hiển trước, sau đó sắp xếp theo ngày tạo giảm dần.
+     * Bài ghim hiển thị trước, sau đó sắp xếp theo ngày tạo giảm dần.
      * Chỉ hiển thị bài viết có trạng thái 'active'.
      */
     public function getFeed(int $perPage = 15, ?string $cursor = null): CursorPaginator
@@ -34,7 +41,6 @@ class PostRepository extends BaseRepository implements PostRepositoryInterface
         return $this->model
             ->with(['user', 'media'])
             ->where('status', 'active')
-            ->orderBy('is_pinned', 'desc')
             ->orderBy('created_at', 'desc')
             ->cursorPaginate($perPage, ['*'], 'cursor', $cursor);
     }
@@ -49,7 +55,7 @@ class PostRepository extends BaseRepository implements PostRepositoryInterface
             ->with(['user', 'media'])
             ->where('user_id', $userId);
 
-        // Nếu người xem không phải chủ sở hữu => chỉ hiển bài active
+        // Nếu người xem không phải chủ sở hữu => chỉ hiển thị bài active
         if ($viewerId !== $userId) {
             $query->where('status', 'active');
         }
@@ -58,7 +64,7 @@ class PostRepository extends BaseRepository implements PostRepositoryInterface
     }
 
     /**
-     * Lấy bài viết cho trang quản trị, hỗ trợ lọc theo trạng thái và tìm kiếm.
+     * Lấy bài viết cho trang Quản trị, hỗ trợ lọc theo trạng thái và tìm kiếm.
      */
     public function getForAdmin(int $perPage = 15, ?string $status = null, ?string $search = null): LengthAwarePaginator
     {
@@ -80,21 +86,25 @@ class PostRepository extends BaseRepository implements PostRepositoryInterface
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 
+    /** {@inheritdoc} */
     public function countAll(): int
     {
         return $this->model->count();
     }
 
+    /** {@inheritdoc} */
     public function countSince(\Carbon\Carbon $date): int
     {
         return $this->model->where('created_at', '>=', $date)->count();
     }
 
+    /** {@inheritdoc} */
     public function countBetween(\Carbon\Carbon $from, \Carbon\Carbon $to): int
     {
         return $this->model->whereBetween('created_at', [$from, $to])->count();
     }
 
+    /** {@inheritdoc} */
     public function countHidden(): int
     {
         return $this->model->where('status', 'hidden')->count();
@@ -115,6 +125,7 @@ class PostRepository extends BaseRepository implements PostRepositoryInterface
 
     /**
      * Thống kê số bài viết theo ngày trong N ngày gần nhất.
+     * Điền giá trị 0 cho những ngày không có bài viết.
      */
     public function getDailyCount(int $days = 7): array
     {

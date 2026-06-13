@@ -8,6 +8,12 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * Sự kiện đánh dấu đã đọc (MessageRead).
+ *
+ * Phát qua WebSocket khi người dùng đọc tin nhắn trong cuộc trò chuyện.
+ * Frontend nhận sự kiện này để cập nhật trạng thái "Đã xem" cho người gửi.
+ */
 class MessageRead implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
@@ -21,6 +27,9 @@ class MessageRead implements ShouldBroadcast
         $this->userId = $userId;
     }
 
+    /**
+     * Broadcast đến kênh cuộc trò chuyện.
+     */
     public function broadcastOn(): array
     {
         return [

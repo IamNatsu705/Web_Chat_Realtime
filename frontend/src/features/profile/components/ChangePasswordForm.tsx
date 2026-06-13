@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { profileApi } from '../api/profileApi';
 
+/**
+ * ChangePasswordForm — Form đổi mật khẩu cho người dùng.
+ *
+ * Gửi yêu cầu API và hiển thị thông báo thành công hoặc lỗi.
+ */
+
 export default function ChangePasswordForm() {
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');

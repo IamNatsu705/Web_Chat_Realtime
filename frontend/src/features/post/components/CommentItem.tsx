@@ -18,6 +18,13 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('vi-VN');
 }
 
+/**
+ * CommentItem — Component hiển thị một bình luận hoặc phản hồi.
+ *
+ * Hỗ trợ hiển thị nội dung, thông tin người dùng,
+ * cho phép trả lời (hiển thị inline input) và xoá bình luận.
+ */
+
 interface CommentItemProps {
   comment: Comment;
   postId: number;
@@ -63,7 +70,7 @@ const CommentItem = memo(function CommentItem({
   return (
     <div className={`comment-item-enter ${isReply ? 'ml-10' : ''}`}>
       <div className="flex items-start gap-2.5 group">
-        {/* Avatar */}
+        {/* Hình đại diện (Avatar) */}
         <Link
           to={`/profile/${comment.user_id}`}
           className={`${isReply ? 'h-7 w-7' : 'h-8 w-8'} rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 shrink-0 flex items-center justify-center text-white font-semibold overflow-hidden hover:opacity-80 transition-opacity ${isReply ? 'text-[10px]' : 'text-xs'}`}
@@ -75,7 +82,7 @@ const CommentItem = memo(function CommentItem({
           )}
         </Link>
 
-        {/* Content */}
+        {/* Nội dung bình luận */}
         <div className="flex-1 min-w-0">
           <div className="inline-block max-w-full">
             <div className="bg-gray-100 rounded-2xl px-3.5 py-2 inline-block relative group/bubble">
@@ -89,7 +96,7 @@ const CommentItem = memo(function CommentItem({
                 {comment.content}
               </p>
 
-              {/* Delete button - appears on hover */}
+              {/* Nút xoá - hiện ra khi hover */}
               {canDelete && (
                 <button
                   onClick={handleDelete}
@@ -103,7 +110,7 @@ const CommentItem = memo(function CommentItem({
             </div>
           </div>
 
-          {/* Action bar */}
+          {/* Thanh hành động (Trả lời, Thời gian) */}
           <div className="flex items-center gap-3 mt-0.5 ml-3">
             {!isReply && (
               <button
@@ -118,7 +125,7 @@ const CommentItem = memo(function CommentItem({
             </span>
           </div>
 
-          {/* Inline reply input */}
+          {/* Ô nhập phản hồi hiển thị nội tuyến */}
           {showReplyInput && (
             <div className="flex items-center gap-2 mt-2 ml-1 comment-item-enter">
               <div className="h-6 w-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 shrink-0 flex items-center justify-center text-white text-[9px] font-semibold overflow-hidden">
@@ -159,7 +166,7 @@ const CommentItem = memo(function CommentItem({
             </div>
           )}
 
-          {/* Replies (only for top-level comments, max 2 levels) */}
+          {/* Danh sách phản hồi (chỉ dành cho bình luận gốc, hiển thị tối đa 2 cấp) */}
           {!isReply && replies.length > 0 && (
             <div className="mt-2">
               {replies.length > 2 && !showReplies && (

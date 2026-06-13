@@ -6,7 +6,7 @@ export type RelationshipStatus = typeof RELATIONSHIP_STATUS[keyof typeof RELATIO
 export interface NetworkUser extends User {
   relationship_status: RelationshipStatus;
   friend_request_id?: number;
-  is_sender?: boolean; // True if the current user sent the request
+  is_sender?: boolean; // True nếu người dùng hiện tại là người gửi lời mời
 }
 
 export interface FriendRequest {

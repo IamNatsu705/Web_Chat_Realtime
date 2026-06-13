@@ -214,9 +214,9 @@ class GroupChatService implements GroupChatServiceInterface
             throw new Exception('Người này đã là thành viên của nhóm.');
         }
 
-        // Set cleared_at = now() để thành viên mới chỉ thấy tin nhắn từ lúc tham gia
+        // Đặt cleared_at = null để thành viên mới có thể thấy tin nhắn cũ trước đây
         $newParticipant = $this->participantRepository->createConversationParticipant($groupId, $userIdToAdd, 'active');
-        $newParticipant->update(['cleared_at' => now(), 'role' => 'member']);
+        $newParticipant->update(['role' => 'member', 'cleared_at' => null]);
 
         // Cập nhật member_count
         $conversation->increment('member_count');
@@ -346,6 +346,34 @@ class GroupChatService implements GroupChatServiceInterface
     }
 
     // =====================================================================
+    //  COMMUNITY: THAM GIA NHÓM (Unified)
+    // =====================================================================
+
+    /**
+     * BUG-F FIX: Unified joinGroup — tự động phân biệt open/request dựa trên join_type.
+     * Controller chỉ cần gọi 1 method duy nhất, không cần resolve repository bằng app().
+     * Chỉ cần 1 lần findOrFail thay vì 2.
+     *
+     * @return array{type: string, data: mixed} Trả về loại hành động (joined/requested) và dữ liệu.
+     */
+    public function joinGroup(int $groupId, int $userId): array
+    {
+        $conversation = $this->conversationRepository->findOrFail($groupId);
+
+        if ($conversation->join_type === 'open') {
+            $this->performJoinOpenGroup($conversation, $userId);
+            return ['type' => 'joined', 'data' => null];
+        }
+
+        if ($conversation->join_type === 'request') {
+            $joinRequest = $this->requestToJoin($groupId, $userId);
+            return ['type' => 'requested', 'data' => $joinRequest];
+        }
+
+        throw new Exception('Nhóm này chỉ cho phép tham gia qua lời mời.');
+    }
+
+    // =====================================================================
     //  COMMUNITY: THAM GIA NHÓM OPEN
     // =====================================================================
 
@@ -356,6 +384,15 @@ class GroupChatService implements GroupChatServiceInterface
     public function joinOpenGroup(int $groupId, int $userId)
     {
         $conversation = $this->conversationRepository->findOrFail($groupId);
+        $this->performJoinOpenGroup($conversation, $userId);
+    }
+
+    /**
+     * Thực hiện join nhóm open với conversation đã load sẵn (tránh double query).
+     */
+    private function performJoinOpenGroup($conversation, int $userId): void
+    {
+        $groupId = $conversation->id;
 
         if ($conversation->join_type !== 'open') {
             throw new Exception('Nhóm này không cho phép tham gia tự do.');
@@ -368,7 +405,7 @@ class GroupChatService implements GroupChatServiceInterface
         }
 
         $newParticipant = $this->participantRepository->createConversationParticipant($groupId, $userId, 'active');
-        $newParticipant->update(['cleared_at' => now(), 'role' => 'member']);
+        $newParticipant->update(['role' => 'member', 'cleared_at' => null]);
 
         $conversation->increment('member_count');
 
@@ -408,18 +445,17 @@ class GroupChatService implements GroupChatServiceInterface
             throw new Exception('Bạn đã gửi yêu cầu tham gia rồi. Vui lòng đợi duyệt.');
         }
 
-        // BUG-03 FIX: Xóa bản ghi rejected cũ (nếu có) để cho phép gửi yêu cầu lại
+        // Xóa bản ghi cũ (rejected hoặc approved) để cho phép gửi yêu cầu lại
         // Unique constraint (conversation_id, user_id) chặn insert nếu bản ghi cũ còn tồn tại
         \App\Models\GroupJoinRequest::where('conversation_id', $groupId)
             ->where('user_id', $userId)
-            ->where('status', 'rejected')
             ->delete();
 
-        return $this->joinRequestRepository->create([
-            'conversation_id' => $groupId,
-            'user_id'         => $userId,
-            'status'          => 'pending',
-        ]);
+        // Dùng firstOrCreate để tránh lỗi Unique Constraint Violation khi spam click
+        return $this->joinRequestRepository->firstOrCreate(
+            ['conversation_id' => $groupId, 'user_id' => $userId],
+            ['status' => 'pending']
+        );
     }
 
     /**
@@ -466,7 +502,7 @@ class GroupChatService implements GroupChatServiceInterface
                 $joinRequest->user_id,
                 'active'
             );
-            $newParticipant->update(['cleared_at' => now(), 'role' => 'member']);
+            $newParticipant->update(['role' => 'member', 'cleared_at' => null]);
 
             // Cập nhật member_count
             $conversation = $this->conversationRepository->findOrFail($groupId);

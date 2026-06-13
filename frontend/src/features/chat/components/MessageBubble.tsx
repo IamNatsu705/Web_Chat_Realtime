@@ -5,19 +5,20 @@ import MessageStatus from './MessageStatus';
 import SystemMessage from './SystemMessage';
 import { getImageUrl } from '@/utils/getImageUrl';
 import { HiOutlineDocumentArrowDown } from 'react-icons/hi2';
+import axiosInstance from '@/lib/axios';
 
 interface MessageBubbleProps {
   message: Message;
   isOwn: boolean;
   showAvatar?: boolean;
-  /** For groups: always show sender name above bubble */
+  /** Đối với nhóm: luôn hiển thị tên người gửi phía trên tin nhắn */
   showSenderName?: boolean;
   onRecall?: (messageId: number | string) => void;
   onDeleteForMe?: (messageId: number | string) => void;
 }
 
 function Avatar({ user, size = 8 }: { user?: User; size?: number }) {
-  // Use static classes — Tailwind JIT cannot detect dynamically constructed class names
+  // Sử dụng các class tĩnh — Tailwind JIT không thể phát hiện các tên class được tạo động
   const dim = size === 8 ? 'h-8 w-8' : 'h-6 w-6';
   if (!user) {
     return (
@@ -44,7 +45,7 @@ function formatTime(iso: string) {
 }
 
 /**
- * ImageContent — renders an image message with lightbox on click
+ * ImageContent — hiển thị tin nhắn hình ảnh, hỗ trợ phóng to khi nhấn vào
  */
 function ImageContent({ src, isOwn }: { src: string; isOwn: boolean }) {
   const [showFull, setShowFull] = useState(false);
@@ -86,9 +87,10 @@ function ImageContent({ src, isOwn }: { src: string; isOwn: boolean }) {
 }
 
 /**
- * FileContent — renders a document file message with download button
+ * FileContent — hiển thị tin nhắn tài liệu đính kèm nút tải xuống
  */
 function FileContent({ content, isOwn }: { content: string; isOwn: boolean }) {
+  const [isDownloading, setIsDownloading] = useState(false);
   let fileData;
   try {
     fileData = JSON.parse(content);
@@ -98,7 +100,6 @@ function FileContent({ content, isOwn }: { content: string; isOwn: boolean }) {
   }
   
   const sizeMb = fileData.size ? (fileData.size / 1024 / 1024).toFixed(2) : '0.00';
-  const fileUrl = getImageUrl(fileData.url);
   
   const icons: Record<string, string> = {
     pdf: 'text-red-600 bg-red-100',
@@ -111,6 +112,34 @@ function FileContent({ content, isOwn }: { content: string; isOwn: boolean }) {
   };
   const iconClass = icons[fileData.type] || icons.other;
 
+  /**
+   * Download file qua axios blob — gửi kèm Authorization header.
+   * Tránh lỗi 401 khi storage yêu cầu xác thực.
+   */
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const fileUrl = `/storage/${fileData.url}`;
+      const res = await axiosInstance.get(fileUrl, { responseType: 'blob', baseURL: import.meta.env.VITE_IMAGE_URL });
+      const blob = new Blob([res.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileData.name || 'file');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download file failed:', err);
+      // Fallback: mở URL trực tiếp
+      window.open(getImageUrl(fileData.url), '_blank');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className={`flex items-center space-x-3 p-2 pr-3 rounded-2xl min-w-[220px] max-w-[280px] shadow-sm ${isOwn ? 'bg-indigo-600/95 border border-indigo-500' : 'bg-white border border-gray-200'}`}>
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-white/20 ${iconClass}`}>
@@ -120,20 +149,25 @@ function FileContent({ content, isOwn }: { content: string; isOwn: boolean }) {
          <p className={`text-sm font-medium truncate ${isOwn ? 'text-white' : 'text-gray-800'}`}>{fileData.name}</p>
          <p className={`text-[11px] mt-0.5 ${isOwn ? 'text-indigo-200' : 'text-gray-500'}`}>{sizeMb} MB</p>
       </div>
-      <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={`p-2 rounded-full shrink-0 transition-colors ${isOwn ? 'hover:bg-indigo-500 text-indigo-100 hover:text-white' : 'hover:bg-gray-100 text-gray-400 hover:text-indigo-600'}`} title="Tải xuống">
-        <HiOutlineDocumentArrowDown className="w-5 h-5" />
-      </a>
+      <button
+        onClick={handleDownload}
+        disabled={isDownloading}
+        className={`p-2 rounded-full shrink-0 transition-colors ${isOwn ? 'hover:bg-indigo-500 text-indigo-100 hover:text-white' : 'hover:bg-gray-100 text-gray-400 hover:text-indigo-600'} ${isDownloading ? 'opacity-50 cursor-wait' : ''}`}
+        title="Tải xuống"
+      >
+        <HiOutlineDocumentArrowDown className={`w-5 h-5 ${isDownloading ? 'animate-bounce' : ''}`} />
+      </button>
     </div>
   );
 }
 
 /**
- * MessageBubble — renders a single chat message.
+ * MessageBubble — hiển thị một tin nhắn trò chuyện.
  *
- * - Own messages: indigo bubble on the right + status ticks
- * - Others: white bubble on the left + sender avatar
- * - System messages: delegated to <SystemMessage>
- * - Image messages: rendered as clickable thumbnails
+ * - Tin nhắn của mình: bong bóng màu chàm bên phải + trạng thái (đã gửi, đã xem)
+ * - Tin nhắn của người khác: bong bóng màu trắng bên trái + avatar người gửi
+ * - Tin nhắn hệ thống: ủy quyền cho component <SystemMessage>
+ * - Tin nhắn hình ảnh: hiển thị dạng ảnh thu nhỏ có thể bấm vào
  */
 export default function MessageBubble({
   message,
@@ -144,8 +178,8 @@ export default function MessageBubble({
   onDeleteForMe,
 }: MessageBubbleProps) {
   const [showMenu, setShowMenu] = useState(false);
-  // System messages get centered treatment
-  if (message.type === 'system') {
+  // Tin nhắn hệ thống được căn giữa màn hình
+  if (message.type === 'system' || !message.sender_id) {
     return <SystemMessage content={message.content} />;
   }
 
@@ -156,7 +190,7 @@ export default function MessageBubble({
     return (
       <div className="flex flex-col items-end mb-1 group relative">
         <div className="flex items-center">
-          {/* Menu button */}
+          {/* Nút Menu */}
           {!message.is_recalled && (
             <div className="mr-2 opacity-0 group-hover:opacity-100 transition-opacity relative">
                 <button onClick={() => setShowMenu(!showMenu)} className="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600">
@@ -197,7 +231,7 @@ export default function MessageBubble({
     );
   }
 
-  // Received message
+  // Tin nhắn nhận được
   return (
     <div className="flex items-end mb-1 space-x-2 group relative">
       {showAvatar ? (
@@ -223,7 +257,7 @@ export default function MessageBubble({
                 </p>
               </div>
             )}
-            {/* Menu button */}
+            {/* Nút Menu */}
             {!message.is_recalled && (
               <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity relative">
                   <button onClick={() => setShowMenu(!showMenu)} className="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600">

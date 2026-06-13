@@ -12,10 +12,10 @@ interface ConfirmDialogProps {
 }
 
 /**
- * ConfirmDialog — reusable confirmation popup with animation.
+ * ConfirmDialog — Hộp thoại xác nhận tái sử dụng với hiệu ứng animation.
  *
- * Replaces window.confirm() with a styled modal for dangerous actions
- * like unfriending, deleting messages, recalling messages, clearing chat.
+ * Thay thế window.confirm() bằng modal có giao diện đẹp cho các hành động nguy hiểm
+ * như hủy kết bạn, xóa tin nhắn, thu hồi tin nhắn, xóa lịch sử chat.
  */
 export default function ConfirmDialog({
   isOpen,
@@ -29,7 +29,7 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Close on Escape key
+  // Đóng hộp thoại khi nhấn phím Escape
   useEffect(() => {
     if (!isOpen) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -39,7 +39,7 @@ export default function ConfirmDialog({
     return () => document.removeEventListener('keydown', handleKey);
   }, [isOpen, onCancel]);
 
-  // Focus trap
+  // Bẫy focus vào hộp thoại
   useEffect(() => {
     if (isOpen && dialogRef.current) {
       dialogRef.current.focus();
@@ -85,36 +85,36 @@ export default function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {/* Phông nền (Backdrop) */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-[fadeIn_150ms_ease-out]"
         onClick={onCancel}
       />
 
-      {/* Dialog */}
+      {/* Hộp thoại */}
       <div
         ref={dialogRef}
         tabIndex={-1}
         className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-[scaleIn_200ms_ease-out] outline-none"
       >
-        {/* Icon */}
+        {/* Biểu tượng */}
         <div className="flex justify-center mb-4">
           <div className={`p-3 rounded-full ${styles.iconBg}`}>
             {styles.icon}
           </div>
         </div>
 
-        {/* Title */}
+        {/* Tiêu đề */}
         <h3 className="text-lg font-bold text-gray-900 text-center mb-2">
           {title}
         </h3>
 
-        {/* Message */}
+        {/* Nội dung */}
         <p className="text-sm text-gray-500 text-center leading-relaxed mb-6">
           {message}
         </p>
 
-        {/* Actions */}
+        {/* Các nút hành động */}
         <div className="flex space-x-3">
           <button
             onClick={onCancel}

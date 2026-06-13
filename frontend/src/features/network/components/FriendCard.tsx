@@ -2,6 +2,13 @@ import { Link } from 'react-router-dom';
 import { usePresence } from '../../chat/hooks/usePresence';
 import type { Friendship } from '../types';
 
+/**
+ * FriendCard — Component hiển thị thông tin một người bạn.
+ *
+ * Hiển thị avatar, tên, trạng thái trực tuyến (online/offline)
+ * kèm theo các nút hành động: Nhắn tin và Hủy kết bạn.
+ */
+
 interface FriendCardProps {
   friendship: Friendship;
   onUnfriend: (friendId: number) => void;
@@ -23,7 +30,7 @@ export default function FriendCard({ friendship, onUnfriend, onMessage, isProces
 
   return (
     <div className="flex items-center p-3 rounded-xl border border-gray-100 hover:shadow-md hover:border-indigo-100 transition-all bg-white group overflow-hidden">
-      {/* 1. AVATAR */}
+      {/* 1. KHU VỰC AVATAR */}
       <Link to={`/profile/${friend.id}`} className="h-12 w-12 flex-shrink-0 relative hover:opacity-90 block">
         {friend.avatar ? (
           <img
@@ -42,7 +49,7 @@ export default function FriendCard({ friendship, onUnfriend, onMessage, isProces
         }`}></div>
       </Link>
 
-      {/* 2. TEXT AREA */}
+      {/* 2. KHU VỰC VĂN BẢN (TÊN & TRẠNG THÁI) */}
       <div className="flex-1 min-w-0 ml-3 transition-all duration-300">
         <Link to={`/profile/${friend.id}`} className="text-sm font-bold text-gray-900 truncate hover:text-indigo-600 hover:underline transition-colors block" title={friend.name}>
           {friend.name}
@@ -52,7 +59,7 @@ export default function FriendCard({ friendship, onUnfriend, onMessage, isProces
         </p>
       </div>
 
-      {/* 3. ACTION BUTTONS */}
+      {/* 3. CÁC NÚT HÀNH ĐỘNG */}
       <div className="flex items-center space-x-1 max-w-0 opacity-0 group-hover:max-w-[100px] group-hover:opacity-100 group-hover:ml-2 transition-all duration-300 ease-in-out overflow-hidden">
         <button
           onClick={() => onMessage?.(friend.id)}
@@ -65,7 +72,11 @@ export default function FriendCard({ friendship, onUnfriend, onMessage, isProces
           </svg>
         </button>
         <button
-          onClick={() => onUnfriend(friend.id)}
+          onClick={() => {
+            if (window.confirm('Bạn có chắc chắn muốn hủy kết bạn với người này?')) {
+              onUnfriend(friend.id);
+            }
+          }}
           disabled={isProcessing}
           className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
           title="Hủy kết bạn"

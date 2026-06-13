@@ -11,11 +11,11 @@ interface ChatInputProps {
 }
 
 /**
- * ChatInput — message composer
+ * ChatInput — Khu vực nhập tin nhắn
  *
- * - Auto-resizing textarea
- * - Enter = send, Shift+Enter = newline
- * - Image attachment button with preview
+ * - Khung nhập liệu tự động điều chỉnh độ cao
+ * - Bấm Enter để gửi, Shift+Enter để xuống dòng
+ * - Nút đính kèm hình ảnh và tài liệu có hiển thị bản xem trước
  */
 export default function ChatInput({
   onSend,
@@ -127,7 +127,7 @@ export default function ChatInput({
 
   return (
     <div className="px-4 py-3 bg-white border-t border-gray-200 flex-shrink-0">
-      {/* File Preview */}
+      {/* Xem trước tệp đính kèm */}
       {filePreview && (
         <div className="mb-2 relative inline-block">
           {filePreview.type === 'image' && filePreview.url ? (
@@ -188,7 +188,7 @@ export default function ChatInput({
       )}
 
       <div className="flex items-end space-x-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-indigo-400 focus-within:border-indigo-400 transition-shadow">
-        {/* Textarea */}
+        {/* Khung nhập văn bản */}
         <textarea
           ref={textareaRef}
           value={content}
@@ -200,7 +200,7 @@ export default function ChatInput({
           className="flex-grow bg-transparent resize-none outline-none text-sm text-gray-800 placeholder-gray-400 leading-relaxed max-h-36 py-1"
         />
 
-        {/* Image attachment button */}
+        {/* Nút đính kèm hình ảnh */}
         <button
           type="button"
           onClick={() => imageInputRef.current?.click()}
@@ -211,7 +211,7 @@ export default function ChatInput({
           <HiOutlinePhoto className="w-6 h-6" />
         </button>
 
-        {/* Document attachment button */}
+        {/* Nút đính kèm tài liệu */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
@@ -222,7 +222,7 @@ export default function ChatInput({
           <HiOutlineDocumentText className="w-6 h-6" />
         </button>
 
-        {/* Hidden inputs */}
+        {/* Các trường input ẩn */}
         <input
           ref={imageInputRef}
           type="file"
@@ -238,7 +238,7 @@ export default function ChatInput({
           className="hidden"
         />
 
-        {/* Send button */}
+        {/* Nút Gửi */}
         <button
           type="button"
           onClick={handleSend}

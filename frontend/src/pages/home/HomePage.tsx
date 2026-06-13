@@ -5,6 +5,11 @@ import PostCard from '@/features/post/components/PostCard';
 import { useFeedQuery } from '@/features/post/hooks/queries';
 import { HiOutlineDocumentText } from 'react-icons/hi2';
 
+/**
+ * HomePage — Trang chủ (Bảng tin).
+ *
+ * Hiển thị form tạo bài viết và danh sách bài viết (feed) với cuộn vô hạn.
+ */
 export default function HomePage() {
   const { data: feedData, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useFeedQuery();
 

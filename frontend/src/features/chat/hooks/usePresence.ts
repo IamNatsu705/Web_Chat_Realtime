@@ -98,7 +98,7 @@ function leavePresenceChannel() {
     const echo = getEcho();
     echo.leave('presence.online');
   } catch {
-    // Ignore — echo may already be destroyed during logout
+    // Bỏ qua — Echo có thể đã bị hủy khi đăng xuất
   }
   presenceChannel = null;
   globalOnlineIds = new Set();
@@ -126,7 +126,7 @@ export function usePresence() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      // User logged out → reset local state
+      // User đã đăng xuất → reset state cục bộ
       setOnlineUserIds(new Set());
       setLastSeenMap(new Map());
       return;

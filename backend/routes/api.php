@@ -16,65 +16,63 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Prefix: /api/v1
 |
-| Auth:    Public routes (register, login)
-|          Protected routes (me, logout)
+| Auth:    Route công khai (đăng ký, đăng nhập)
+|          Route bảo vệ (lấy thông tin, đăng xuất)
 |
-| Profile: Protected — update profile, change password, get posts
+| Profile: Bảo vệ — cập nhật hồ sơ, đổi mật khẩu, lấy bài đăng
 |
-| Network: Protected — search, friend requests, friends management
+| Network: Bảo vệ — tìm kiếm, lời mời kết bạn, quản lý bạn bè
 |
-| Post:    Protected — feed, CRUD posts, like, comments
+| Post:    Bảo vệ — bảng tin, CRUD bài viết, lượt thích, bình luận
 |
-| Notification: Protected — list, count, mark read
-|
-| Admin:   Protected + AdminMiddleware — dashboard, users, posts management
+| Admin:   Bảo vệ + AdminMiddleware — thống kê, quản lý user/bài viết
 |
 */
 
 Route::prefix('v1')->group(function () {
 
-    // ─── Auth (Public) ────────────────────────────────────────────────────
+    // ─── Xác thực (công khai) ────────────────────────────────────────────
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login',    [AuthController::class, 'login']);
     });
 
-    // ─── Protected Routes ─────────────────────────────────────────────────
+    // ─── Route bảo vệ (yêu cầu đăng nhập) ──────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
 
-        // Auth
+        // Xác thực
         Route::prefix('auth')->group(function () {
             Route::get('/me',     [AuthController::class, 'me']);
             Route::post('/logout', [AuthController::class, 'logout']);
         });
 
-        // Profile
+        // Hồ sơ cá nhân
         Route::prefix('profile')->group(function () {
             Route::post('/update',   [ProfileController::class, 'updateProfile']);
             Route::put('/password',  [ProfileController::class, 'updatePassword']);
             Route::get('/posts',     [ProfileController::class, 'getMyPosts']);
         });
 
-        // Network
+        // Mạng lưới bạn bè
         Route::prefix('network')->group(function () {
             Route::get('/search',  [NetworkController::class, 'search']);
             Route::get('/friends', [NetworkController::class, 'getFriends']);
             Route::get('/requests', [NetworkController::class, 'getIncomingRequests']);
             Route::get('/suggestions', [NetworkController::class, 'suggestions']);
 
-            // Friend Request actions
+            // Lời mời kết bạn
             Route::prefix('request')->group(function () {
                 Route::post('/send',                    [NetworkController::class, 'sendRequest']);
                 Route::delete('/cancel/{userId}',       [NetworkController::class, 'cancelFriendRequest']);
                 Route::post('/{requestId}/respond',     [NetworkController::class, 'respondToRequest']);
             });
 
-            // Friendship
+            // Quản lý bạn bè
             Route::delete('/friend/{userId}', [NetworkController::class, 'unfriend']);
             Route::get('/users/{userId}', [NetworkController::class, 'getUser']);
         });
 
-        // Chat
+        // Chat (Trò chuyện)
         Route::prefix('chat')->group(function () {
             Route::get('/conversations', [ChatController::class, 'getConversations']);
             Route::post('/conversations/direct', [ChatController::class, 'getOrCreateDirect']);
@@ -88,7 +86,7 @@ Route::prefix('v1')->group(function () {
                 Route::post('/accept', [ChatController::class, 'acceptStranger']);
                 Route::post('/reject', [ChatController::class, 'rejectStranger']);
 
-                // ── Tài liệu (dùng cho mọi loại chat: DM, group, community) ────
+                // ── Tài liệu (dùng cho mọi loại chat: DM, nhóm, cộng đồng) ────
                 Route::get('/resources', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'index']);
                 Route::post('/resources', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'store']);
                 Route::get('/resources/{resourceId}/download', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'download']);
@@ -96,11 +94,13 @@ Route::prefix('v1')->group(function () {
                 Route::post('/resources/{resourceId}/pin', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'togglePin']);
             });
 
+            // Quản lý tin nhắn
             Route::prefix('messages')->group(function() {
                 Route::post('/{messageId}/recall', [ChatController::class, 'recallMessage']);
                 Route::delete('/{messageId}/delete', [ChatController::class, 'deleteMessageForMe']);
             });
 
+            // Quản lý nhóm chat
             Route::prefix('groups')->group(function () {
                 Route::post('/', [GroupChatController::class, 'createGroup']);
                 Route::put('/{groupId}', [GroupChatController::class, 'updateGroup']);
@@ -110,15 +110,15 @@ Route::prefix('v1')->group(function () {
                 Route::post('/{groupId}/members', [GroupChatController::class, 'addGroupMember']);
                 Route::delete('/{groupId}/members/{userId}', [GroupChatController::class, 'removeGroupMember']);
 
-                // ── Community: Tham gia nhóm ────────────────────────────────
+                // ── Cộng đồng: Tham gia nhóm ────────────────────────────────
                 Route::post('/{groupId}/join', [GroupChatController::class, 'joinGroup']);
                 Route::delete('/{groupId}/join', [GroupChatController::class, 'cancelJoinRequest']);
 
-                // ── Community: Quản lý yêu cầu tham gia ────────────────────
+                // ── Cộng đồng: Quản lý yêu cầu tham gia ────────────────────
                 Route::get('/{groupId}/join-requests', [GroupChatController::class, 'getJoinRequests']);
                 Route::post('/{groupId}/join-requests/{requestId}/respond', [GroupChatController::class, 'respondToJoinRequest']);
 
-                // ── Community: Quản lý phó nhóm ────────────────────────────
+                // ── Cộng đồng: Quản lý phó nhóm ────────────────────────────
                 Route::post('/{groupId}/moderators/{userId}', [GroupChatController::class, 'promoteModerator']);
                 Route::delete('/{groupId}/moderators/{userId}', [GroupChatController::class, 'demoteModerator']);
 
@@ -130,10 +130,10 @@ Route::prefix('v1')->group(function () {
                 Route::post('/{groupId}/resources/{resourceId}/pin', [\App\Http\Controllers\Api\Chat\GroupResourceController::class, 'togglePin']);
             });
 
-            // ── Community: Khám phá nhóm cộng đồng ─────────────────────────
+            // ── Cộng đồng: Khám phá nhóm ─────────────────────────────────
             Route::get('/communities', [GroupChatController::class, 'getCommunities']);
 
-            // Streaks
+            // Chuỗi nhắn tin (Streak)
             Route::prefix('streaks/{conversationId}')->group(function () {
                 Route::get('/', [StreakController::class, 'show']);
                 Route::post('/restore', [StreakController::class, 'restore']);
@@ -141,7 +141,7 @@ Route::prefix('v1')->group(function () {
             });
         });
 
-        // Posts
+        // Bài đăng
         Route::prefix('posts')->group(function () {
             Route::get('/feed', [PostController::class, 'feed']);
             Route::post('/', [PostController::class, 'store']);
@@ -152,15 +152,15 @@ Route::prefix('v1')->group(function () {
             Route::get('/{postId}/comments', [PostController::class, 'getComments']);
             Route::post('/{postId}/comments', [PostController::class, 'storeComment']);
 
-            // Comment management
+            // Quản lý bình luận
             Route::put('/comments/{commentId}', [PostController::class, 'updateComment']);
             Route::delete('/comments/{commentId}', [PostController::class, 'destroyComment']);
         });
 
-        // User posts (public profile)
+        // Bài viết theo người dùng (trang cá nhân)
         Route::get('/users/{userId}/posts', [PostController::class, 'userPosts']);
 
-        // Admin (requires admin role)
+        // Quản trị viên (yêu cầu role admin)
         Route::prefix('admin')->middleware(\App\Http\Middleware\AdminMiddleware::class)->group(function () {
             Route::get('/dashboard', [AdminController::class, 'dashboard']);
             Route::get('/users', [AdminController::class, 'getUsers']);

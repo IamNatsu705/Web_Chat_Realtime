@@ -37,6 +37,11 @@ const TIER_MAPPING: Record<string, { label: string; icon: React.ReactNode; color
   streak_100: { label: 'Bất diệt', icon: <FaFireFlameCurved />, color: 'text-red-500', bg: 'bg-red-50' },
 };
 
+/**
+ * StreakInfoPanel — Panel hiển thị thông tin chi tiết về chuỗi ngày trò chuyện (streak).
+ *
+ * Cho phép xem trạng thái hiện tại, các mốc đạt được, và quyền khôi phục chuỗi.
+ */
 export default function StreakInfoPanel({
   conversationId,
   streakPreview,
@@ -49,7 +54,7 @@ export default function StreakInfoPanel({
   const [restored, setRestored] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Fetch enriched streak data from API (has user_messaged_today, next_milestone, etc.)
+  // Lấy dữ liệu chuỗi trò chuyện đầy đủ từ API (bao gồm thông tin nhắn trong ngày, mốc tiếp theo, v.v.)
   const fetchStreak = useCallback(async () => {
     try {
       const res = await chatApi.getStreak(conversationId);
@@ -61,12 +66,12 @@ export default function StreakInfoPanel({
     }
   }, [conversationId]);
 
-  // Initial fetch
+  // Fetch lần đầu
   useEffect(() => {
     fetchStreak();
   }, [fetchStreak]);
 
-  // Re-fetch when WebSocket StreakUpdated event arrives for this conversation
+  // Tự động tải lại khi có sự kiện WebSocket StreakUpdated cho cuộc trò chuyện này
   useEffect(() => {
     const handleStreakUpdated = (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -155,7 +160,7 @@ export default function StreakInfoPanel({
       className="absolute top-full left-0 mt-2 w-[340px] bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden origin-top-left"
       style={{ animation: 'popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)' }}
     >
-      {/* Header section - Clean & elegant */}
+      {/* Phần tiêu đề */}
       <div className="p-5 pb-4 border-b border-gray-50">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-1.5 text-orange-500">
@@ -183,7 +188,7 @@ export default function StreakInfoPanel({
       </div>
 
       <div className="p-5 space-y-6">
-        {/* Progress & Milestones */}
+        {/* Tiến trình & Mốc đạt được */}
         <div>
           <div className="flex justify-between items-end mb-2">
             <p className="text-xs font-semibold text-gray-500">Mốc thành tựu</p>
@@ -225,7 +230,7 @@ export default function StreakInfoPanel({
           </div>
         </div>
 
-        {/* Restore Info & Actions */}
+        {/* Thông tin khôi phục & Các nút hành động */}
         <div className="space-y-3">
           <div className="flex items-center gap-3 p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">

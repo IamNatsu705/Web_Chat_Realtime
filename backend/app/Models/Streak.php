@@ -5,6 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Model Chuỗi ngày nhắn tin liên tiếp (Streak).
+ *
+ * Theo dõi chuỗi ngày mà hai người dùng nhắn tin cho nhau liên tục (mỗi ngày cả hai đều gửi ít nhất 1 tin).
+ * Streak tăng lên khi cả hai bên đều nhắn tin trong cùng một ngày.
+ * Streak bị mất nếu một trong hai bên không nhắn tin trong ngày.
+ *
+ * Các mốc (milestone): 5, 10, 15, 30, 50, 100 ngày — hiển thị biểu tượng đặc biệt.
+ */
 class Streak extends Model
 {
     use HasFactory;
@@ -31,24 +40,35 @@ class Streak extends Model
         'restore_days' => 'integer',
     ];
 
+    /**
+     * Cuộc trò chuyện mà Streak này thuộc về.
+     */
     public function conversation()
     {
         return $this->belongsTo(Conversation::class);
     }
 
+    /**
+     * Người dùng phía A trong cặp Streak.
+     */
     public function userA()
     {
         return $this->belongsTo(User::class, 'user_a_id');
     }
 
+    /**
+     * Người dùng phía B trong cặp Streak.
+     */
     public function userB()
     {
         return $this->belongsTo(User::class, 'user_b_id');
     }
 
     /**
-     * Check if the given user is user_a or user_b.
-     * Returns 'a', 'b', or null.
+     * Xác định người dùng thuộc phía nào trong cặp Streak.
+     *
+     * @param int $userId ID của người dùng cần kiểm tra.
+     * @return string|null Trả về 'a', 'b', hoặc null nếu không thuộc Streak này.
      */
     public function getUserSide(int $userId): ?string
     {
@@ -58,7 +78,10 @@ class Streak extends Model
     }
 
     /**
-     * Get the other user's ID.
+     * Lấy ID của người dùng còn lại trong cặp Streak.
+     *
+     * @param int $userId ID của người dùng hiện tại.
+     * @return int|null ID người dùng đối diện, hoặc null nếu không thuộc Streak.
      */
     public function getOtherUserId(int $userId): ?int
     {
@@ -68,7 +91,9 @@ class Streak extends Model
     }
 
     /**
-     * Check if current streak has reached a milestone (5, 10, 15, ...).
+     * Kiểm tra Streak hiện tại có đạt mốc quan trọng không (5, 10, 15, ...).
+     *
+     * @return bool True nếu streak >= 5 và chia hết cho 5.
      */
     public function isMilestone(): bool
     {
@@ -76,7 +101,9 @@ class Streak extends Model
     }
 
     /**
-     * Get the milestone tier image name based on current streak.
+     * Lấy tên cấp bậc (tier) biểu tượng Streak dựa trên số ngày liên tiếp.
+     *
+     * @return string Tên cấp bậc: 'streak_5', 'streak_10', ..., 'streak_100', hoặc 'none'.
      */
     public function getMilestoneTier(): string
     {

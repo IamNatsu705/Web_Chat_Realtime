@@ -41,18 +41,30 @@ export function useGroupChat() {
   const updateGroupMutation = useMutation({
     mutationFn: ({ groupId, data }: { groupId: number; data: UpdateGroupRequest }) => chatApi.updateGroup(groupId, data),
     onMutate: () => trackLoading(true),
+    // BUG-D FIX: Fallback invalidate nếu WS bị delay
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
+    },
     onSettled: () => trackLoading(false),
   });
 
   const addMemberMutation = useMutation({
     mutationFn: ({ groupId, userId }: { groupId: number; userId: number }) => chatApi.addGroupMember(groupId, userId),
     onMutate: () => trackLoading(true),
+    // BUG-D FIX: Invalidate conversations để cập nhật danh sách participants
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
+    },
     onSettled: () => trackLoading(false),
   });
 
   const kickMemberMutation = useMutation({
     mutationFn: ({ groupId, userId }: { groupId: number; userId: number }) => chatApi.removeGroupMember(groupId, userId),
     onMutate: () => trackLoading(true),
+    // BUG-D FIX: Invalidate conversations để cập nhật danh sách participants
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
+    },
     onSettled: () => trackLoading(false),
   });
 

@@ -6,6 +6,11 @@ use App\Models\Streak;
 use App\Repositories\BaseRepo\BaseRepository;
 use Carbon\Carbon;
 
+/**
+ * Repository Chuỗi ngày nhắn tin (Streak Repository).
+ *
+ * Triển khai các truy vấn liên quan đến bảng streaks.
+ */
 class StreakRepository extends BaseRepository implements StreakRepositoryInterface
 {
     public function getModel()
@@ -13,11 +18,16 @@ class StreakRepository extends BaseRepository implements StreakRepositoryInterfa
         return Streak::class;
     }
 
+    /** {@inheritdoc} */
     public function getByConversationId(int $conversationId)
     {
         return $this->model->where('conversation_id', $conversationId)->first();
     }
 
+    /**
+     * Lấy hoặc tạo mới Streak cho cuộc trò chuyện.
+     * User A luôn là ID nhỏ hơn, User B là ID lớn hơn — đảm bảo tính nhất quán dữ liệu.
+     */
     public function getOrCreate(int $conversationId, int $userAId, int $userBId)
     {
         return $this->model->firstOrCreate(
@@ -32,11 +42,10 @@ class StreakRepository extends BaseRepository implements StreakRepositoryInterfa
         );
     }
 
-
-
     /**
-     * Lấy tất cả streak đang hoạt động/chờ khôi phục có current_streak > 0,
+     * Lấy tất cả Streak đang hoạt động/chờ khôi phục có current_streak > 0,
      * và last_completed_date trước ngày hôm nay (có khả năng bị lỡ ngày).
+     * Dùng cho cron job kiểm tra streak hết hạn hàng ngày.
      */
     public function getActiveStreaksNeedingCheck()
     {

@@ -13,6 +13,13 @@ import { useProfileActions } from '../../features/network/hooks/useProfileAction
 import { RELATIONSHIP_STATUS } from '../../features/network/constants';
 import { HiOutlineChatBubbleLeftRight, HiOutlineUserPlus, HiOutlineXMark, HiOutlineCheck, HiOutlineClock, HiOutlineUserMinus } from 'react-icons/hi2';
 
+/**
+ * ProfilePage — Trang hồ sơ cá nhân.
+ *
+ * Hỗ trợ 2 chế độ:
+ * - Xem hồ sơ bản thân: Chỉnh sửa thông tin, đổi mật khẩu, đăng bài.
+ * - Xem hồ sơ người khác: Kết bạn, nhắn tin, xem bài viết của họ.
+ */
 export default function ProfilePage() {
     const { user: authUser } = useAuth();
     const { userId } = useParams<{ userId: string }>();
@@ -28,7 +35,7 @@ export default function ProfilePage() {
 
     const displayUser = isOtherUser ? networkResp?.data : authUser;
 
-    // Network actions cho profile người khác
+    // Hành động mạng lưới cho profile người khác
     const profileActions = useProfileActions(isOtherUser ? targetUserId : null);
 
     // Bài viết: dùng chung PostCard
@@ -47,7 +54,7 @@ export default function ProfilePage() {
 
     const postsLoading = isOtherUser ? isPostsLoading : isMyPostsLoading;
 
-    // Relationship status helpers
+    // Hàm hỗ trợ trạng thái mối quan hệ
     const networkData = networkResp?.data as { relationship_status?: string, is_sender?: boolean, friend_request_id?: number } | undefined;
     const relStatus = networkData?.relationship_status ?? 'none';
     const isSender = networkData?.is_sender;
@@ -80,10 +87,10 @@ export default function ProfilePage() {
             <Header />
             <main className="flex-grow pt-6 pb-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Top banner / header banner */}
+                    {/* Banner đầu trang */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
                         <div className="h-32 md:h-48 bg-[#FFF1F2] relative overflow-hidden flex items-center justify-center">
-                            {/* Decorative dot pattern */}
+                            {/* Hoa văn chấm trang trí */}
                             <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#D70038 1px, transparent 1px)', backgroundSize: '16px 16px' }}></div>
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <h1 className="text-[60px] md:text-[100px] font-black text-[#D70038]/15 whitespace-nowrap select-none rotate-[-5deg] tracking-tighter pointer-events-none">
@@ -110,18 +117,13 @@ export default function ProfilePage() {
                                 )}
                             </div>
 
-                            {/* Action buttons */}
+                            {/* Các nút hành động */}
                             <div className="md:mb-2 w-full md:w-auto flex justify-center gap-2 mt-4 md:mt-0 flex-wrap">
                                 {!isOtherUser ? (
-                                    <button className="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors border border-indigo-200 shadow-sm">
-                                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                        </svg>
-                                        Thêm bài viết
-                                    </button>
+                                    <div></div>
                                 ) : (
                                     <>
-                                        {/* Network action buttons based on relationship */}
+                                        {/* Các nút hành động mạng lưới dựa trên mối quan hệ */}
                                         {relStatus === 'none' && (
                                             <button
                                                 onClick={profileActions.sendRequest}
@@ -147,7 +149,7 @@ export default function ProfilePage() {
                                         {relStatus === RELATIONSHIP_STATUS.PENDING && isSender === false && (
                                             <>
                                                 <button
-                                                    onClick={() => profileActions.acceptRequest(friendRequestId)}
+                                                    onClick={() => profileActions.acceptRequest(friendRequestId!)}
                                                     disabled={profileActions.isProcessing}
                                                     className="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50"
                                                 >
@@ -155,7 +157,7 @@ export default function ProfilePage() {
                                                     Chấp nhận
                                                 </button>
                                                 <button
-                                                    onClick={() => profileActions.rejectRequest(friendRequestId)}
+                                                    onClick={() => profileActions.rejectRequest(friendRequestId!)}
                                                     disabled={profileActions.isProcessing}
                                                     className="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors border border-gray-200 shadow-sm disabled:opacity-50"
                                                 >
@@ -177,7 +179,11 @@ export default function ProfilePage() {
 
                                         {relStatus === RELATIONSHIP_STATUS.ACCEPTED && (
                                             <button
-                                                onClick={profileActions.unfriend}
+                                                onClick={() => {
+                                                    if (window.confirm('Bạn có chắc chắn muốn hủy kết bạn với người này?')) {
+                                                        profileActions.unfriend();
+                                                    }
+                                                }}
                                                 disabled={profileActions.isProcessing}
                                                 className="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-red-50 text-red-600 hover:bg-red-100 transition-colors border border-red-200 shadow-sm disabled:opacity-50"
                                             >
@@ -186,7 +192,7 @@ export default function ProfilePage() {
                                             </button>
                                         )}
 
-                                        {/* Nhắn tin button — always visible for other users */}
+                                        {/* Nút nhắn tin — luôn hiển cho người khác */}
                                         <button
                                             onClick={profileActions.handleMessage}
                                             disabled={profileActions.isProcessing}
@@ -201,9 +207,9 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    {/* Content grid */}
+                    {/* Lưới nội dung */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Left Column: Forms or User Info */}
+                        {/* Cột trái: Form chỉnh sửa hoặc thông tin người dùng */}
                         <div className="col-span-1 lg:col-span-1 space-y-6">
                             {!isOtherUser && (
                                 <>
@@ -237,7 +243,7 @@ export default function ProfilePage() {
                                 </div>
                             )}
                         </div>
-                        
+
                         {/* Right Column: Feed — dùng chung PostCard */}
                         <div className="col-span-1 lg:col-span-2 space-y-4">
                             {!isOtherUser && <CreatePost />}

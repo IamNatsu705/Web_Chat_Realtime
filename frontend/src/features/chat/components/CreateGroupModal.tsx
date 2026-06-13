@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import toast from 'react-hot-toast';
 import type { Friendship } from '../../network/types';
 import type { CreateGroupRequest, JoinType, CommunityCategory } from '../types';
 
@@ -19,12 +20,12 @@ interface CreateGroupModalProps {
 }
 
 /**
- * CreateGroupModal — dialog to create a new group chat.
+ * CreateGroupModal — Hộp thoại để tạo nhóm chat mới.
  *
- * - Input group name (required)
- * - Select at least 2 friends via checkbox list
- * - Optional group avatar upload with preview
- * - Only friends of the current user can be selected
+ * - Nhập tên nhóm (bắt buộc)
+ * - Chọn ít nhất 2 người bạn qua danh sách checkbox (đối với nhóm riêng tư)
+ * - Tùy chọn tải lên ảnh đại diện nhóm (kèm xem trước)
+ * - Chỉ những người bạn của người dùng hiện tại mới có thể được chọn
  */
 export default function CreateGroupModal({
   friends,
@@ -56,6 +57,14 @@ export default function CreateGroupModal({
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Kích thước ảnh không được vượt quá 5MB');
+      // Xoá file đã chọn nếu vượt giới hạn
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
   };
@@ -84,10 +93,10 @@ export default function CreateGroupModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111827]/60 backdrop-blur-md p-4 transition-all">
       <div className="bg-white rounded-[24px] shadow-[0_24px_48px_rgba(0,0,0,0.2)] w-full max-w-[540px] overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Red Top Bar */}
+        {/* Thanh đỏ trên cùng */}
         <div className="h-2 bg-gradient-to-r from-[#D70038] to-[#990028] w-full"></div>
 
-        {/* Header */}
+        {/* Tiêu đề */}
         <div className="flex items-center justify-between px-7 py-5 border-b border-[#F3F4F6]">
           <h3 className="text-[20px] font-extrabold text-[#111827]">Tạo nhóm mới</h3>
           <button
@@ -100,9 +109,9 @@ export default function CreateGroupModal({
           </button>
         </div>
 
-        {/* Body */}
+        {/* Nội dung Modal */}
         <div className="flex-grow overflow-y-auto px-7 py-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-200">
-          {/* Avatar upload & Group name (Row) */}
+          {/* Hàng: Tải ảnh đại diện & Tên nhóm */}
           <div className="flex items-center gap-5">
             <div className="flex-shrink-0">
               <button
@@ -155,7 +164,7 @@ export default function CreateGroupModal({
             </div>
           </div>
 
-          {/* Join Type Selector */}
+          {/* Chọn quyền riêng tư */}
           <div>
             <label className="block text-[13px] font-bold text-[#374151] mb-2 uppercase tracking-wide">Quyền riêng tư</label>
             <div className="grid grid-cols-3 gap-3">
@@ -181,7 +190,7 @@ export default function CreateGroupModal({
             </div>
           </div>
 
-          {/* Description (for community groups) */}
+          {/* Mô tả (dành cho nhóm cộng đồng) */}
           {isCommunity && (
             <div>
               <label className="block text-[13px] font-bold text-[#374151] mb-2 uppercase tracking-wide">Mô tả nhóm</label>
@@ -196,7 +205,7 @@ export default function CreateGroupModal({
             </div>
           )}
 
-          {/* Category (for community groups) */}
+          {/* Danh mục (dành cho nhóm cộng đồng) */}
           {isCommunity && (
             <div>
               <label className="block text-[13px] font-bold text-[#374151] mb-2 uppercase tracking-wide">Danh mục</label>
@@ -213,7 +222,7 @@ export default function CreateGroupModal({
             </div>
           )}
 
-          {/* Friend selector */}
+          {/* Danh sách chọn bạn bè */}
           <div>
             <label className="block text-[13px] font-bold text-[#374151] mb-2 uppercase tracking-wide flex items-center justify-between">
               <span>Thêm thành viên</span>
@@ -232,8 +241,9 @@ export default function CreateGroupModal({
                   if (!friend) return null;
                   const checked = selectedIds.has(friend.id);
                   return (
-                    <label
+                    <div
                       key={friend.id}
+                      onClick={() => toggleUser(friend.id)}
                       className={`flex items-center px-4 py-3 cursor-pointer transition-colors ${
                         checked ? 'bg-[#FFF5F6]' : 'hover:bg-white'
                       }`}
@@ -252,7 +262,7 @@ export default function CreateGroupModal({
                       <div className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors ${checked ? 'bg-[#D70038] border-[#D70038]' : 'bg-white border-[#D1D5DB]'}`}>
                         {checked && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                       </div>
-                    </label>
+                    </div>
                   );
                 })}
               </div>
@@ -267,7 +277,7 @@ export default function CreateGroupModal({
           )}
         </div>
 
-        {/* Footer */}
+        {/* Phần chân */}
         <div className="flex space-x-3 px-7 py-5 border-t border-[#F3F4F6] bg-[#F9FAFB]">
           <button
             onClick={onClose}

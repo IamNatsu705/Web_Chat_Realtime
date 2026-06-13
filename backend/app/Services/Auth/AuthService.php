@@ -7,6 +7,12 @@ use App\Services\User\UserServiceInterface;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Service Xác thực (Auth Service).
+ *
+ * Xử lý nghiệp vụ đăng ký và đăng nhập.
+ * Sử dụng Laravel Sanctum để tạo Personal Access Token cho API authentication.
+ */
 class AuthService implements AuthServiceInterface
 {
     public function __construct(
@@ -14,6 +20,10 @@ class AuthService implements AuthServiceInterface
         protected UserRepositoryInterface $userRepository
     ) {}
 
+    /**
+     * Đăng ký tài khoản mới.
+     * Tạo user qua UserService, sau đó tạo token Sanctum.
+     */
     public function register(array $data): array
     {
         $user = $this->userService->createUser($data);
@@ -26,6 +36,10 @@ class AuthService implements AuthServiceInterface
         ];
     }
 
+    /**
+     * Đăng nhập bằng email/password.
+     * Kiểm tra thông tin, kiểm tra tài khoản bị khóa, xóa token cũ và tạo token mới.
+     */
     public function login(array $credentials): array
     {
         $user = $this->userRepository->findByEmail($credentials['email']);
@@ -43,6 +57,7 @@ class AuthService implements AuthServiceInterface
             ]);
         }
 
+        // Xóa tất cả token cũ để đảm bảo chỉ có 1 phiên đăng nhập
         $user->tokens()->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;

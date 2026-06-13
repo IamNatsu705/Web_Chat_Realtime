@@ -8,6 +8,14 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Repository Người dùng (User Repository).
+ *
+ * Triển khai các truy vấn liên quan đến bảng users, bao gồm:
+ * - Tìm kiếm người dùng kèm trạng thái quan hệ (bạn bè, pending, none).
+ * - Thống kê cho Dashboard quản trị (tổng user, user mới, user bị ban).
+ * - Theo dõi hoạt động (most active, active today).
+ */
 class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
     public function getModel()
@@ -15,16 +23,23 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         return User::class;
     }
 
+    /** {@inheritdoc} */
     public function findByEmail(string $email)
     {
         return $this->findByField('email', $email);
     }
 
+    /**
+     * Tìm kiếm người dùng theo từ khóa, kèm thông tin trạng thái quan hệ.
+     *
+     * Kỹ thuật: LEFT JOIN với bảng friend_requests và friendships để xác định
+     * trạng thái quan hệ (accepted, pending, none) trong 1 truy vấn duy nhất,
+     * tránh lỗi N+1 khi phải kiểm tra từng user riêng lẻ.
+     */
     public function searchByKeyword(string $keyword, int $currentUserId)
     {
         return $this->model
             ->select('users.id', 'users.name', 'users.email', 'users.avatar', 'users.bio', 'users.student_id', 'users.department')
-            // 1. Join với FriendRequest (Giữ nguyên logic orOn của bạn)
             ->leftJoin('friend_requests', function ($join) use ($currentUserId) {
                 $join->on(function ($q) use ($currentUserId) {
                     $q->on('friend_requests.sender_id', '=', DB::raw($currentUserId))
@@ -32,9 +47,9 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
                 })->orOn(function ($q) use ($currentUserId) {
                     $q->on('friend_requests.receiver_id', '=', DB::raw($currentUserId))
                         ->on('friend_requests.sender_id', '=', 'users.id');
-                });
+                })->where('friend_requests.status', 'pending');
             })
-            // 2. Sửa lại Join với Friendships để kiểm tra cả 2 chiều
+            // 2. JOIN với Friendships — kiểm tra quan hệ bạn bè cả hai chiều
             ->leftJoin('friendships', function ($join) use ($currentUserId) {
                 $join->on(function ($q) use ($currentUserId) {
                     $q->on('friendships.user_id', '=', DB::raw($currentUserId))
@@ -45,14 +60,16 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
                 });
             })
             ->addSelect([
+                // Xác định trạng thái quan hệ: accepted (bạn bè) > pending (đang chờ) > none
                 DB::raw("CASE
                 WHEN friendships.id IS NOT NULL THEN 'accepted'
-                WHEN friend_requests.id IS NOT NULL THEN friend_requests.status
+                WHEN friend_requests.id IS NOT NULL THEN 'pending'
                 ELSE 'none'
             END as relationship_status"),
 
                 'friend_requests.id as friend_request_id',
 
+                // Đánh dấu người dùng hiện tại có phải là người gửi lời mời không
                 DB::raw("CASE
                 WHEN friend_requests.sender_id = $currentUserId THEN 1
                 ELSE 0
@@ -64,7 +81,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
             })
             ->where('users.id', '!=', $currentUserId)
             ->where('users.role', '!=', 'admin')
-            // GroupBy cần bao quát hết các trường để tránh lỗi SQL Strict Mode
+            // GROUP BY cần bao quát hết các trường để tránh lỗi SQL Strict Mode
             ->groupBy(
                 'users.id',
                 'users.name',
@@ -81,21 +98,29 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
             ->get();
     }
 
+    /** {@inheritdoc} */
     public function countAll(): int
     {
         return $this->model->count();
     }
 
+    /** {@inheritdoc} */
     public function countSince(Carbon $date): int
     {
         return $this->model->where('created_at', '>=', $date)->count();
     }
 
+    /** {@inheritdoc} */
     public function countBanned(): int
     {
         return $this->model->where('is_banned', true)->count();
     }
 
+    /**
+     * Lấy danh sách người dùng cho trang Quản trị.
+     * Loại bỏ tài khoản admin khỏi danh sách.
+     * Hỗ trợ tìm kiếm theo tên/email và lọc theo trạng thái (active/banned).
+     */
     public function getForAdmin(int $perPage = 15, ?string $search = null, ?string $status = null): LengthAwarePaginator
     {
         $query = $this->model->where('role', '!=', 'admin');
@@ -116,6 +141,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 
+    /** {@inheritdoc} */
     public function countBetween(Carbon $from, Carbon $to): int
     {
         return $this->model->whereBetween('created_at', [$from, $to])->count();
@@ -136,6 +162,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
             ->get();
     }
 
+    /** {@inheritdoc} */
     public function countActiveToday(): int
     {
         return $this->model
@@ -145,6 +172,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 
     /**
      * Thống kê số người dùng mới theo ngày trong N ngày gần nhất.
+     * Điền giá trị 0 cho những ngày không có người dùng mới đăng ký.
      */
     public function getDailyCount(int $days = 7): array
     {
@@ -156,6 +184,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
             ->pluck('count', 'date')
             ->toArray();
 
+        // Điền giá trị 0 cho những ngày không có dữ liệu
         $data = [];
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = now()->subDays($i)->toDateString();

@@ -17,12 +17,10 @@ interface ConversationListProps {
  * ConversationList — sidebar trái.
  *
  * Tabs:
- *  - "Tin nhắn": danh sách chat đang tham gia (DM + group)
- *  - "Người lạ": tin nhắn đang chờ
- *  - "Cộng đồng": khám phá và tham gia nhóm cộng đồng PTIT
+ *  - "Tin nhắn": danh sách chat đang tham gia (DM + group + community đã join)
+ *  - "Người lạ": tin nhắn đang chờ từ người chưa kết bạn
  *
- * Tab Cộng đồng tích hợp trực tiếp vào chat: click nhóm đã join → mở chat,
- * chưa join → nút "Tham gia" / "Xin vào" ngay tại chỗ.
+ * Trang Cộng đồng (Khám phá nhóm PTIT) ở route `/communities` riêng biệt.
  */
 export default function ConversationList({
   conversations,
@@ -72,7 +70,7 @@ export default function ConversationList({
           </button>
         </div>
 
-        {/* Search */}
+        {/* Ô tìm kiếm */}
         <div className="relative">
           <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none">
             <svg className="h-3.5 w-3.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -90,7 +88,7 @@ export default function ConversationList({
           />
         </div>
 
-        {/* Tabs */}
+        {/* Danh sách Tabs */}
         <div className="flex w-full mt-2 border-b border-gray-200">
           {[
             { key: 'active',    label: 'Hộp thư' },

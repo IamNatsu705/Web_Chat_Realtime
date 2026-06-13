@@ -4,10 +4,20 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
+/**
+ * Service Provider chính (App Service Provider).
+ *
+ * Đăng ký tất cả bindings cho Dependency Injection:
+ * - Repository Interfaces → Implementations.
+ * - Service Interfaces → Implementations.
+ *
+ * Laravel IoC Container sử dụng các binding này để tự động inject
+ * đúng implementation khi Controller/Service yêu cầu Interface.
+ */
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Đăng ký các service và repository bindings.
      */
     public function register(): void
     {
@@ -64,55 +74,61 @@ class AppServiceProvider extends ServiceProvider
 
         // ─── Services ────────────────────────────────────────────────────────
 
-        // Auth
+        // Xác thực
         $this->app->bind(
             \App\Services\Auth\AuthServiceInterface::class,
             \App\Services\Auth\AuthService::class
         );
 
-        // User
+        // Người dùng
         $this->app->bind(
             \App\Services\User\UserServiceInterface::class,
             \App\Services\User\UserService::class
         );
 
-        // Network
+        // Mạng lưới bạn bè
         $this->app->bind(
             \App\Services\Network\NetworkServiceInterface::class,
             \App\Services\Network\NetworkService::class
         );
 
-        // Profile
+        // Hồ sơ cá nhân
         $this->app->bind(
             \App\Services\Profile\ProfileServiceInterface::class,
             \App\Services\Profile\ProfileService::class
         );
 
-        // Chat
+        // Chat (trò chuyện 1-1)
         $this->app->bind(
             \App\Services\Chat\ChatServiceInterface::class,
             \App\Services\Chat\ChatService::class
         );
+
+        // Chat nhóm
         $this->app->bind(
             \App\Services\Chat\GroupChatServiceInterface::class,
             \App\Services\Chat\GroupChatService::class
         );
+
+        // Chuỗi nhắn tin (Streak)
         $this->app->bind(
             \App\Services\Chat\StreakServiceInterface::class,
             \App\Services\Chat\StreakService::class
         );
+
+        // Tài liệu nhóm
         $this->app->bind(
             \App\Services\Chat\GroupResourceServiceInterface::class,
             \App\Services\Chat\GroupResourceService::class
         );
 
-        // Post
+        // Bài đăng
         $this->app->bind(
             \App\Services\Post\PostServiceInterface::class,
             \App\Services\Post\PostService::class
         );
 
-        // Admin
+        // Quản trị
         $this->app->bind(
             \App\Services\Admin\AdminServiceInterface::class,
             \App\Services\Admin\AdminService::class
@@ -120,7 +136,7 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap any application services.
+     * Khởi chạy các dịch vụ ứng dụng.
      */
     public function boot(): void
     {

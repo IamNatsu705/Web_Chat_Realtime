@@ -4,6 +4,11 @@ namespace App\Http\Requests\Network;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Request Gửi lời mời kết bạn (Send Friend Request).
+ *
+ * Xác thực: receiver_id phải tồn tại và không được trùng với chính mình.
+ */
 class SendFriendRequest extends FormRequest
 {
     public function authorize(): bool

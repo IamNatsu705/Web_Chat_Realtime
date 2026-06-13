@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react';
 import { profileApi } from '../api/profileApi';
 import type { Post } from '../types';
 
+/**
+ * ProfileFeed — Component hiển thị danh sách bài viết trên trang cá nhân.
+ *
+ * Lấy danh sách bài viết do người dùng đăng tải và hiển thị
+ * với giao diện rút gọn (chủ yếu là văn bản và một ảnh preview nếu có).
+ */
+
 export default function ProfileFeed() {
     const [posts, setPosts] = useState<Post[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +77,7 @@ export default function ProfileFeed() {
                     
                     {post.media_url && (
                         <div className="mt-3 rounded-lg overflow-hidden border border-gray-100">
-                            {/* Assuming media_url is an image for now */}
+                            {/* Giả định media_url là hình ảnh (tạm thời) */}
                             <img src={post.media_url} alt="Post media" className="w-full h-auto object-cover max-h-96" />
                         </div>
                     )}

@@ -60,6 +60,6 @@ export function useMessagesQuery(conversationId: number | null) {
     getNextPageParam: (lastPage) =>
       lastPage.has_more ? lastPage.next_cursor : undefined,
     enabled: isAuthenticated && conversationId !== null,
-    staleTime: 60_000, // Messages are updated via WS, API is backup
+    staleTime: 60_000, // Tin nhắn được cập nhật qua WS, API chỉ là dự phòng
   });
 }

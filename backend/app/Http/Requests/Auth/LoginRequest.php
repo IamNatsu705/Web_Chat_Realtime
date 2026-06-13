@@ -4,6 +4,11 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Request Đăng nhập (Login Request).
+ *
+ * Xác thực dữ liệu đăng nhập: email (hợp lệ) và mật khẩu (bắt buộc).
+ */
 class LoginRequest extends FormRequest
 {
     public function authorize(): bool
@@ -11,13 +16,10 @@ class LoginRequest extends FormRequest
         return true;
     }
 
-    /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email'    => ['required', 'email'],
             'password' => ['required', 'string'],
         ];
     }

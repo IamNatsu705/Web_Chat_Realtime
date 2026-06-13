@@ -6,11 +6,17 @@ import FriendCard from '../../features/network/components/FriendCard';
 import { useNetwork } from '../../features/network/hooks/useNetwork';
 import ConfirmDialog from '../../components/ConfirmDialog';
 
+/**
+ * ConnectionsPage — Trang hiển thị toàn bộ danh sách kết nối (bạn bè).
+ *
+ * Hỗ trợ lọc tìm kiếm, hủy kết bạn với hộp thoại xác nhận,
+ * và nhắn tin nhanh cho bạn bè.
+ */
 export default function ConnectionsPage() {
   const { friends, isFriendsLoading, handleUnfriend, handleMessageUser } = useNetwork();
   const [filterQuery, setFilterQuery] = useState('');
 
-  // ── Confirm Dialog state ─────────────────────────────────────────────────
+  // ── Trạng thái hộp thoại xác nhận ─────────────────────────────────────────────────
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -54,7 +60,7 @@ export default function ConnectionsPage() {
       <main className="grow pt-6 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          {/* Breadcrumb / Back Navigation */}
+          {/* Điều hướng / Nút quay lại */}
           <div className="mb-6">
             <Link to="/network" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors inline-flex items-center">
               <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -71,7 +77,7 @@ export default function ConnectionsPage() {
                 <p className="text-sm text-gray-500 mt-1">{friends.length} kết nối</p>
               </div>
 
-              {/* Local Search Filter */}
+              {/* Bộ lọc tìm kiếm cục bộ */}
               <div className="relative w-full sm:w-72">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -124,7 +130,7 @@ export default function ConnectionsPage() {
       </main>
       <Footer />
 
-      {/* Confirm Dialog */}
+      {/* Hộp thoại xác nhận */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.title}

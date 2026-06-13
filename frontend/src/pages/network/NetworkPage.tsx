@@ -3,13 +3,18 @@ import Footer from '../../components/layout/Footer';
 import UserCard from '../../features/network/components/UserCard';
 import RequestCard from '../../features/network/components/RequestCard';
 import FriendCard from '../../features/network/components/FriendCard';
-import SuggestionCard from '../../features/network/components/SuggestionCard';
 import { useNetwork } from '../../features/network/hooks/useNetwork';
 import { useSuggestionsQuery, NETWORK_QUERIES } from '../../features/network/hooks/queries';
 import { NETWORK_UI_CONSTANTS } from '../../features/network/constants';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 
+/**
+ * NetworkPage — Trang mạng lưới (kết nối).
+ *
+ * Hiển thị: danh sách bạn bè (sidebar), thanh tìm kiếm, lời mời kết bạn,
+ * gợi ý kết bạn thông minh (dựa trên bạn chung).
+ */
 export default function NetworkPage() {
   const {
     searchQuery,
@@ -32,10 +37,10 @@ export default function NetworkPage() {
   const { data: suggestions = [], isLoading: isSuggestionsLoading } = useSuggestionsQuery();
   const queryClient = useQueryClient();
 
-  // Handle add friend from suggestion → invalidate suggestions list
+  // Xử lý kết bạn từ gợi ý → invalidate danh sách gợi ý
   const handleAddFriendFromSuggestion = (userId: number) => {
     handleAddFriend(userId);
-    // Remove from suggestions cache after sending request
+    // Xóa khỏi cache gợi ý sau khi gửi lời mời
     queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.suggestions() });
   };
 
@@ -47,10 +52,10 @@ export default function NetworkPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-            {/* Left Sidebar - Manage Network & Friends List */}
+            {/* Sidebar trái - Quản lý mạng lưới & Danh sách bạn bè */}
             <div className="lg:col-span-1 space-y-6">
 
-              {/* Friends List Widget */}
+              {/* Widget danh sách bạn bè */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sticky top-24">
                 <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                   <h2 className="text-base font-bold text-gray-900">Kết nối</h2>
@@ -90,10 +95,10 @@ export default function NetworkPage() {
               </div>
             </div>
 
-            {/* Main Area - Invitations & Search */}
+            {/* Vùng chính - Lời mời & Tìm kiếm */}
             <div className="lg:col-span-3 space-y-6">
 
-              {/* Search Section */}
+              {/* Phần tìm kiếm */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div className="relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden border border-gray-300 transition-shadow">
                   <div className="grid place-items-center h-full w-12 text-gray-300">
@@ -112,7 +117,7 @@ export default function NetworkPage() {
                   />
                 </div>
 
-                {/* Search Results Display */}
+                {/* Hiển thị kết quả tìm kiếm */}
                 {searchQuery && (
                   <div className="mt-6">
                     <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-4">Kết quả tìm kiếm</h3>
@@ -143,7 +148,7 @@ export default function NetworkPage() {
                 )}
               </div>
 
-              {/* Invitations Section */}
+              {/* Phần lời mời kết bạn */}
               {!searchQuery && (requests.length > 0 || isRequestsLoading) && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200">
                   <div className="p-4 border-b border-gray-200">
@@ -198,11 +203,15 @@ export default function NetworkPage() {
                     ) : suggestions.length > 0 ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                         {suggestions.map(user => (
-                          <SuggestionCard
+                          <UserCard
                             key={user.id}
                             user={user}
                             onAddFriend={handleAddFriendFromSuggestion}
                             onMessage={handleMessageUser}
+                            onCancelRequest={handleCancelRequest}
+                            onAcceptRequest={(reqId) => handleAcceptRequest(reqId, user.id)}
+                            onRejectRequest={(reqId) => handleRejectRequest(reqId, user.id)}
+                            onUnfriend={handleUnfriend}
                             isProcessing={processingUserIds.includes(user.id)}
                           />
                         ))}

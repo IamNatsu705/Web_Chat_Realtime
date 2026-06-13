@@ -9,6 +9,12 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * Sự kiện cập nhật chuỗi nhắn tin (StreakUpdated).
+ *
+ * Phát qua WebSocket khi Streak thay đổi (tăng streak, đạt milestone, hết hạn...).
+ * Broadcast đến kênh chat.{id} + user.{id} để cả sidebar và khung chat nhận được.
+ */
 class StreakUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
@@ -33,10 +39,12 @@ class StreakUpdated implements ShouldBroadcast
         $this->participantIds = $participantIds;
     }
 
+    /**
+     * Broadcast đến kênh chat + kênh riêng của từng thành viên.
+     * Để sidebar nhận cập nhật streak dù user đang xem cuộc trò chuyện khác.
+     */
     public function broadcastOn(): array
     {
-        // BUG-05 FIX: Broadcast đến cả user.{id} channels (giống MessageSent)
-        // để sidebar nhận được cập nhật streak khi user đang xem conversation khác
         $channels = [
             new PrivateChannel('chat.' . $this->conversationId),
         ];

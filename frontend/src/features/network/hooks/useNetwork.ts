@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { chatApi } from '../../chat/api/chatApi';
 import { networkApi } from '../api/networkApi';
-import type { NetworkUser } from '../types';
+import type { NetworkUser, SuggestedUser } from '../types';
 import type { Conversation } from '../../chat/types';
 import { RELATIONSHIP_STATUS, FRIEND_REQUEST_ACTION, NETWORK_UI_CONSTANTS } from '../constants';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -62,6 +62,14 @@ export function useNetwork() {
           ? { ...u, relationship_status: RELATIONSHIP_STATUS.PENDING, is_sender: true } 
           : u
       ));
+      queryClient.setQueryData<SuggestedUser[]>(NETWORK_QUERIES.suggestions(), (old) => {
+        if (!old) return old;
+        return old.map(u => 
+          u.id === userId 
+            ? { ...u, relationship_status: RELATIONSHIP_STATUS.PENDING, is_sender: true } 
+            : u
+        );
+      });
     },
     onSuccess: (res, userId) => {
       // Có dữ liệu chuẩn từ backend, cập nhật lại ID lời mời để dùng hàm hủy nếu cần
@@ -69,6 +77,7 @@ export function useNetwork() {
         u.id === userId ? { ...u, friend_request_id: res.data?.id } : u
       ));
       queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.friendRequests() });
+      queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.suggestions() });
     },
     onSettled: (_, __, userId) => trackProcessing(userId, false)
   });
@@ -81,9 +90,16 @@ export function useNetwork() {
       setSearchResults(prev => prev.map(u => 
         u.id === userId ? { ...u, relationship_status: RELATIONSHIP_STATUS.NONE } : u
       ));
+      queryClient.setQueryData<SuggestedUser[]>(NETWORK_QUERIES.suggestions(), (old) => {
+        if (!old) return old;
+        return old.map(u => 
+          u.id === userId ? { ...u, relationship_status: RELATIONSHIP_STATUS.NONE } : u
+        );
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.friendRequests() });
+      queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.suggestions() });
     },
     onSettled: (_, __, userId) => trackProcessing(userId, false)
   });
@@ -106,10 +122,15 @@ export function useNetwork() {
       setSearchResults(prev => prev.map(u => 
         u.friend_request_id === requestId ? { ...u, relationship_status: RELATIONSHIP_STATUS.ACCEPTED } : u
       ));
+      queryClient.setQueryData<SuggestedUser[]>(NETWORK_QUERIES.suggestions(), (old) => {
+        if (!old) return old;
+        return old.filter(u => u.friend_request_id !== requestId);
+      });
     },
     onSuccess: () => {
       // Kết bạn xong thì phải tải lại list Friends mới nhất
       queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.friends() });
+      queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.suggestions() });
     },
     onSettled: (_, __, { userId }) => {
       if (userId) trackProcessing(userId, false);
@@ -132,6 +153,12 @@ export function useNetwork() {
       setSearchResults(prev => prev.map(u => 
         u.friend_request_id === requestId ? { ...u, relationship_status: RELATIONSHIP_STATUS.NONE } : u
       ));
+      queryClient.setQueryData<SuggestedUser[]>(NETWORK_QUERIES.suggestions(), (old) => {
+        if (!old) return old;
+        return old.map(u => 
+          u.friend_request_id === requestId ? { ...u, relationship_status: RELATIONSHIP_STATUS.NONE } : u
+        );
+      });
     },
     onSettled: (_, __, { userId }) => {
       if (userId) trackProcessing(userId, false);
@@ -159,6 +186,9 @@ export function useNetwork() {
       // Lỗi mạng thả lại dữ liệu cũ
       queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.friends() });
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NETWORK_QUERIES.suggestions() });
+    },
     onSettled: (_, __, friendId) => trackProcessing(friendId, false)
   });
 
@@ -171,13 +201,13 @@ export function useNetwork() {
       const res = await chatApi.getOrCreateDirect(userId);
       if (res.data?.conversation) {
         const newConv = res.data.conversation;
-        // Optimistically add the conversation to cache using the CORRECT query key
+        // Thêm conversation vào cache ngay lập tức (Optimistic UI)
         queryClient.setQueryData<Conversation[]>(CHAT_QUERIES.conversations(), (oldData) => {
           if (!oldData) return [newConv];
           if (oldData.some((c) => c.id === newConv.id)) return oldData;
           return [newConv, ...oldData];
         });
-        // Also force a refetch to ensure server data is in sync
+        // Ép fetch lại để đảm bảo dữ liệu đồng bộ với server
         queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
         navigate(`/messages?conversationId=${newConv.id}`);
       }

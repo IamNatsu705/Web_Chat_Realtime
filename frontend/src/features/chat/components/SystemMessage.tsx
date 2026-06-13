@@ -5,8 +5,8 @@ interface SystemMessageProps {
 }
 
 /**
- * Parse streak metadata from system message content.
- * Format: "visible text|||{json metadata}"
+ * Phân tích siêu dữ liệu chuỗi (streak metadata) từ nội dung tin nhắn hệ thống.
+ * Định dạng: "văn bản hiển thị|||{siêu dữ liệu json}"
  */
 function parseStreakMessage(content: string): { text: string; metadata?: Record<string, unknown> } {
   const parts = content.split('|||');
@@ -21,7 +21,7 @@ function parseStreakMessage(content: string): { text: string; metadata?: Record<
 }
 
 /**
- * Detect the type of streak system message from its content.
+ * Nhận diện loại tin nhắn hệ thống chuỗi ngày từ nội dung của nó.
  */
 function getStreakType(text: string): 'milestone' | 'warning' | 'lost' | 'reward' | 'restore_used' | 'generic' {
   if (text.includes('ngày liên tiếp')) return 'milestone';
@@ -33,7 +33,7 @@ function getStreakType(text: string): 'milestone' | 'warning' | 'lost' | 'reward
 }
 
 /**
- * SystemMessage — center-aligned system event message in chat.
+ * SystemMessage — Tin nhắn sự kiện hệ thống căn giữa trong khung chat.
  * Hiển thị text thuần và icon thư viện cho tất cả các loại thông báo streak.
  */
 export default function SystemMessage({ content }: SystemMessageProps) {

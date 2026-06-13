@@ -5,6 +5,11 @@ namespace App\Repositories\ConversationParticipantRepo;
 use App\Models\ConversationParticipant;
 use App\Repositories\BaseRepo\BaseRepository;
 
+/**
+ * Repository Thành viên cuộc trò chuyện (Conversation Participant Repository).
+ *
+ * Triển khai các truy vấn liên quan đến bảng conversation_participants.
+ */
 class ConversationParticipantRepository extends BaseRepository implements ConversationParticipantRepositoryInterface
 {
     public function getModel(): string
@@ -12,15 +17,17 @@ class ConversationParticipantRepository extends BaseRepository implements Conver
         return ConversationParticipant::class;
     }
 
+    /** {@inheritdoc} */
     public function createConversationParticipant(int $conversationId, int $userId, string $status)
     {
-        return $this->model->create([
-            'conversation_id' => $conversationId,
-            'user_id' => $userId,
-            'status' => $status,
-        ]);
+        // Dùng firstOrCreate để tránh lỗi Unique Constraint Violation khi spam click tham gia
+        return $this->model->firstOrCreate(
+            ['conversation_id' => $conversationId, 'user_id' => $userId],
+            ['status' => $status]
+        );
     }
 
+    /** {@inheritdoc} */
     public function getOtherParticipant(int $conversationId, int $userId)
     {
         return $this->model
@@ -29,6 +36,7 @@ class ConversationParticipantRepository extends BaseRepository implements Conver
             ->first();
     }
 
+    /** {@inheritdoc} */
     public function getParticipantIds(int $conversationId): array
     {
         return $this->model
@@ -37,6 +45,7 @@ class ConversationParticipantRepository extends BaseRepository implements Conver
             ->toArray();
     }
 
+    /** {@inheritdoc} */
     public function getParticipant(int $conversationId, int $userId): ?ConversationParticipant
     {
         return $this->model
@@ -45,6 +54,7 @@ class ConversationParticipantRepository extends BaseRepository implements Conver
             ->first();
     }
 
+    /** {@inheritdoc} */
     public function deleteByConversationAndUser(int $conversationId, int $userId): bool
     {
         return (bool) $this->model
@@ -53,6 +63,7 @@ class ConversationParticipantRepository extends BaseRepository implements Conver
             ->delete();
     }
 
+    /** {@inheritdoc} */
     public function updateClearedAt(int $conversationId, int $userId): void
     {
         $this->model
@@ -61,11 +72,13 @@ class ConversationParticipantRepository extends BaseRepository implements Conver
             ->update(['cleared_at' => now()]);
     }
 
+    /** {@inheritdoc} */
     public function insertMany(array $participants): void
     {
         ConversationParticipant::insert($participants);
     }
 
+    /** {@inheritdoc} */
     public function activateParticipants(int $conversationId, array $userIds): void
     {
         $this->model

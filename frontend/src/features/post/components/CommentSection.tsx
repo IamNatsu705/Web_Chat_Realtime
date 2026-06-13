@@ -10,6 +10,13 @@ interface CommentSectionProps {
   postOwnerId: number;
 }
 
+/**
+ * CommentSection — Khu vực hiển thị và nhập bình luận cho bài viết.
+ *
+ * Tự động focus vào ô nhập khi mở, lấy danh sách bình luận
+ * qua API và hỗ trợ gửi bình luận mới.
+ */
+
 export default function CommentSection({ postId, postOwnerId }: CommentSectionProps) {
   const { user } = useAuth();
   const [commentText, setCommentText] = useState('');
@@ -20,7 +27,7 @@ export default function CommentSection({ postId, postOwnerId }: CommentSectionPr
 
   const comments = commentsData?.comments ?? [];
 
-  // Auto-focus input when section mounts
+  // Tự động focus vào ô nhập liệu khi component mount
   useEffect(() => {
     const timer = setTimeout(() => inputRef.current?.focus(), 100);
     return () => clearTimeout(timer);
@@ -37,7 +44,7 @@ export default function CommentSection({ postId, postOwnerId }: CommentSectionPr
 
   return (
     <div className="border-t border-gray-100 comment-section-enter">
-      {/* Comment input */}
+      {/* Ô nhập bình luận */}
       <div className="flex items-center gap-2.5 px-4 py-3 bg-gray-50/50">
         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 shrink-0 flex items-center justify-center text-white text-xs font-semibold overflow-hidden">
           {avatarUrl ? (
@@ -76,7 +83,7 @@ export default function CommentSection({ postId, postOwnerId }: CommentSectionPr
         </div>
       </div>
 
-      {/* Comments list */}
+      {/* Danh sách bình luận */}
       <div className="px-4 pb-3">
         {isLoading && (
           <div className="flex items-center justify-center py-4">

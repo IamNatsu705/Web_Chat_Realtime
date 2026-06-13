@@ -5,6 +5,12 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Resource Bài đăng (Post Resource).
+ *
+ * Biến đổi model Post thành JSON cho API response.
+ * Bao gồm: nội dung, media, lượt thích, bình luận, trạng thái is_liked.
+ */
 class PostResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -16,7 +22,6 @@ class PostResource extends JsonResource
             'media_url' => $this->media_url,
             'likes_count' => $this->likes_count,
             'comments_count' => $this->comments_count,
-            'is_pinned' => $this->is_pinned,
             'status' => $this->status,
             'hide_reason' => $this->hide_reason,
             'hidden_by_admin' => $this->whenLoaded('hiddenByAdmin', fn () => $this->hiddenByAdmin?->name),

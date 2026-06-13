@@ -1,7 +1,13 @@
 import AppRoutes from './routes';
 import { Toaster } from 'react-hot-toast';
 
-
+/**
+ * Component gốc của ứng dụng (App Root).
+ *
+ * Kết hợp:
+ * - AppRoutes: Hệ thống điều hướng (routing) + Providers (Auth, WebSocket).
+ * - Toaster: Hiển thị thông báo toast (react-hot-toast) ở góc trên bên phải.
+ */
 function App() {
   return (
     <>

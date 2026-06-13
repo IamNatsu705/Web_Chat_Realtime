@@ -16,6 +16,13 @@ use App\Traits\ApiResponses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Controller Mạng lưới (Network Controller).
+ *
+ * Xử lý các API endpoint liên quan đến mạng lưới bạn bè:
+ * tìm kiếm người dùng, gửi/hủy/phản hồi lời mời kết bạn,
+ * lấy danh sách bạn bè, hủy kết bạn, và gợi ý kết bạn.
+ */
 class NetworkController extends Controller
 {
     use ApiResponses;
@@ -25,6 +32,10 @@ class NetworkController extends Controller
         protected UserServiceInterface    $userService
     ) {}
 
+    /**
+     * GET /api/v1/network/search
+     * Tìm kiếm người dùng theo từ khóa (tên hoặc email).
+     */
     public function search(SearchUserRequest $request): JsonResponse
     {
         $users = $this->userService->search(
@@ -38,6 +49,10 @@ class NetworkController extends Controller
         );
     }
 
+    /**
+     * POST /api/v1/network/friend-requests
+     * Gửi lời mời kết bạn.
+     */
     public function sendRequest(SendFriendRequest $request): JsonResponse
     {
         try {
@@ -56,6 +71,10 @@ class NetworkController extends Controller
         }
     }
 
+    /**
+     * GET /api/v1/network/friend-requests/incoming
+     * Lấy danh sách lời mời kết bạn đang chờ.
+     */
     public function getIncomingRequests(GetIncomingRequests $request): JsonResponse
     {
         $requests = $this->networkService->getIncomingRequests((int) auth()->id());
@@ -66,6 +85,10 @@ class NetworkController extends Controller
         );
     }
 
+    /**
+     * GET /api/v1/network/friends
+     * Lấy danh sách tất cả bạn bè.
+     */
     public function getFriends(Request $request): JsonResponse
     {
         $friends = $this->networkService->getFriends((int) auth()->id());
@@ -76,6 +99,10 @@ class NetworkController extends Controller
         );
     }
 
+    /**
+     * DELETE /api/v1/network/friend-requests/{userId}/cancel
+     * Hủy lời mời kết bạn đã gửi.
+     */
     public function cancelFriendRequest(Request $request, int $userId): JsonResponse
     {
         try {
@@ -87,6 +114,10 @@ class NetworkController extends Controller
         }
     }
 
+    /**
+     * POST /api/v1/network/friend-requests/{requestId}/respond
+     * Phản hồi lời mời kết bạn (chấp nhận hoặc từ chối).
+     */
     public function respondToRequest(RespondFriendRequest $request, int $requestId): JsonResponse
     {
         try {
@@ -106,6 +137,10 @@ class NetworkController extends Controller
         }
     }
 
+    /**
+     * DELETE /api/v1/network/friends/{userId}
+     * Hủy kết bạn (unfriend).
+     */
     public function unfriend(Request $request, int $userId): JsonResponse
     {
         try {
@@ -117,6 +152,10 @@ class NetworkController extends Controller
         }
     }
 
+    /**
+     * GET /api/v1/network/users/{userId}
+     * Lấy thông tin chi tiết người dùng (kèm trạng thái quan hệ).
+     */
     public function getUser(int $userId): JsonResponse
     {
         $wrappedUser = $this->userService->search(['keyword' => ''], auth()->id())
@@ -134,8 +173,8 @@ class NetworkController extends Controller
     }
 
     /**
-     * Gợi ý kết bạn dựa trên Mutual Friends.
-     * Trả về danh sách users sắp xếp theo số bạn chung giảm dần.
+     * GET /api/v1/network/suggestions
+     * Gợi ý kết bạn dựa trên bạn chung (Mutual Friends).
      */
     public function suggestions(Request $request): JsonResponse
     {

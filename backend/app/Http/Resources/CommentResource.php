@@ -5,6 +5,12 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Resource Bình luận (Comment Resource).
+ *
+ * Biến đổi model PostComment thành JSON cho API response.
+ * Hỗ trợ cấu trúc lồng: replies (bình luận con) cũng dùng CommentResource.
+ */
 class CommentResource extends JsonResource
 {
     public function toArray(Request $request): array

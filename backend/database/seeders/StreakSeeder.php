@@ -99,8 +99,7 @@ class StreakSeeder extends Seeder
             $this->streakSystemMsg(
                 $dm3->id,
                 'Chuỗi 12 ngày đang gặp nguy hiểm! Hãy dùng quyền khôi phục để giữ chuỗi. (Còn 1 lần, hạn hôm nay)|||{"restore_days":1}',
-                now()->subHours(1),
-                'streak_warning'
+                now()->subHours(1)
             );
         }
     }

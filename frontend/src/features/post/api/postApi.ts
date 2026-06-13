@@ -3,10 +3,10 @@ import { getImageUrl } from '@/utils/getImageUrl';
 import type { ApiResponse } from '@/types/api';
 import type { Post, Comment, FeedPage } from '../types';
 
-// Re-export types for backward compatibility
+// Xuất lại types để tương thích ngược
 export type { Post, Comment, FeedPage, ApiResponse };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Hàm hỗ trợ ──────────────────────────────────────────────────────────────
 
 function normalizePost(post: Post): Post {
   if (post.user?.avatar) post.user.avatar = getImageUrl(post.user.avatar);
@@ -18,7 +18,7 @@ function normalizePost(post: Post): Post {
   return post;
 }
 
-// ─── Post API ─────────────────────────────────────────────────────────────────
+// ─── API Bài viết ─────────────────────────────────────────────────────────────
 
 /**
  * postApi - Chịu trách nhiệm tương tác Backend cho các tính năng Bài viết (Posts),

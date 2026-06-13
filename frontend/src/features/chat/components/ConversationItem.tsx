@@ -22,10 +22,10 @@ function formatConvTime(iso?: string) {
 }
 
 /**
- * ConversationItem — a single row in the Conversation List sidebar.
+ * ConversationItem — Một dòng hiển thị trong danh sách cuộc trò chuyện.
  *
- * For 1-1 chats: shows the other user's avatar + online dot
- * For groups: shows group avatar (or initials) with member-count badge
+ * Với chat 1-1: Hiển thị avatar của người kia kèm chấm trạng thái online.
+ * Với nhóm: Hiển thị avatar nhóm (hoặc chữ cái đầu) kèm theo huy hiệu số lượng.
  */
 export default function ConversationItem({
   conversation,
@@ -34,7 +34,7 @@ export default function ConversationItem({
   isOnline,
   onClick,
 }: ConversationItemProps) {
-  // For 1-1 chats, get the OTHER participant
+  // Đối với chat 1-1, lấy thông tin người tham gia KHÁC
   const otherUser = !conversation.is_group
     ? conversation.participants.find((p) => p.id !== currentUser.id)
     : null;
@@ -57,7 +57,7 @@ export default function ConversationItem({
     if (msg.is_recalled) {
       lastMsgContent = `${prefix}Tin nhắn đã thu hồi`;
     } else if (msg.type === 'system') {
-      // Strip metadata after ||| separator (same format as SystemMessage.tsx)
+      // Bỏ phần dữ liệu thừa sau dải phân cách ||| (tương tự như SystemMessage.tsx)
       const systemText = msg.content.split('|||')[0];
       lastMsgContent = `[Thông báo] ${systemText}`;
     } else if (msg.type === 'image') {
@@ -82,7 +82,7 @@ export default function ConversationItem({
           : 'border-transparent'
         }`}
     >
-      {/* Avatar */}
+      {/* Hình đại diện */}
       <div className="relative shrink-0 mr-3">
         {avatarUrl ? (
           <img
@@ -108,13 +108,13 @@ export default function ConversationItem({
           </div>
         )}
 
-        {/* Online dot — only for 1-1 chats */}
+        {/* Chấm trạng thái online — chỉ dành cho chat 1-1 */}
         {!conversation.is_group && isOnline && (
           <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white" />
         )}
       </div>
 
-      {/* Text */}
+      {/* Nội dung chữ */}
       <div className="grow min-w-0">
         <div className="flex justify-between items-baseline">
           <span
@@ -124,7 +124,7 @@ export default function ConversationItem({
             {displayName}
           </span>
           <div className="flex items-center gap-1.5 ml-2 shrink-0">
-            {/* Streak indicator */}
+            {/* Chỉ báo Chuỗi ngày (Streak) */}
             {!conversation.is_group && conversation.streak && conversation.streak.current_streak >= 3 && (
               <span
                 className={`flex items-center gap-0.5 text-[10px] font-extrabold rounded-full px-2 py-0.5 border shadow-sm ${

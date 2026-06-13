@@ -362,9 +362,11 @@ class ConversationSeeder extends Seeder
             ]
         );
         $englishClub->update([
-            'description' => 'CLB Tiếng Anh PTIT — Luyện speaking, writing, IELTS/TOEIC hàng tuần. Open for all students!',
+            'description' => 'CLB Tiếng Anh PTIT — Luyện speaking, writing, IELTS/TOEIC hàng tuần. Open for everyone!',
+            'avatar'      => 'https://ui-avatars.com/api/?name=EN&background=FECDD3&color=D70038',
             'join_type'   => 'open',
-            'category'    => 'language',
+            'category'    => 'club',
+            'admin_id'    => 2,
         ]);
         ConversationParticipant::where('conversation_id', $englishClub->id)
             ->where('user_id', $nga->id)

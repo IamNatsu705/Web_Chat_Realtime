@@ -24,6 +24,13 @@ import TypingIndicator from '../../features/chat/components/TypingIndicator';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * ChatPage — Trang nhắn tin chính.
+ *
+ * Bao gồm: danh sách cuộc trò chuyện (trái), cửa sổ chat (phải),
+ * panel thông tin nhóm, panel tài liệu, modal tạo nhóm, hộp thoại xác nhận.
+ * Tích hợp: optimistic UI, typing indicator, cuộn vô hạn, đánh dấu đã đọc.
+ */
 export default function ChatPage() {
 
   const { user } = useAuth();
@@ -45,7 +52,7 @@ export default function ChatPage() {
   const [showResourcePanel, setShowResourcePanel] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
-  // ── Confirm Dialog state ────────────────────────────────────────────────
+  // ── Trạng thái hộp thoại xác nhận ───────────────────────────────────────────────
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -76,7 +83,7 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevScrollHeight = useRef(0);
 
-  // ── Chat & Group hooks ────────────────────────────────────────────────────
+  // ── Hook Chat và Nhóm ────────────────────────────────────────────────────
   const {
     messages: allMessages,
     isLoading: isLoadingMsgs,
@@ -107,7 +114,7 @@ export default function ChatPage() {
   // khi có tin nhắn mới tới mà user đang mở đoạn chat này.
   useEffect(() => {
     if (!activeConversationId || !activeConversation) return;
-    if (activeConversation.my_status === 'pending') return; // Do NOT mark read for stranger chats!
+    if (activeConversation.my_status === 'pending') return; // Không đánh dấu đã đọc cho chat người lạ!
 
     const handleMarkRead = () => {
       if ((activeConversation.unread_count ?? 0) > 0 && document.visibilityState === 'visible') {
@@ -147,32 +154,32 @@ export default function ChatPage() {
     };
   }, [activeConversationId, setSearchParams]);
 
-  // ── NOTE: Global WebSocket logic is handled by WebSocketProvider.
-  //    useConversation handles per-conversation state, and cacheUtils handles cache.
+  // ── GHI CHÚ: Logic WebSocket toàn cục được xử lý trong WebSocketProvider.
+  //    useConversation xử lý state từng cuộc trò chuyện, cacheUtils xử lý cache.
 
-  // ── Auto-scroll to bottom on new messages ────────────────────────────────
+  // ── Tự động cuộn xuống cuối khi có tin nhắn mới ────────────────────────────────
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
 
     if (isLoadingMore) {
-      // Preserve scroll position when loading older messages
+      // Giữ vị trí cuộn khi tải tin nhắn cũ
       prevScrollHeight.current = el.scrollHeight;
       return;
     }
 
-    // After loading older messages, restore position
+    // Sau khi tải tin nhắn cũ, khôi phục vị trí cuộn
     if (prevScrollHeight.current > 0) {
       el.scrollTop = el.scrollHeight - prevScrollHeight.current;
       prevScrollHeight.current = 0;
       return;
     }
 
-    // For new messages, scroll to bottom
+    // Với tin nhắn mới, cuộn xuống cuối
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [allMessages, isLoadingMore]);
 
-  // ── Auto-scroll when images load ─────────────────────────────────────────
+  // ── Tự động cuộn khi ảnh tải xong ─────────────────────────────────────────
   useEffect(() => {
     const handleImageLoaded = () => {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -183,7 +190,7 @@ export default function ChatPage() {
     };
   }, []);
 
-  // ── Infinite scroll: load more when scrolled to top ──────────────────────
+  // ── Cuộn vô hạn: tải thêm khi cuộn lên đầu ──────────────────────
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -193,7 +200,7 @@ export default function ChatPage() {
     }
   }, [hasMore, isLoadingMore, loadMore]);
 
-  // ── Select conversation ──────────────────────────────────────────────────
+  // ── Chọn cuộc trò chuyện ──────────────────────────────────────────────────
   const handleSelectConversation = (conv: Conversation) => {
     setActiveConversationId(conv.id);
     setSearchParams({ conversationId: conv.id.toString() });
@@ -201,7 +208,7 @@ export default function ChatPage() {
     setShowResourcePanel(false);
   };
 
-  // ── Group actions ─────────────────────────────────────────────────────────
+  // ── Hành động nhóm ─────────────────────────────────────────────────────────
   const handleCreateGroup = async (data: Parameters<typeof createGroup>[0]) => {
     const newConv = await createGroup(data);
     if (newConv) {
@@ -231,6 +238,8 @@ export default function ChatPage() {
     if (ok) {
       setActiveConversationId(null);
       setSearchParams({});
+      // BUG-C FIX: Invalidate cache ngay để sidebar cập nhật, không dựa hoàn toàn vào WS
+      queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
     }
   };
 
@@ -247,6 +256,8 @@ export default function ChatPage() {
         if (ok) {
           setActiveConversationId(null);
           setSearchParams({});
+          // BUG-C FIX: Invalidate cache ngay để sidebar cập nhật
+          queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
         }
       },
     });
@@ -264,12 +275,12 @@ export default function ChatPage() {
         try {
           await chatApi.clearConversation(activeConversation.id);
           
-          // Clear messages from cache entirely so it refetches from API
-          // (API will respect cleared_at and return only newer messages)
+          // Xóa tin nhắn khỏi cache hoàn toàn để fetch lại từ API
+          // (API sẽ dựa trên cleared_at và chỉ trả về tin nhắn mới hơn)
           queryClient.removeQueries({ queryKey: CHAT_QUERIES.messages(activeConversation.id) });
           queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
 
-          // Kicked out if stranger, otherwise stay in chat
+          // Nếu là người lạ, chuyển ra ngoài; người quen thì giữ nguyên
           if (activeConversation.my_status === 'pending') {
             setActiveConversationId(null);
             setSearchParams({});
@@ -318,10 +329,10 @@ export default function ChatPage() {
     }
   };
 
-  // ── Group panel check ─────────────────────────────────────────────────────
+  // ── Kiểm tra panel nhóm ─────────────────────────────────────────────────────
   const isGroup = activeConversation?.is_group ?? false;
 
-  // ── Typing indicator ─────────────────────────────────────────────────────
+  // ── Chỉ báo đang soạn tin ─────────────────────────────────────────────────────
   const { emitTyping, typingText, isTyping } = useTyping(
     activeConversationId,
     isGroup
@@ -338,7 +349,7 @@ export default function ChatPage() {
         <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 flex">
           <div className="grow bg-white rounded-2xl shadow border border-gray-200 flex overflow-hidden h-full">
 
-            {/* ── LEFT: Conversation List ────────────────────────────────── */}
+            {/* ── TRÁI: Danh sách cuộc trò chuyện ────────────────────────── */}
             <div className="w-80 shrink-0 border-r border-gray-200 flex flex-col">
               <ConversationList
                 conversations={conversations}
@@ -350,11 +361,11 @@ export default function ChatPage() {
               />
             </div>
 
-            {/* ── RIGHT: Chat Window ────────────────────────────────────── */}
+            {/* ── PHẢI: Cửa sổ Chat ────────────────────────────────────── */}
             <div className="grow flex flex-col min-w-0 relative">
               {activeConversation ? (
                 <>
-                  {/* Header */}
+                  {/* Tiêu đề */}
                   <ChatHeader
                     conversation={activeConversation}
                     currentUser={user}
@@ -375,13 +386,13 @@ export default function ChatPage() {
                     onClearChat={handleClearChat}
                   />
 
-                  {/* Messages area */}
+                  {/* Vùng hiển thị tin nhắn */}
                   <div
                     ref={scrollRef}
                     onScroll={handleScroll}
                     className="grow overflow-y-auto px-4 py-4 bg-gray-50 flex flex-col"
                   >
-                    {/* Load more indicator */}
+                    {/* Chỉ báo đang tải thêm */}
                     {isLoadingMore && (
                       <div className="flex justify-center mb-3">
                         <div className="flex space-x-1">
@@ -396,7 +407,7 @@ export default function ChatPage() {
                       </div>
                     )}
 
-                    {/* No more messages indicator */}
+                    {/* Chỉ báo hết tin nhắn */}
                     {!hasMore && allMessages.length > 0 && (
                       <div className="flex justify-center mb-4">
                         <span className="text-[10px] text-gray-400 bg-white border border-gray-200 rounded-full px-3 py-1">
@@ -405,7 +416,7 @@ export default function ChatPage() {
                       </div>
                     )}
 
-                    {/* Loading skeleton */}
+                    {/* Bộ xương màn hình (Loading skeleton) */}
                     {isLoadingMsgs ? (
                       <div className="space-y-4 grow">
                         {[1, 2, 3, 4, 5].map((i) => (
@@ -439,7 +450,7 @@ export default function ChatPage() {
                       </div>
                     ) : (
                       <>
-                        {/* Date separator logic */}
+                        {/* Logic tách ngày */}
                         {allMessages.map((msg, idx) => {
                           const prevMsg = allMessages[idx - 1];
                           const showDateSep =
@@ -448,7 +459,7 @@ export default function ChatPage() {
                             new Date(prevMsg.created_at).toDateString();
 
                           const isOwn = msg.sender_id === user.id;
-                          // Show avatar for received messages when consecutive sender changes
+                          // Hiển avatar cho tin nhắn nhận vào khi người gửi thay đổi
                           const nextMsg = allMessages[idx + 1];
                           const showAvatar =
                             !isOwn &&
@@ -514,7 +525,7 @@ export default function ChatPage() {
                     )}
                   </div>
 
-                  {/* Input or Stranger Actions */}
+                  {/* Ô nhập liệu hoặc hành động người lạ */}
                   {activeConversation.my_status === 'pending' ? (
                      <div className="py-5 px-4 bg-white border-t border-gray-200 flex flex-col items-center">
                         <p className="text-sm font-medium text-gray-700 mb-3">Người lạ này muốn nhắn tin cho bạn. Bạn có đồng ý không?</p>
@@ -529,14 +540,14 @@ export default function ChatPage() {
                      </div>
                   ) : (
                     <>
-                      {/* Typing indicator — shown above input */}
+                      {/* Chỉ báo đang soạn tin — hiển phía trên ô nhập */}
                       {isTyping && typingText && (
                         <div className="px-4 py-1 bg-white border-t border-gray-100">
                           <TypingIndicator text={typingText} />
                         </div>
                       )}
                       
-                      {/* Upload progress */}
+                      {/* Tiến độ tải lên */}
                       {uploadProgress !== null && (
                         <div className="px-4 py-2 bg-indigo-50 border-t border-indigo-100 flex items-center justify-between">
                           <span className="text-xs font-medium text-indigo-700">Đang tải tài liệu lên...</span>
@@ -555,7 +566,7 @@ export default function ChatPage() {
                     </>
                   )}
 
-                  {/* Group info panel */}
+                  {/* Panel thông tin nhóm */}
                   {showGroupInfo && isGroup && (
                     <div className="absolute inset-y-0 right-0 w-72 z-10">
                       <GroupInfoPanel
@@ -594,7 +605,7 @@ export default function ChatPage() {
                   )}
                 </>
               ) : (
-                /* Empty state */
+                /* Trạng thái trống */
                 <div className="grow flex flex-col items-center justify-center text-center px-8 bg-gray-50">
                   <div className="h-24 w-24 rounded-full bg-indigo-100 flex items-center justify-center mb-6">
                     <svg className="w-12 h-12 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

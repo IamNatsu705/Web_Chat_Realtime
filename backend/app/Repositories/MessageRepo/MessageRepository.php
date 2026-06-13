@@ -6,6 +6,12 @@ use App\Models\Message;
 use App\Models\MessageReadReceipt;
 use App\Repositories\BaseRepo\BaseRepository;
 
+/**
+ * Repository Tin nhắn (Message Repository).
+ *
+ * Triển khai các truy vấn liên quan đến bảng messages và message_reads.
+ * Xử lý phân trang cursor, đánh dấu đã đọc (riêng biệt cho 1-1 và nhóm), và thống kê.
+ */
 class MessageRepository extends BaseRepository implements MessageRepositoryInterface
 {
     public function getModel()
@@ -13,8 +19,17 @@ class MessageRepository extends BaseRepository implements MessageRepositoryInter
         return Message::class;
     }
 
+    /**
+     * Lấy danh sách tin nhắn theo cuộc trò chuyện (phân trang dạng cursor).
+     *
+     * Logic lọc:
+     * - Loại bỏ tin nhắn đã bị người dùng xóa phía mình (deleted_by chứa userId).
+     * - Chỉ lấy tin nhắn sau thời điểm xóa lịch sử (cleared_at) nếu có.
+     * - Sắp xếp theo thời gian mới nhất trước (desc).
+     */
     public function getMessagesByConversationId(int $conversationId, int $userId, int $limit, ?string $cursor)
     {
+        // Lấy thời điểm xóa lịch sử của người dùng trong cuộc trò chuyện này
         $participant = \App\Models\ConversationParticipant::where('conversation_id', $conversationId)
             ->where('user_id', $userId)
             ->first();
@@ -29,6 +44,7 @@ class MessageRepository extends BaseRepository implements MessageRepositoryInter
                   ->orWhereJsonDoesntContain('deleted_by', (int)$userId);
             });
 
+        // Chỉ lấy tin nhắn sau thời điểm xóa lịch sử
         if ($clearedAt) {
             $query->where('created_at', '>=', $clearedAt);
         }
@@ -58,6 +74,7 @@ class MessageRepository extends BaseRepository implements MessageRepositoryInter
      */
     public function markGroupMessagesAsRead(int $conversationId, int $userId)
     {
+        // Tìm tất cả tin nhắn chưa được user này đọc
         $unreadMessageIds = $this->model
             ->where('conversation_id', $conversationId)
             ->where('sender_id', '!=', $userId)
@@ -67,13 +84,15 @@ class MessageRepository extends BaseRepository implements MessageRepositoryInter
             ->pluck('id');
 
         if ($unreadMessageIds->isNotEmpty()) {
+            // Tạo bản ghi đã đọc cho từng tin nhắn
             $reads = $unreadMessageIds->map(fn($id) => [
                 'message_id' => $id,
                 'user_id' => $userId,
                 'read_at' => now(),
             ])->toArray();
 
-            MessageReadReceipt::insert($reads);
+            // Sửa lại thành upsert (insertOrIgnore) để tránh lỗi race condition
+            MessageReadReceipt::insertOrIgnore($reads);
 
             // Cập nhật luôn read_at trên bản ghi message (người đọc đầu tiên thắng).
             // Đảm bảo MessageResource trả về status='read' khi tải lại trang,
@@ -85,6 +104,7 @@ class MessageRepository extends BaseRepository implements MessageRepositoryInter
         }
     }
 
+    /** {@inheritdoc} */
     public function countAll(): int
     {
         return $this->model->count();
@@ -92,6 +112,7 @@ class MessageRepository extends BaseRepository implements MessageRepositoryInter
 
     /**
      * Thống kê số tin nhắn theo ngày trong N ngày gần nhất.
+     * Điền giá trị 0 cho những ngày không có tin nhắn.
      */
     public function getDailyCount(int $days = 7): array
     {
@@ -103,6 +124,7 @@ class MessageRepository extends BaseRepository implements MessageRepositoryInter
             ->pluck('count', 'date')
             ->toArray();
 
+        // Điền giá trị 0 cho những ngày không có dữ liệu
         $data = [];
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = now()->subDays($i)->toDateString();
@@ -112,4 +134,3 @@ class MessageRepository extends BaseRepository implements MessageRepositoryInter
         return $data;
     }
 }
-

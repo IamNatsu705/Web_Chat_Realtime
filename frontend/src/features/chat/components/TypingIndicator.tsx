@@ -1,5 +1,5 @@
 /**
- * TypingIndicator — animated dots shown when someone is typing
+ * TypingIndicator — Biểu tượng các dấu chấm nhấp nháy khi có người đang nhập.
  *
  * - Chat cá nhân / Người lạ: Hiện tên (ví dụ: "Minh đang soạn tin...")
  * - Chat nhóm: Hiện chung ("Có người đang soạn tin...")

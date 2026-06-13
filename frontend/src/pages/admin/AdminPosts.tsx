@@ -4,6 +4,12 @@ import { PostsTable } from '@/features/admin/components/posts/PostsTable';
 import { PostDetailModal } from '@/features/admin/components/posts/PostDetailModal';
 import { AdminPagination } from '@/features/admin/components/shared/AdminPagination';
 
+/**
+ * AdminPosts — Trang quản lý bài viết dành cho Admin.
+ *
+ * Cung cấp chức năng xem danh sách bài viết, lọc theo trạng thái/tìm kiếm,
+ * xem chi tiết bài viết, ẩn bài viết vi phạm, và khôi phục bài viết.
+ */
 export default function AdminPosts() {
   const {
     setPage,
@@ -21,7 +27,7 @@ export default function AdminPosts() {
 
   return (
     <div>
-      {/* Header */}
+      {/* Tiêu đề */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Quản lý Bài Viết</h1>
         <p className="text-gray-500 mt-1 text-sm">
@@ -29,7 +35,7 @@ export default function AdminPosts() {
         </p>
       </div>
 
-      {/* Filter */}
+      {/* Bộ lọc */}
       <PostsFilter
         statusFilter={statusFilter}
         onStatusChange={(val) => { setStatusFilter(val); setPage(1); }}
@@ -38,7 +44,7 @@ export default function AdminPosts() {
         total={data?.total}
       />
 
-      {/* Loading */}
+      {/* Trạng thái tải */}
       {isLoading && (
         <div className="flex items-center justify-center py-16">
           <svg className="animate-spin w-8 h-8 text-indigo-500" fill="none" viewBox="0 0 24 24">
@@ -48,7 +54,7 @@ export default function AdminPosts() {
         </div>
       )}
 
-      {/* Table */}
+      {/* Bảng dữ liệu */}
       {!isLoading && (
         <PostsTable
           posts={data?.posts ?? []}
@@ -60,7 +66,7 @@ export default function AdminPosts() {
         />
       )}
 
-      {/* Pagination */}
+      {/* Phân trang */}
       {data && (
         <AdminPagination
           currentPage={data.current_page}
@@ -69,7 +75,7 @@ export default function AdminPosts() {
         />
       )}
 
-      {/* Detail Modal */}
+      {/* Modal chi tiết bài viết */}
       <PostDetailModal
         post={selectedPost}
         onClose={() => setSelectedPost(null)}

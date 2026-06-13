@@ -192,7 +192,7 @@ export function useConversation(
       if (!conversationId || !user) return;
 
       const tempId = nextTempId();
-      // For file preview, we can just store the filename in content or a JSON string
+      // Với file preview, lưu tên file trong content dạng JSON string
       const fileInfo = {
         name: file.name,
         size: file.size,
@@ -227,7 +227,7 @@ export function useConversation(
           status: 'sent' as const,
         });
 
-        // Invalidate resources to update the UI instantly
+        // Cập nhật danh sách tài liệu ngay lập tức
         queryClient.invalidateQueries({ queryKey: ['resources', conversationId] });
       } catch {
         replaceMessageInCache(queryClient, conversationId, tempId, {
@@ -251,16 +251,16 @@ export function useConversation(
     }
   }, [conversationId]);
 
-  // ── 4. WebSocket listeners have been moved to Global Event Bus (WebSocketProvider) ──
+  // ── 4. WebSocket listeners đã được chuyển sang WebSocketProvider (Global Event Bus) ──
 
-  // ── Local handlers (recall, delete) ────────────────────────────────────────
+  // ── Xử lý cục bộ (thu hồi, xóa tin nhắn) ──────────────────────────────────
   const handleLocalRecall = useCallback(
     (messageId: number | string, recalledMessage: Message) => {
       if (!conversationId) return;
       updateMessagesInCache(queryClient, conversationId, (msg) =>
         msg.id === messageId ? recalledMessage : msg
       );
-      // Invalidate resources in case a file message was recalled
+      // Cập nhật tài liệu nếu tin nhắn file bị thu hồi
       queryClient.invalidateQueries({ queryKey: ['resources', conversationId] });
     },
     [conversationId, queryClient]

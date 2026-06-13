@@ -69,7 +69,7 @@ export function useProfileActions(userId: number | null) {
       const res = await chatApi.getOrCreateDirect(userId);
       if (res.data?.conversation) {
         const newConv = res.data.conversation;
-        // Optimistically add conversation to cache with correct key
+        // Thêm conversation vào cache ngay lập tức (Optimistic UI)
         queryClient.setQueryData<Conversation[]>(CHAT_QUERIES.conversations(), (oldData) => {
           if (!oldData) return [newConv];
           if (oldData.some((c) => c.id === newConv.id)) return oldData;
