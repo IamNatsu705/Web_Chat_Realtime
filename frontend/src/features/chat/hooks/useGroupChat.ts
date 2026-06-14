@@ -7,13 +7,13 @@ import toast from 'react-hot-toast';
 
 /**
  * Hook `useGroupChat` — Cung cấp các thao tác (Mutations) để quản lý Nhóm Chat.
- * 
+ *
  * **Tích hợp TanStack Query:**
  * Hook này sử dụng `useMutation` để tự động đồng bộ trạng thái Loading (`isProcessing`),
  * và tự động vô hiệu hóa cache (Invalidate Queries) của danh sách hội thoại sau khi thực hiện
  * thành công các hành động (tạo nhóm, thêm thành viên, rời nhóm, v.v.).
- * 
- * *Lưu ý:* Việc lắng nghe sự kiện cập nhật nhóm (WebSockets) không nằm ở đây mà được quản lý 
+ *
+ * *Lưu ý:* Việc lắng nghe sự kiện cập nhật nhóm (WebSockets) không nằm ở đây mà được quản lý
  * tập trung tại `WebSocketProvider` để tránh dư thừa listener.
  */
 export function useGroupChat() {
@@ -26,7 +26,7 @@ export function useGroupChat() {
   const trackLoading = (state: boolean) => setIsProcessing(state);
 
   // ── Mutations Hành động Nhóm ──────────────────────────────────────────────
-  // BUG-C6 FIX: Chỉ giữ invalidate cho createGroup (cần data ngay để navigate).
+  // Chỉ giữ invalidate cho createGroup (cần data ngay để navigate).
   // Các mutations khác để WebSocket events xử lý cache update, tránh double API calls.
 
   const createGroupMutation = useMutation({
@@ -41,7 +41,7 @@ export function useGroupChat() {
   const updateGroupMutation = useMutation({
     mutationFn: ({ groupId, data }: { groupId: number; data: UpdateGroupRequest }) => chatApi.updateGroup(groupId, data),
     onMutate: () => trackLoading(true),
-    // BUG-D FIX: Fallback invalidate nếu WS bị delay
+    // Fallback invalidate nếu WS bị delay
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
     },
@@ -51,7 +51,7 @@ export function useGroupChat() {
   const addMemberMutation = useMutation({
     mutationFn: ({ groupId, userId }: { groupId: number; userId: number }) => chatApi.addGroupMember(groupId, userId),
     onMutate: () => trackLoading(true),
-    // BUG-D FIX: Invalidate conversations để cập nhật danh sách participants
+    // Invalidate conversations để cập nhật danh sách participants
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
     },
@@ -61,7 +61,7 @@ export function useGroupChat() {
   const kickMemberMutation = useMutation({
     mutationFn: ({ groupId, userId }: { groupId: number; userId: number }) => chatApi.removeGroupMember(groupId, userId),
     onMutate: () => trackLoading(true),
-    // BUG-D FIX: Invalidate conversations để cập nhật danh sách participants
+    // Invalidate conversations để cập nhật danh sách participants
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
     },

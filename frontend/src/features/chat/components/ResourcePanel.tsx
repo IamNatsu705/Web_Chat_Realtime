@@ -14,13 +14,13 @@ interface ResourcePanelProps {
 // ── Helper: icon theo loại file ────────────────────────────────────────────────
 function FileTypeIcon({ type }: { type: string }) {
   const icons: Record<string, { bg: string; text: string; label: string }> = {
-    pdf:     { bg: 'bg-red-100',    text: 'text-red-600',    label: 'PDF' },
-    doc:     { bg: 'bg-blue-100',   text: 'text-blue-600',   label: 'DOC' },
-    excel:   { bg: 'bg-green-100',  text: 'text-green-600',  label: 'XLS' },
-    ppt:     { bg: 'bg-orange-100', text: 'text-orange-600', label: 'PPT' },
-    image:   { bg: 'bg-purple-100', text: 'text-purple-600', label: 'IMG' },
+    pdf: { bg: 'bg-red-100', text: 'text-red-600', label: 'PDF' },
+    doc: { bg: 'bg-blue-100', text: 'text-blue-600', label: 'DOC' },
+    excel: { bg: 'bg-green-100', text: 'text-green-600', label: 'XLS' },
+    ppt: { bg: 'bg-orange-100', text: 'text-orange-600', label: 'PPT' },
+    image: { bg: 'bg-purple-100', text: 'text-purple-600', label: 'IMG' },
     archive: { bg: 'bg-yellow-100', text: 'text-yellow-600', label: 'ZIP' },
-    other:   { bg: 'bg-gray-100',   text: 'text-gray-600',   label: 'FILE' },
+    other: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'FILE' },
   };
   const cfg = icons[type] ?? icons.other;
   return (
@@ -39,12 +39,12 @@ function formatSize(bytes: number): string {
 
 // ── Danh mục tài liệu ─────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { value: '',         label: 'Tất cả' },
-  { value: 'exam',     label: 'Đề thi' },
-  { value: 'lecture',  label: 'Bài giảng' },
+  { value: '', label: 'Tất cả' },
+  { value: 'exam', label: 'Đề thi' },
+  { value: 'lecture', label: 'Bài giảng' },
   { value: 'exercise', label: 'Bài tập' },
-  { value: 'note',     label: 'Ghi chú' },
-  { value: 'other',    label: 'Khác' },
+  { value: 'note', label: 'Ghi chú' },
+  { value: 'other', label: 'Khác' },
 ];
 
 function getCategoryLabel(val: string) {
@@ -128,7 +128,7 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
       const parts = resource.file_url.split('.');
       const ext = parts.length > 1 ? parts.pop() : '';
       const filename = resource.title + (ext ? `.${ext}` : '');
-      
+
       await resourceApi.downloadResourceFile(conversationId, resource.id, filename);
     } catch (err) {
       console.error('Lỗi khi tải tài liệu:', err);
@@ -166,11 +166,10 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
             <button
               key={cat.value}
               onClick={() => setCategory(cat.value)}
-              className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                category === cat.value
+              className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${category === cat.value
                   ? 'bg-indigo-600 text-white border-indigo-600'
                   : 'bg-white text-gray-500 border-gray-200 hover:border-indigo-300'
-              }`}
+                }`}
             >
               {cat.label}
             </button>
@@ -201,18 +200,17 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
             <p className="mt-0.5 text-gray-300">Bấm "Upload" để thêm.</p>
           </div>
         ) : (
-          /* BUG-G FIX: Sắp xếp tài liệu ghim lên đầu */
+          /* Sắp xếp tài liệu ghim lên đầu */
           [...resources].sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0)).map((resource) => (
             <div
               key={resource.id}
-              className={`flex items-start gap-2.5 p-2 rounded-lg border transition-colors hover:bg-gray-50 ${
-                resource.is_pinned ? 'border-indigo-200 bg-indigo-50/30' : 'border-gray-100 bg-white'
-              }`}
+              className={`flex items-start gap-2.5 p-2 rounded-lg border transition-colors hover:bg-gray-50 ${resource.is_pinned ? 'border-indigo-200 bg-indigo-50/30' : 'border-gray-100 bg-white'
+                }`}
             >
               <FileTypeIcon type={resource.file_type} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
-                  {/* BUG-G FIX: Badge ghim */}
+                  {/* Badge ghim */}
                   {resource.is_pinned && (
                     <span className="text-[9px] bg-indigo-100 text-indigo-600 font-bold px-1.5 py-0.5 rounded-full shrink-0">📌</span>
                   )}
@@ -226,17 +224,16 @@ export default function ResourcePanel({ conversationId, currentUser, myRole }: R
               </div>
               {/* Nút hành động */}
               <div className="flex items-center gap-0.5 flex-shrink-0">
-                {/* BUG-G FIX: Nút ghim — chỉ owner/mod thấy */}
+                {/* Nút ghim — chỉ owner/mod thấy */}
                 {isOwnerOrMod && (
                   <button
                     onClick={() => pinMutation.mutate(resource.id)}
                     disabled={pinMutation.isPending}
                     title={resource.is_pinned ? 'Bỏ ghim' : 'Ghim tài liệu'}
-                    className={`p-1 rounded transition-colors ${
-                      resource.is_pinned
+                    className={`p-1 rounded transition-colors ${resource.is_pinned
                         ? 'text-indigo-500 hover:text-indigo-700 hover:bg-indigo-100'
                         : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
-                    }`}
+                      }`}
                   >
                     <svg className="w-3.5 h-3.5" fill={resource.is_pinned ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />

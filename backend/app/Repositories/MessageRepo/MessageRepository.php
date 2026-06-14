@@ -38,7 +38,7 @@ class MessageRepository extends BaseRepository implements MessageRepositoryInter
 
         $query = $this->model->where('conversation_id', $conversationId)
             ->where(function($q) use ($userId) {
-                // BUG-10 FIX: Sử dụng Eloquent JSON method thay vì raw SQL JSON_CONTAINS
+                // Sử dụng Eloquent JSON method thay vì raw SQL JSON_CONTAINS
                 // whereJsonDoesntContain hoạt động trên cả MySQL và SQLite
                 $q->whereNull('deleted_by')
                   ->orWhereJsonDoesntContain('deleted_by', (int)$userId);
@@ -90,8 +90,6 @@ class MessageRepository extends BaseRepository implements MessageRepositoryInter
                 'user_id' => $userId,
                 'read_at' => now(),
             ])->toArray();
-
-            // Sửa lại thành upsert (insertOrIgnore) để tránh lỗi race condition
             MessageReadReceipt::insertOrIgnore($reads);
 
             // Cập nhật luôn read_at trên bản ghi message (người đọc đầu tiên thắng).

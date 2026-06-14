@@ -124,11 +124,10 @@ export default function CommunitiesPage() {
               <button
                 key={key}
                 onClick={() => setCategoryFilter(key)}
-                className={`whitespace-nowrap px-5 py-2.5 rounded-xl text-[14px] font-semibold transition-all duration-300 shrink-0 ${
-                  categoryFilter === key
+                className={`whitespace-nowrap px-5 py-2.5 rounded-xl text-[14px] font-semibold transition-all duration-300 shrink-0 ${categoryFilter === key
                     ? 'bg-[#D70038] text-white shadow-[0_4px_12px_rgba(215,0,56,0.25)] scale-[1.02]'
                     : 'bg-white text-[#4B5563] border border-[#E5E7EB] hover:border-[#D70038]/30 hover:bg-[#FFF5F6] hover:text-[#D70038]'
-                }`}
+                  }`}
               >
                 {label}
               </button>
@@ -147,7 +146,7 @@ export default function CommunitiesPage() {
             <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
               {communities.map((community) => {
                 const joinStatus = getJoinStatus(community);
-                
+
                 return (
                   <div
                     key={community.id}
@@ -198,7 +197,7 @@ export default function CommunitiesPage() {
                       <span className="text-[12px] font-bold text-[#D70038] bg-[#FFF1F2] px-3 py-1.5 rounded-lg truncate max-w-[120px] uppercase tracking-wide">
                         {CATEGORY_LABELS[community.category || 'other'] ?? community.category}
                       </span>
-                      
+
                       <div onClick={(e) => e.stopPropagation()}>
                         {joinStatus === 'joined' ? (
                           <button
@@ -257,17 +256,17 @@ export default function CommunitiesPage() {
 
       {/* 4. MODAL - Modern Overlay */}
       {selectedCommunity && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/60 backdrop-blur-md"
           onClick={() => setSelectedCommunity(null)}
         >
-          <div 
+          <div
             className="bg-white rounded-[24px] shadow-[0_24px_48px_rgba(0,0,0,0.2)] w-full max-w-[420px] overflow-hidden flex flex-col transform transition-all scale-100 opacity-100"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header with red top bar */}
             <div className="h-2 bg-gradient-to-r from-[#D70038] to-[#990028] w-full"></div>
-            
+
             <div className="p-7">
               {/* Header */}
               <div className="flex justify-between items-start mb-6">
@@ -325,7 +324,7 @@ export default function CommunitiesPage() {
                 </p>
               </div>
 
-              {/* BUG-J FIX: Nút hành động trong modal */}
+              {/* Nút hành động trong modal */}
               <div>
                 {getJoinStatus(selectedCommunity) === 'joined' ? (
                   <button

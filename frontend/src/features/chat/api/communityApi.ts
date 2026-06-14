@@ -133,7 +133,7 @@ export const communityApi = {
     return res.data.data!.resource;
   },
 
-  // BUG-07 FIX: Sử dụng blob download qua axios (kèm Authorization header)
+  // Sử dụng blob download qua axios (kèm Authorization header)
   // thay vì trả URL string cho window.open (bị 401 Unauthorized)
   downloadResource: async (groupId: number, resourceId: number, fileName?: string): Promise<void> => {
     const res = await axiosInstance.get(

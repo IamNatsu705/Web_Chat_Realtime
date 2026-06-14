@@ -12,7 +12,7 @@ export interface InfiniteData {
  * Thêm 1 tin nhắn mới vào cuối page đầu tiên (page mới nhất).
  * Tránh duplicate bằng cách check id.
  */
-export function addMessageToCache(queryClient: QueryClient,conversationId: number,message: Message){
+export function addMessageToCache(queryClient: QueryClient, conversationId: number, message: Message) {
 
   queryClient.setQueryData(
     CHAT_QUERIES.messages(conversationId),
@@ -142,7 +142,7 @@ export function updateConversationInCache(
         const updatedConv = updater(c);
 
         // Race Condition Check: So sánh thời gian
-        // BUG-C3 FIX: Guard cho null/undefined timestamps
+        // Guard cho null/undefined timestamps
         const oldTimeStr = c.last_message?.created_at || c.updated_at;
         const newTimeStr = updatedConv.last_message?.created_at || updatedConv.updated_at;
         const oldTime = oldTimeStr ? new Date(oldTimeStr).getTime() : 0;

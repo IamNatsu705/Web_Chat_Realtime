@@ -64,7 +64,7 @@ export default function ChatPage() {
     isOpen: false,
     title: '',
     message: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const closeConfirmDialog = useCallback(() => {
@@ -134,7 +134,7 @@ export default function ChatPage() {
     };
   }, [activeConversation, activeConversationId, activeConversation?.my_status, activeConversation?.unread_count, markRead, queryClient]);
 
-  // ── BUG-15 FIX: Xử lý khi nhóm bị giải tán hoặc user bị kick từ WebSocket ──
+  // Xử lý khi nhóm bị giải tán hoặc user bị kick từ WebSocket ──
   useEffect(() => {
     const handleGroupAction = (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -238,7 +238,7 @@ export default function ChatPage() {
     if (ok) {
       setActiveConversationId(null);
       setSearchParams({});
-      // BUG-C FIX: Invalidate cache ngay để sidebar cập nhật, không dựa hoàn toàn vào WS
+      // Invalidate cache ngay để sidebar cập nhật, không dựa hoàn toàn vào WS
       queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
     }
   };
@@ -256,7 +256,7 @@ export default function ChatPage() {
         if (ok) {
           setActiveConversationId(null);
           setSearchParams({});
-          // BUG-C FIX: Invalidate cache ngay để sidebar cập nhật
+          // Invalidate cache ngay để sidebar cập nhật
           queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
         }
       },
@@ -274,7 +274,7 @@ export default function ChatPage() {
         closeConfirmDialog();
         try {
           await chatApi.clearConversation(activeConversation.id);
-          
+
           // Xóa tin nhắn khỏi cache hoàn toàn để fetch lại từ API
           // (API sẽ dựa trên cleared_at và chỉ trả về tin nhắn mới hơn)
           queryClient.removeQueries({ queryKey: CHAT_QUERIES.messages(activeConversation.id) });
@@ -293,15 +293,15 @@ export default function ChatPage() {
   };
 
   const handleAcceptStranger = async () => {
-    if(!activeConversation) return;
+    if (!activeConversation) return;
     try {
-        await chatApi.acceptStranger(activeConversation.id);
-        queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
+      await chatApi.acceptStranger(activeConversation.id);
+      queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() });
     } catch { /* silently fail */ }
   };
 
   const handleRejectStranger = async () => {
-    if(!activeConversation) return;
+    if (!activeConversation) return;
     showConfirm({
       title: 'Từ chối tin nhắn',
       message: 'Bạn có chắc muốn từ chối nhận tin nhắn từ người này?',
@@ -527,17 +527,17 @@ export default function ChatPage() {
 
                   {/* Ô nhập liệu hoặc hành động người lạ */}
                   {activeConversation.my_status === 'pending' ? (
-                     <div className="py-5 px-4 bg-white border-t border-gray-200 flex flex-col items-center">
-                        <p className="text-sm font-medium text-gray-700 mb-3">Người lạ này muốn nhắn tin cho bạn. Bạn có đồng ý không?</p>
-                        <div className="flex space-x-3 w-full max-w-xs">
-                           <button onClick={handleRejectStranger} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg text-sm hover:bg-gray-50 transition-colors">Từ chối</button>
-                           <button onClick={handleAcceptStranger} className="flex-1 px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg text-sm hover:bg-indigo-700 transition-colors shadow-sm">Chấp nhận</button>
-                        </div>
-                     </div>
+                    <div className="py-5 px-4 bg-white border-t border-gray-200 flex flex-col items-center">
+                      <p className="text-sm font-medium text-gray-700 mb-3">Người lạ này muốn nhắn tin cho bạn. Bạn có đồng ý không?</p>
+                      <div className="flex space-x-3 w-full max-w-xs">
+                        <button onClick={handleRejectStranger} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg text-sm hover:bg-gray-50 transition-colors">Từ chối</button>
+                        <button onClick={handleAcceptStranger} className="flex-1 px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg text-sm hover:bg-indigo-700 transition-colors shadow-sm">Chấp nhận</button>
+                      </div>
+                    </div>
                   ) : activeConversation.my_status === 'rejected' ? (
-                     <div className="py-4 px-4 bg-gray-50 border-t border-gray-200 text-center">
-                        <p className="text-sm font-medium text-red-500">Bạn đã từ chối nhận tin nhắn từ người này.</p>
-                     </div>
+                    <div className="py-4 px-4 bg-gray-50 border-t border-gray-200 text-center">
+                      <p className="text-sm font-medium text-red-500">Bạn đã từ chối nhận tin nhắn từ người này.</p>
+                    </div>
                   ) : (
                     <>
                       {/* Chỉ báo đang soạn tin — hiển phía trên ô nhập */}
@@ -546,7 +546,7 @@ export default function ChatPage() {
                           <TypingIndicator text={typingText} />
                         </div>
                       )}
-                      
+
                       {/* Tiến độ tải lên */}
                       {uploadProgress !== null && (
                         <div className="px-4 py-2 bg-indigo-50 border-t border-indigo-100 flex items-center justify-between">

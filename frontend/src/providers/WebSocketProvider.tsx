@@ -78,7 +78,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
             CHAT_QUERIES.conversations(),
             (old = []) => old.filter((c) => c.id !== conversationId)
           );
-          // BUG-C1 FIX: Xóa messages cache để tránh memory leak và stale data
+          // Xóa messages cache để tránh memory leak và stale data
           queryClient.removeQueries({ queryKey: CHAT_QUERIES.messages(conversationId) });
           toast(`Nhóm đã bị giải tán bởi ${payload.actor.name}`, { icon: '🗑️' });
           window.dispatchEvent(new CustomEvent('group-action', {
@@ -98,9 +98,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
             // Điều này cực kỳ quan trọng để ngăn chặn lỗi hiển thị dữ liệu "bóng ma" (stale data)
             // trong trường hợp user bị kích (kick) và sau đó được mời lại vào chính nhóm này.
             queryClient.removeQueries({ queryKey: CHAT_QUERIES.messages(conversationId) });
-            // BUG-15 FIX: Toast thông báo bị kick
+            // Toast thông báo bị kick
             toast(`Bạn đã bị ${payload.actor.name} xóa khỏi nhóm`, { icon: '⚠️' });
-            // BUG-15 FIX: Dispatch event cho ChatPage
+            // Dispatch event cho ChatPage
             window.dispatchEvent(new CustomEvent('group-action', {
               detail: { type: 'kicked', conversationId, actorName: payload.actor.name }
             }));
@@ -276,10 +276,10 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
             : msg
         );
 
-        // BUG FIX: Invalidate resources in case a file message was recalled
+        // Invalidate resources in case a file message was recalled
         queryClient.invalidateQueries({ queryKey: ['resources', convId] });
 
-        // BUG-14 FIX: Cập nhật sidebar CHỈ KHI tin nhắn bị recall là last_message
+        // Cập nhật sidebar CHỈ KHI tin nhắn bị recall là last_message
         updateConversationInCache(queryClient, convId, (c: Conversation): Conversation => {
           if (!c.last_message || c.last_message.id !== payload.messageId) return c;
 
@@ -328,7 +328,6 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
-      // BUG-10 FIX (Memory Leak & 403 Forbidden Prevention):
       // Khi component unmount hoặc conversationIds thay đổi, BẮT BUỘC phải gỡ bỏ các Event Listeners
       // (.stopListening) để giải phóng bộ nhớ. Nếu không, Echo sẽ cố gắng kết nối lại hoặc
       // nhận sự kiện từ các kênh (channels) mà user không còn quyền truy cập, gây lỗi 403 Authentication.

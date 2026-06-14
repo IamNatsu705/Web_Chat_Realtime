@@ -350,7 +350,7 @@ class GroupChatService implements GroupChatServiceInterface
     // =====================================================================
 
     /**
-     * BUG-F FIX: Unified joinGroup — tự động phân biệt open/request dựa trên join_type.
+     * Unified joinGroup — tự động phân biệt open/request dựa trên join_type.
      * Controller chỉ cần gọi 1 method duy nhất, không cần resolve repository bằng app().
      * Chỉ cần 1 lần findOrFail thay vì 2.
      *

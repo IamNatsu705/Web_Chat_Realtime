@@ -123,7 +123,7 @@ export default function StreakInfoPanel({
     try {
       await chatApi.restoreStreak(conversationId);
       setRestored(true);
-      // BUG-06 FIX: Re-fetch full streak data từ server sau restore
+      // Re-fetch full streak data từ server sau restore
       // Thay vì chỉ cập nhật status/restore_days, lấy toàn bộ data mới
       // (current_streak đã được BE tăng, tier có thể thay đổi)
       await fetchStreak();
@@ -215,13 +215,12 @@ export default function StreakInfoPanel({
               return (
                 <div
                   key={m}
-                  className={`flex flex-col items-center justify-center py-1.5 rounded-lg border transition-colors ${
-                    reached
+                  className={`flex flex-col items-center justify-center py-1.5 rounded-lg border transition-colors ${reached
                       ? 'bg-orange-50 border-orange-200 text-orange-600'
                       : isNext
-                      ? 'bg-white border-orange-300 text-orange-500 shadow-sm'
-                      : 'bg-gray-50 border-gray-100 text-gray-400'
-                  }`}
+                        ? 'bg-white border-orange-300 text-orange-500 shadow-sm'
+                        : 'bg-gray-50 border-gray-100 text-gray-400'
+                    }`}
                 >
                   <span className="text-xs font-bold">{m}</span>
                 </div>
@@ -251,11 +250,10 @@ export default function StreakInfoPanel({
             <button
               onClick={handleShare}
               disabled={sharing || shared}
-              className={`w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                shared
+              className={`w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${shared
                   ? 'bg-green-50 text-green-600 border border-green-200'
                   : 'bg-gray-900 hover:bg-gray-800 text-white shadow-sm hover:shadow-md'
-              }`}
+                }`}
             >
               {shared ? (
                 <>✅ Đã chia sẻ thành công</>
@@ -269,11 +267,10 @@ export default function StreakInfoPanel({
             <button
               onClick={handleRestore}
               disabled={restoring || restored}
-              className={`w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                restored
+              className={`w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${restored
                   ? 'bg-green-50 text-green-600 border border-green-200'
                   : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md'
-              }`}
+                }`}
             >
               {restored ? (
                 <>✅ Đã khôi phục thành công</>

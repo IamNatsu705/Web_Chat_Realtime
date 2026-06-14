@@ -68,7 +68,7 @@ class GroupResourceController extends Controller
             'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'category'    => ['nullable', 'string', 'in:exam,lecture,exercise,note,other'],
-            // BUG-08 FIX: Giới hạn loại file theo nghiệp vụ (Mục 3.1.2 báo cáo: PDF, Word, Excel, PPT, ảnh, nén)
+            // Giới hạn loại file theo nghiệp vụ (Mục 3.1.2 báo cáo: PDF, Word, Excel, PPT, ảnh, nén)
             'file'        => ['required', 'file', 'max:51200', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,webp,zip,rar,7z,txt,csv'],
         ]);
 
