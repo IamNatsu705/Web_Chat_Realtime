@@ -5,7 +5,7 @@ namespace App\Events\Chat;
 use App\Models\Streak;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -15,7 +15,7 @@ use Illuminate\Queue\SerializesModels;
  * Phát qua WebSocket khi Streak thay đổi (tăng streak, đạt milestone, hết hạn...).
  * Broadcast đến kênh chat.{id} + user.{id} để cả sidebar và khung chat nhận được.
  */
-class StreakUpdated implements ShouldBroadcast
+class StreakUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

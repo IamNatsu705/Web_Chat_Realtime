@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { networkApi } from '../../features/network/api/networkApi';
 import { useProfileActions } from '../../features/network/hooks/useProfileActions';
 import { RELATIONSHIP_STATUS } from '../../features/network/constants';
+import { useConfirm } from '@/hooks/useConfirm';
 import { HiOutlineChatBubbleLeftRight, HiOutlineUserPlus, HiOutlineXMark, HiOutlineCheck, HiOutlineClock, HiOutlineUserMinus } from 'react-icons/hi2';
 
 /**
@@ -37,6 +38,7 @@ export default function ProfilePage() {
 
     // Hành động mạng lưới cho profile người khác
     const profileActions = useProfileActions(isOtherUser ? targetUserId : null);
+    const confirm = useConfirm();
 
     // Bài viết: dùng chung PostCard
     const { data: userPostsData, isLoading: isPostsLoading } = useUserPostsQuery(
@@ -179,10 +181,9 @@ export default function ProfilePage() {
 
                                         {relStatus === RELATIONSHIP_STATUS.ACCEPTED && (
                                             <button
-                                                onClick={() => {
-                                                    if (window.confirm('Bạn có chắc chắn muốn hủy kết bạn với người này?')) {
-                                                        profileActions.unfriend();
-                                                    }
+                                                onClick={async () => {
+                                                    const ok = await confirm({ title: 'Hủy kết bạn', message: 'Bạn có chắc chắn muốn hủy kết bạn với người này?', confirmLabel: 'Hủy kết bạn', variant: 'danger' });
+                                                    if (ok) profileActions.unfriend();
                                                 }}
                                                 disabled={profileActions.isProcessing}
                                                 className="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-red-50 text-red-600 hover:bg-red-100 transition-colors border border-red-200 shadow-sm disabled:opacity-50"

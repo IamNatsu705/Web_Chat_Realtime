@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { useToggleLikeMutation, useDeletePostMutation } from '../hooks/queries';
 import { getImageUrl } from '@/utils/getImageUrl';
+import { useConfirm } from '@/hooks/useConfirm';
 import type { Post } from '../api/postApi';
 import CommentSection from './CommentSection';
 
@@ -31,6 +32,7 @@ interface PostCardProps {
 
 const PostCard = memo(function PostCard({ post }: PostCardProps) {
   const { user } = useAuth();
+  const confirm = useConfirm();
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   
@@ -44,11 +46,10 @@ const PostCard = memo(function PostCard({ post }: PostCardProps) {
     toggleLike.mutate(post.id);
   }, [toggleLike, post.id]);
 
-  const handleDelete = () => {
-    if (confirm('Bạn có chắc muốn xoá bài viết này?')) {
-      deletePost.mutate(post.id);
-    }
+  const handleDelete = async () => {
     setShowMenu(false);
+    const ok = await confirm({ title: 'Xoá bài viết', message: 'Bạn có chắc muốn xoá bài viết này?', confirmLabel: 'Xoá', variant: 'danger' });
+    if (ok) deletePost.mutate(post.id);
   };
 
   const isOwner = user?.id === post.user_id;
@@ -101,9 +102,9 @@ const PostCard = memo(function PostCard({ post }: PostCardProps) {
           {post.media.map((m) => (
             <div key={m.id} className="rounded-lg overflow-hidden bg-gray-100">
               {m.media_type === 'video' ? (
-                <video src={m.media_url} controls className="w-full max-h-80 object-cover" />
+                <video src={getImageUrl(m.media_url)} controls className="w-full max-h-80 object-cover" />
               ) : (
-                <img src={m.media_url} alt="" className="w-full max-h-80 object-cover" />
+                <img src={getImageUrl(m.media_url)} alt="" className="w-full max-h-80 object-cover" />
               )}
             </div>
           ))}

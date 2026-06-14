@@ -13,6 +13,9 @@ export type ProfileResponse<T> = ApiResponse<T>;
 export interface UpdateProfileRequest {
   name: string;
   avatar?: File | string | null;
+  bio?: string;
+  student_id?: string;
+  department?: string;
 }
 
 export interface UpdatePasswordRequest {

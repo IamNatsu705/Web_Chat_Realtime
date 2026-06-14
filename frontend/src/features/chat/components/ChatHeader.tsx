@@ -3,6 +3,7 @@ import type { Conversation } from '../types';
 import type { User } from '../../auth/types';
 import { usePresence } from '../hooks/usePresence';
 import { useNavigate } from 'react-router-dom';
+import { useConfirm } from '@/hooks/useConfirm';
 import StreakInfoPanel from './StreakInfoPanel';
 import { BsFire } from 'react-icons/bs';
 
@@ -39,6 +40,7 @@ export default function ChatHeader({
   const [streakPanelOpen, setStreakPanelOpen] = useState(false);
   const { isOnline, getLastSeen, formatLastSeen } = usePresence();
   const navigate = useNavigate();
+  const confirm = useConfirm();
 
   const isGroup = conversation.is_group;
   const isAdmin = isGroup && conversation.admin_id === currentUser.id;
@@ -207,11 +209,10 @@ export default function ChatHeader({
                     </button>
                     {!isAdmin && (
                       <button
-                        onClick={() => { 
-                          if (window.confirm('Bạn có chắc chắn muốn rời khỏi nhóm này?')) {
-                            onLeaveGroup?.(); 
-                            setDropdownOpen(false); 
-                          }
+                        onClick={async () => { 
+                          setDropdownOpen(false);
+                          const ok = await confirm({ title: 'Rời nhóm', message: 'Bạn có chắc chắn muốn rời khỏi nhóm này?', confirmLabel: 'Rời nhóm', variant: 'warning' });
+                          if (ok) onLeaveGroup?.();
                         }}
                         className="w-full text-left px-4 py-2 hover:bg-red-50 text-red-500 flex items-center space-x-2"
                       >
@@ -223,11 +224,10 @@ export default function ChatHeader({
                     )}
                     {isAdmin && (
                       <button
-                        onClick={() => { 
-                          if (window.confirm('Bạn có chắc chắn muốn giải tán nhóm này? Hành động này không thể hoàn tác.')) {
-                            onDissolveGroup?.(); 
-                            setDropdownOpen(false); 
-                          }
+                        onClick={async () => { 
+                          setDropdownOpen(false);
+                          const ok = await confirm({ title: 'Giải tán nhóm', message: 'Bạn có chắc chắn muốn giải tán nhóm này? Hành động này không thể hoàn tác.', confirmLabel: 'Giải tán', variant: 'danger' });
+                          if (ok) onDissolveGroup?.();
                         }}
                         className="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 font-medium flex items-center space-x-2"
                       >
@@ -242,11 +242,10 @@ export default function ChatHeader({
                 )}
                 {/* Xóa lịch sử trò chuyện — dùng cho cả 1-1 và nhóm */}
                 <button
-                  onClick={() => { 
-                    if (window.confirm('Bạn có chắc chắn muốn xóa lịch sử trò chuyện này?')) {
-                      onClearChat?.(); 
-                      setDropdownOpen(false); 
-                    }
+                  onClick={async () => { 
+                    setDropdownOpen(false);
+                    const ok = await confirm({ title: 'Xóa lịch sử chat', message: 'Bạn có chắc chắn muốn xóa lịch sử trò chuyện này?', confirmLabel: 'Xóa', variant: 'danger' });
+                    if (ok) onClearChat?.();
                   }}
                   className="w-full text-left px-4 py-2 hover:bg-red-50 text-red-500 flex items-center space-x-2"
                 >

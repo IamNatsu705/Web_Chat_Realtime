@@ -4,7 +4,7 @@ namespace App\Events\Chat;
 
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -14,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
  * Phát qua WebSocket khi người gửi thu hồi tin nhắn.
  * Frontend nhận sự kiện này để thay thế nội dung tin nhắn thành "Tin nhắn đã bị thu hồi".
  */
-class MessageRecalled implements ShouldBroadcast
+class MessageRecalled implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

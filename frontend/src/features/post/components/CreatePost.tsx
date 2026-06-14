@@ -95,7 +95,7 @@ export default function CreatePost() {
             className="flex items-center space-x-2 text-[#6B7280] hover:text-[#D70038] hover:bg-[#FFF1F2] px-3.5 py-2 rounded-xl transition-all font-medium text-[14px]"
           >
             <svg className="w-5 h-5 text-[#10B981]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>
-            <span>Ảnh/Video</span>
+            <span>Video</span>
           </button>
         </div>
 

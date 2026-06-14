@@ -6,7 +6,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -24,7 +24,7 @@ use Illuminate\Queue\SerializesModels;
  * @property array|null $target       Người bị ảnh hưởng (thêm/xóa) (UserResource resolved)
  * @property string|null $newName     Tên mới (cho group_renamed)
  */
-class GroupUpdated implements ShouldBroadcast
+class GroupUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

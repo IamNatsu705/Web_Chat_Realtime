@@ -1,5 +1,6 @@
 import type { DashboardStats } from '@/features/admin/api/adminApi';
 import { Flame, Heart, MessageCircle } from 'lucide-react';
+import { getImageUrl } from '@/utils/getImageUrl';
 
 interface TopEngagementPostsProps {
   posts?: DashboardStats['top_posts'];
@@ -52,7 +53,7 @@ export function TopEngagementPosts({ posts }: TopEngagementPostsProps) {
               {/* Avatar */}
               <div className="flex-shrink-0">
                 {post.user?.avatar ? (
-                  <img src={post.user.avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
+                  <img src={getImageUrl(post.user.avatar)} alt="" className="h-8 w-8 rounded-full object-cover" />
                 ) : (
                   <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
                     <span className="text-xs font-bold text-indigo-600">

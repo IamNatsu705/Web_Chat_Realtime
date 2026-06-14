@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { usePresence } from '../../chat/hooks/usePresence';
+import { useConfirm } from '@/hooks/useConfirm';
 import type { Friendship } from '../types';
 
 /**
@@ -19,6 +20,7 @@ interface FriendCardProps {
 export default function FriendCard({ friendship, onUnfriend, onMessage, isProcessing = false }: FriendCardProps) {
   const friend = friendship.friend;
   const { isOnline, getLastSeen, formatLastSeen } = usePresence();
+  const confirm = useConfirm();
 
   if (!friend) return null;
 
@@ -72,10 +74,9 @@ export default function FriendCard({ friendship, onUnfriend, onMessage, isProces
           </svg>
         </button>
         <button
-          onClick={() => {
-            if (window.confirm('Bạn có chắc chắn muốn hủy kết bạn với người này?')) {
-              onUnfriend(friend.id);
-            }
+          onClick={async () => {
+            const ok = await confirm({ title: 'Hủy kết bạn', message: 'Bạn có chắc chắn muốn hủy kết bạn với người này?', confirmLabel: 'Hủy kết bạn', variant: 'danger' });
+            if (ok) onUnfriend(friend.id);
           }}
           disabled={isProcessing}
           className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"

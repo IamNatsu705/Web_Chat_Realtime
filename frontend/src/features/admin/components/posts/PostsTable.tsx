@@ -78,7 +78,7 @@ export function PostsTable({
                     {post.media?.length > 0 && (
                       <span className="inline-flex items-center gap-1.5 mt-1.5 text-xs text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md w-fit">
                         <ImageIcon className="w-3.5 h-3.5" />
-                        {post.media.length} ảnh/video
+                        {post.media.length} ảnh
                       </span>
                     )}
                   </td>
@@ -100,11 +100,10 @@ export function PostsTable({
                   {/* Status */}
                   <td className="px-5 py-3.5 text-center">
                     <div className="flex flex-col items-center gap-1">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${
-                        isHidden
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${isHidden
                           ? 'bg-amber-50 text-amber-700'
                           : 'bg-emerald-50 text-emerald-700'
-                      }`}>
+                        }`}>
                         {isHidden ? (
                           <><EyeOff className="w-3.5 h-3.5" /> Đã ẩn</>
                         ) : (

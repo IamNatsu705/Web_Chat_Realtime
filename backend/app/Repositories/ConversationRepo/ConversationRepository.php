@@ -123,7 +123,14 @@ class ConversationRepository extends BaseRepository implements ConversationRepos
 
         // Lọc theo danh mục cộng đồng (môn học, chuyên ngành, đồ án, NCKH, CLB...)
         if ($category && $category !== 'all') {
-            $query->where('category', $category);
+            if ($category === 'other') {
+                $query->where(function ($q) {
+                    $q->where('category', 'other')
+                      ->orWhereNull('category');
+                });
+            } else {
+                $query->where('category', $category);
+            }
         }
 
         if ($userId) {

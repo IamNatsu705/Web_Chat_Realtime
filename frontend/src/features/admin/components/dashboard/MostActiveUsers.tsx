@@ -1,5 +1,6 @@
 import type { DashboardStats } from '@/features/admin/api/adminApi';
 import { Zap } from 'lucide-react';
+import { getImageUrl } from '@/utils/getImageUrl';
 
 interface MostActiveUsersProps {
   users?: DashboardStats['most_active_users'];
@@ -47,7 +48,7 @@ export function MostActiveUsers({ users }: MostActiveUsersProps) {
                 {/* Avatar */}
                 <div className="flex-shrink-0">
                   {user.avatar ? (
-                    <img src={user.avatar} alt="" className="h-9 w-9 rounded-full object-cover ring-2 ring-white shadow-sm" />
+                    <img src={getImageUrl(user.avatar)} alt="" className="h-9 w-9 rounded-full object-cover ring-2 ring-white shadow-sm" />
                   ) : (
                     <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center ring-2 ring-white shadow-sm">
                       <span className="text-xs font-bold text-white">

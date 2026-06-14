@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import type { NetworkUser } from '../types';
 import { RELATIONSHIP_STATUS, USER_CARD_TEXTS } from '../constants';
 import { usePresence } from '../../chat/hooks/usePresence';
+import { useConfirm } from '@/hooks/useConfirm';
 
 interface UserCardProps {
   user: NetworkUser & { mutual_friends_count?: number };
@@ -27,6 +28,7 @@ export default function UserCard({
   const getAvatarLetter = (name: string) => name ? name.charAt(0).toUpperCase() : '?';
   const { isOnline } = usePresence();
   const userIsOnline = isOnline(user.id);
+  const confirm = useConfirm();
 
   return (
     <div className="border border-gray-200 rounded-xl hover:shadow-md transition-all bg-white flex flex-col relative group overflow-hidden">
@@ -144,10 +146,9 @@ export default function UserCard({
                 Nhắn tin
               </button>
               <button
-                onClick={() => {
-                  if (window.confirm('Bạn có chắc chắn muốn hủy kết bạn với người này?')) {
-                    onUnfriend?.(user.id);
-                  }
+                onClick={async () => {
+                  const ok = await confirm({ title: 'Hủy kết bạn', message: 'Bạn có chắc chắn muốn hủy kết bạn với người này?', confirmLabel: 'Hủy kết bạn', variant: 'danger' });
+                  if (ok) onUnfriend?.(user.id);
                 }}
                 disabled={isProcessing}
                 className="flex-1 py-2 border border-red-200 text-red-500 font-bold rounded-full hover:bg-red-50 hover:border-red-300 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed text-sm group-hover:text-red-600"

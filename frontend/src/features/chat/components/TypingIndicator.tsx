@@ -6,19 +6,17 @@
  */
 export default function TypingIndicator({ text }: { text: string }) {
   return (
-    <div className="flex items-end mb-1 px-1 animate-fade-in">
-      <div className="bg-white/90 backdrop-blur-sm border border-gray-100 px-3 py-2 rounded-2xl rounded-bl-none shadow-sm flex items-center space-x-2">
-        <span className="flex space-x-0.5">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"
-              style={{ animationDelay: `${i * 150}ms` }}
-            />
-          ))}
-        </span>
-        <span className="text-xs text-gray-500 italic">{text}</span>
+    <div className="flex items-center space-x-2 animate-fade-in py-0.5 px-2">
+      <div className="flex space-x-1 items-center bg-gray-100/80 px-2 py-1.5 rounded-full">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"
+            style={{ animationDelay: `${i * 150}ms` }}
+          />
+        ))}
       </div>
+      <span className="text-[11px] font-medium text-gray-400">{text}</span>
     </div>
   );
 }

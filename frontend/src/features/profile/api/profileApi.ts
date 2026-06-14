@@ -10,6 +10,9 @@ export const profileApi = {
   updateProfile: async (data: UpdateProfileRequest): Promise<ProfileResponse<{ user: User }>> => {
     const formData = new FormData();
     formData.append('name', data.name);
+    if (data.bio !== undefined) formData.append('bio', data.bio);
+    if (data.student_id !== undefined) formData.append('student_id', data.student_id);
+    if (data.department !== undefined) formData.append('department', data.department);
 
     if (data.avatar instanceof File) {
       formData.append('avatar', data.avatar);

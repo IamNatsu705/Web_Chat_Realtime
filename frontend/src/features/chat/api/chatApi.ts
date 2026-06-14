@@ -173,6 +173,7 @@ export const chatApi = {
     formData.append('name', data.name);
     if (data.description) formData.append('description', data.description);
     if (data.join_type) formData.append('join_type', data.join_type);
+    if (data.category) formData.append('category', data.category);
     if (data.member_ids) {
       data.member_ids.forEach((id) => formData.append('member_ids[]', String(id)));
     }

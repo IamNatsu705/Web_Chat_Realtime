@@ -9,6 +9,7 @@ import { HiOutlineEllipsisVertical } from 'react-icons/hi2';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { communityApi } from '../api/communityApi';
 import { CHAT_QUERIES } from '../hooks/queries';
+import { useConfirm } from '@/hooks/useConfirm';
 
 interface GroupInfoPanelProps {
   conversation: Conversation;
@@ -18,7 +19,7 @@ interface GroupInfoPanelProps {
   onClose: () => void;
   onRenameGroup: (data: UpdateGroupRequest) => void;
   onAddMember: (userId: number) => void;
-  onKickMember: (userId: number) => void;
+  onKickMember: (userId: number) => Promise<any> | void;
 }
 
 /**
@@ -51,18 +52,20 @@ export default function GroupInfoPanel({
   const [showAddMembers, setShowAddMembers] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [loadingActionId, setLoadingActionId] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const confirm = useConfirm();
 
   const promoteMutation = useMutation({
     mutationFn: (userId: number) => communityApi.promoteModerator(conversation.id, userId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() })
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() }); }
   });
 
   const demoteMutation = useMutation({
     mutationFn: (userId: number) => communityApi.demoteModerator(conversation.id, userId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() })
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: CHAT_QUERIES.conversations() }); }
   });
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,6 +82,39 @@ export default function GroupInfoPanel({
     }
     onRenameGroup({ name: newName.trim() });
     setEditingName(false);
+  };
+
+  const handlePromote = async (memberId: number) => {
+    setOpenMenuId(null);
+    setLoadingActionId(memberId);
+    try {
+      await promoteMutation.mutateAsync(memberId);
+    } finally {
+      setLoadingActionId(null);
+    }
+  };
+
+  const handleDemote = async (memberId: number) => {
+    setOpenMenuId(null);
+    setLoadingActionId(memberId);
+    try {
+      await demoteMutation.mutateAsync(memberId);
+    } finally {
+      setLoadingActionId(null);
+    }
+  };
+
+  const handleKick = async (memberId: number) => {
+    setOpenMenuId(null);
+    const ok = await confirm({ title: 'Xóa thành viên', message: 'Bạn có chắc chắn muốn xóa thành viên này khỏi nhóm?', confirmLabel: 'Xóa', variant: 'danger' });
+    if (ok) {
+      setLoadingActionId(memberId);
+      try {
+        await onKickMember(memberId);
+      } finally {
+        setLoadingActionId(null);
+      }
+    }
   };
 
   const memberIds = conversation.participants.map((p) => p.id);
@@ -238,7 +274,11 @@ export default function GroupInfoPanel({
                       ) : null}
                     </div>
                     {/* Dropdown Quản lý chức vụ */}
-                    {isOwnerOrMod && member.id !== currentUser.id && member.id !== conversation.admin_id && (
+                    {loadingActionId === member.id ? (
+                      <div className="p-1">
+                        <div className="w-4 h-4 rounded-full border-2 border-gray-200 border-t-[#D70038] animate-spin" />
+                      </div>
+                    ) : isOwnerOrMod && member.id !== currentUser.id && member.id !== conversation.admin_id && (
                       <div className="relative">
                         <button
                           onClick={() => setOpenMenuId(openMenuId === member.id ? null : member.id)}
@@ -255,14 +295,14 @@ export default function GroupInfoPanel({
                                 <>
                                   {(conversation.participants as Array<User & { role?: GroupRole }>).find(p => p.id === member.id)?.role === 'moderator' ? (
                                     <button
-                                      onClick={() => { demoteMutation.mutate(member.id); setOpenMenuId(null); }}
+                                      onClick={() => handleDemote(member.id)}
                                       className="w-full text-left px-3 py-2 text-[13px] font-medium text-gray-700 hover:bg-gray-50 hover:text-[#D70038] transition-colors"
                                     >
                                       Giáng chức
                                     </button>
                                   ) : (
                                     <button
-                                      onClick={() => { promoteMutation.mutate(member.id); setOpenMenuId(null); }}
+                                      onClick={() => handlePromote(member.id)}
                                       className="w-full text-left px-3 py-2 text-[13px] font-medium text-gray-700 hover:bg-gray-50 hover:text-[#D70038] transition-colors"
                                     >
                                       Thăng Phó nhóm
@@ -271,12 +311,7 @@ export default function GroupInfoPanel({
                                 </>
                               )}
                               <button
-                                onClick={() => { 
-                                  if (window.confirm('Bạn có chắc chắn muốn xóa thành viên này khỏi nhóm?')) {
-                                    onKickMember(member.id); 
-                                    setOpenMenuId(null); 
-                                  }
-                                }}
+                                onClick={() => handleKick(member.id)}
                                 disabled={isProcessing}
                                 className="w-full text-left px-3 py-2 text-[13px] font-bold text-red-600 hover:bg-red-50 transition-colors"
                               >
